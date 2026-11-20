@@ -1,0 +1,586 @@
+@import "tailwindcss";
+
+/*
+ * Ciberlearn. Sistema basado en DESIGN.md (lienzo claro y aireado, un solo color
+ * de acción, bandas de color y orbes de gradiente detrás de las tarjetas de producto),
+ * con la paleta azul de Ciberlearn y versión oscura equivalente.
+ * Nombres de tokens por función:
+ *   desk   = lienzo de la página        desk-2 = tarjetas      desk-3 = sección alterna (fog)
+ *   field  = banda de color (celeste)   mint   = contrapunto menta para destacados
+ *   chalk/graphite/fog = texto principal / secundario / terciario
+ *   paper* = el "papel" de los mensajes (siempre claro), con ink* encima
+ *   brand  = acción principal           accent = eyebrows, enlaces, gráficos
+ *   hl     = relleno del resaltador     ok / bad = legítimo / phishing
+ *   orb-*  = color de los orbes decorativos (solo detrás de tarjetas de producto)
+ * El tema lo fija un script en <head> con data-theme="light|dark" en <html>.
+ */
+:root,
+[data-theme="light"] {
+  --desk: #ffffff;
+  --desk-2: #ffffff;
+  --desk-3: #f1f5f9;
+  --desk-line: #d8e0ea;
+  --field: #e3edff;
+  --mint: #d6fcf4;
+  --chalk: #111827;
+  --graphite: #3f4654;
+  --fog: #6b7589;
+
+  --paper: #ffffff;
+  --paper-2: #f1f5f9;
+  --ink: #111827;
+  --ink-2: #3f4654;
+  --ink-3: #6b7589;
+  --line: #d8e0ea;
+
+  --brand: #2563eb;
+  --brand-dark: #1e40af;
+  --accent: #2563eb;
+  --hl: #bfdbfe;
+  --ok: #15803d;
+  --ok-soft: #dcfce7;
+  --bad: #dc2626;
+  --bad-soft: #fee2e2;
+  --bad-text: #b91c1c;
+
+  --orb-1: rgb(37 99 235 / 0.38);
+  --orb-2: rgb(34 211 238 / 0.32);
+  --orb-3: rgb(129 140 248 / 0.36);
+  --shadow: rgb(15 23 42 / 0.12);
+  --preview-shadow: 0 20px 40px rgb(37 99 235 / 0.15);
+  --btn-dark-bg: #111827;
+  --btn-dark-fg: #ffffff;
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --desk: #0a0f1c;
+  --desk-2: #111827;
+  --desk-3: #0f1626;
+  --desk-line: #263149;
+  --field: #0f1d3a;
+  --mint: #0d2b28;
+  --chalk: #f1f5f9;
+  --graphite: #c3cad6;
+  --fog: #94a0b8;
+
+  --paper: #f8fafc;
+  --paper-2: #eef2f7;
+  --ink: #111827;
+  --ink-2: #3f4654;
+  --ink-3: #6b7589;
+  --line: #d8e0ea;
+
+  --brand: #3b82f6;
+  --brand-dark: #2563eb;
+  --accent: #60a5fa;
+  --hl: #93c5fd;
+  --ok: #16a34a;
+  --ok-soft: #d1fae5;
+  --bad: #ef4444;
+  --bad-soft: #fde2e2;
+  --bad-text: #fca5a5;
+
+  --orb-1: rgb(59 130 246 / 0.32);
+  --orb-2: rgb(34 211 238 / 0.18);
+  --orb-3: rgb(129 140 248 / 0.26);
+  --shadow: rgb(0 0 0 / 0.55);
+  --preview-shadow: 0 24px 48px rgb(0 0 0 / 0.45);
+  --btn-dark-bg: #f1f5f9;
+  --btn-dark-fg: #111827;
+  color-scheme: dark;
+}
+
+/* Sin JavaScript: sigue al sistema. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --desk: #0a0f1c;
+    --desk-2: #111827;
+    --desk-3: #0f1626;
+    --desk-line: #263149;
+    --field: #0f1d3a;
+    --mint: #0d2b28;
+    --chalk: #f1f5f9;
+    --graphite: #c3cad6;
+    --fog: #94a0b8;
+    --paper: #f8fafc;
+    --paper-2: #eef2f7;
+    --brand: #3b82f6;
+    --brand-dark: #2563eb;
+    --accent: #60a5fa;
+    --hl: #93c5fd;
+    --ok: #16a34a;
+    --bad: #ef4444;
+    --bad-text: #fca5a5;
+    --orb-1: rgb(59 130 246 / 0.32);
+    --orb-2: rgb(34 211 238 / 0.18);
+    --orb-3: rgb(129 140 248 / 0.26);
+    --shadow: rgb(0 0 0 / 0.55);
+    --preview-shadow: 0 24px 48px rgb(0 0 0 / 0.45);
+    --btn-dark-bg: #f1f5f9;
+    --btn-dark-fg: #111827;
+    color-scheme: dark;
+  }
+}
+
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --page-max: 1200px;
+}
+
+/* Display: Bricolage Grotesque, 400/600, tracking -0.025em. Nunca por debajo de 20px. */
+.font-display {
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+/* Eyebrow sobre cada título: Inter 12px 700, mayúsculas, +0.1em. */
+.eyebrow {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* Orbes de gradiente: solo detrás de tarjetas de producto, nunca detrás de texto. */
+.orb {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  filter: blur(48px);
+}
+.orb-1 {
+  background: radial-gradient(circle, var(--orb-1) 0%, transparent 65%);
+}
+.orb-2 {
+  background: radial-gradient(circle, var(--orb-2) 0%, transparent 65%);
+}
+.orb-3 {
+  background: radial-gradient(circle, var(--orb-3) 0%, transparent 65%);
+}
+
+/* Tarjeta de producto flotante (mockup) */
+.preview-card {
+  border-radius: 16px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow:
+    0 0 0 1px rgb(11 61 121 / 0.08),
+    var(--preview-shadow);
+}
+
+/* Banda de color a todo el ancho */
+.band-field {
+  background: var(--field);
+}
+
+@theme inline {
+  --color-desk: var(--desk);
+  --color-desk-2: var(--desk-2);
+  --color-desk-3: var(--desk-3);
+  --color-desk-line: var(--desk-line);
+  --color-field: var(--field);
+  --color-mint: var(--mint);
+  --color-graphite: var(--graphite);
+  --color-chalk: var(--chalk);
+  --color-fog: var(--fog);
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-dark: var(--brand-dark);
+  --color-accent: var(--accent);
+  --color-hl: var(--hl);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-bad-text: var(--bad-text);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-display);
+}
+
+body {
+  background: var(--desk);
+  color: var(--chalk);
+  transition:
+    background-color 200ms ease,
+    color 200ms ease;
+}
+
+::selection {
+  background: var(--hl);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* ───────── Firma: trazo a mano bajo la palabra clave ───────── */
+.mark {
+  position: relative;
+  white-space: nowrap;
+}
+.mark > svg {
+  position: absolute;
+  left: -3%;
+  bottom: -0.14em;
+  width: 106%;
+  height: 0.3em;
+  overflow: visible;
+  pointer-events: none;
+}
+.mark path {
+  fill: none;
+  stroke: var(--brand);
+  stroke-width: 3px;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 900ms var(--ease-out) 200ms;
+}
+.mark[data-drawn] path {
+  stroke-dashoffset: 0;
+}
+
+/* Notas del revisor en el demo: rojo lápiz */
+.pencil-note {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 0.95rem;
+  line-height: 1.2;
+  color: #b91c1c;
+}
+
+/* ───────── Botones: 12px de radio, anillo interior sutil, sin sombras de color ───────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  transition:
+    transform 160ms var(--ease-out),
+    background-color 160ms var(--ease-out),
+    border-color 160ms var(--ease-out),
+    color 160ms var(--ease-out);
+}
+.btn:active {
+  transform: scale(0.97);
+}
+.btn-primary {
+  background: var(--brand);
+  color: #fff;
+  box-shadow: inset 0 0 0 1px rgb(11 61 121 / 0.16);
+}
+.btn-primary:hover {
+  background: var(--brand-dark);
+}
+/* Botón oscuro: la acción en las bandas de color */
+.btn-dark {
+  background: var(--btn-dark-bg);
+  color: var(--btn-dark-fg);
+  box-shadow: inset 0 0 0 1px rgb(11 61 121 / 0.16);
+}
+.btn-dark:hover {
+  filter: brightness(1.15);
+}
+.btn-danger {
+  background: var(--bad);
+  color: #fff;
+  box-shadow: inset 0 0 0 1px rgb(11 61 121 / 0.16);
+}
+.btn-danger:hover {
+  filter: brightness(0.92);
+}
+/* Contorno: borde del color del texto, se rellena de gris claro al pasar */
+.btn-ghost {
+  border: 1px solid var(--chalk);
+  color: var(--chalk);
+  font-weight: 500;
+}
+.btn-ghost:hover {
+  background: var(--desk-3);
+}
+.btn-ink {
+  background: var(--ink);
+  color: var(--paper);
+}
+.btn-ink:hover {
+  background: #263245;
+}
+.btn-ok {
+  background: var(--ok);
+  color: #fff;
+}
+.btn-ok:hover {
+  filter: brightness(0.92);
+}
+
+.field {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid var(--desk-line);
+  background: var(--desk);
+  padding: 0.8rem 1rem;
+  color: var(--chalk);
+  outline: none;
+  transition: border-color 160ms ease;
+}
+.field:focus {
+  border-color: var(--accent);
+}
+
+kbd {
+  font-family: var(--font-mono);
+  font-size: 0.7em;
+  padding: 0.1em 0.45em;
+  border-radius: 4px;
+  border: 1px solid currentColor;
+  opacity: 0.7;
+}
+
+/* ───────── Entrada del hero, una sola vez ───────── */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+[data-enter] > * {
+  animation: rise 640ms var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 80ms);
+}
+
+/* ───────── Fragmentos marcables: trazo de resaltador ───────── */
+.seg {
+  border-radius: 2px;
+  padding: 0 2px;
+  margin: 0 -2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  background-image: linear-gradient(
+    100deg,
+    transparent 0.2em,
+    var(--seg-color, #bfdbfe) 0.35em,
+    var(--seg-color, #bfdbfe) calc(100% - 0.35em),
+    transparent calc(100% - 0.2em)
+  );
+  background-repeat: no-repeat;
+  background-position: 0 60%;
+  background-size: 0% 82%;
+  transition:
+    background-size 260ms var(--ease-out),
+    color 160ms ease;
+}
+.seg[data-mode="inspect"] {
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .seg[data-mode="inspect"]:hover {
+    --seg-color: rgb(191 219 254 / 0.6);
+    background-size: 100% 82%;
+  }
+}
+/* El resaltador va sobre el papel (siempre claro): azul claro fijo en ambos temas */
+.seg[data-state="marked"] {
+  background-size: 100% 82% !important;
+  --seg-color: #9ec5fe;
+}
+.seg[data-state="found"] {
+  --seg-color: #a8e6c6;
+  background-size: 100% 82%;
+}
+.seg[data-state="missed"] {
+  text-decoration: underline wavy var(--bad);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
+  --seg-color: var(--bad-soft);
+  background-size: 100% 82%;
+}
+.seg[data-state="false-positive"] {
+  text-decoration: line-through;
+  text-decoration-color: var(--ink-3);
+  color: var(--ink-3);
+}
+.seg-link {
+  color: #1f5fbf;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ───────── Sello del veredicto ───────── */
+@keyframes stamp-in {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(-14deg) scale(1.7);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(-9deg) scale(1);
+  }
+}
+.stamp {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  transform: translate(-50%, -50%) rotate(-9deg);
+  padding: 0.35em 0.8em;
+  border: 4px double currentColor;
+  border-radius: 10px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: clamp(1.5rem, 5vw, 2.6rem);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  opacity: 0.88;
+  /* textura de tinta gastada */
+  mask-image: radial-gradient(circle at 30% 40%, #000 55%, rgb(0 0 0 / 0.75) 56%, #000 70%);
+  animation: stamp-in 320ms var(--ease-out) both;
+}
+.stamp[data-kind="phishing"] {
+  color: #dc2626;
+}
+.stamp[data-kind="legit"] {
+  color: var(--ok);
+}
+
+/* Sacudida breve del papel cuando cae el sello */
+@keyframes thud {
+  40% {
+    transform: translateY(2px) scale(0.995);
+  }
+}
+.thud {
+  animation: thud 220ms var(--ease-out) 120ms;
+}
+
+/* ───────── Aparición escalonada de explicaciones ───────── */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+.reveal-item {
+  animation: slide-up 360ms var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+
+/* Tooltip de enlace */
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 4px) scale(0.96);
+  }
+}
+.link-tip {
+  animation: pop 140ms var(--ease-out) both;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+.pop-in {
+  animation: pop-in 220ms var(--ease-out) both;
+}
+
+/* ───────── Lupa de rayos X ───────── */
+@property --lx {
+  syntax: "<length-percentage>";
+  inherits: true;
+  initial-value: 50%;
+}
+@property --ly {
+  syntax: "<length-percentage>";
+  inherits: true;
+  initial-value: 50%;
+}
+@property --lr {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 92px;
+}
+.xray-layer {
+  clip-path: circle(var(--lr) at var(--lx) var(--ly));
+  transition: --lr 420ms var(--ease-in-out);
+}
+.xray-ring {
+  position: absolute;
+  left: var(--lx);
+  top: var(--ly);
+  width: calc(var(--lr) * 2);
+  height: calc(var(--lr) * 2);
+  translate: -50% -50%;
+  border-radius: 999px;
+  box-shadow:
+    0 0 0 3px #60a5fa,
+    0 0 0 9px rgb(96 165 250 / 0.18),
+    0 20px 50px -10px rgb(0 0 0 / 0.6);
+  pointer-events: none;
+  transition:
+    width 420ms var(--ease-in-out),
+    height 420ms var(--ease-in-out),
+    opacity 200ms ease;
+}
+
+/* Barras y anillos animados del resumen */
+.bar-fill {
+  transform-origin: left;
+  animation: grow 700ms var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 80ms + 200ms);
+}
+@keyframes grow {
+  from {
+    transform: scaleX(0.02);
+  }
+}
+
+@media print {
+  header,
+  footer {
+    display: none !important;
+  }
+  body {
+    background: #fff !important;
+  }
+  main {
+    padding: 0 !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mark path {
+    stroke-dashoffset: 0;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+  }
+}
