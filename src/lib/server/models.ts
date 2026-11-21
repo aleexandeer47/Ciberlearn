@@ -25,6 +25,29 @@ export interface UserDoc {
   showInRanking?: boolean;
 }
 
+/**
+ * Registro de aceptación de un documento legal (solo se agregan, nunca se editan).
+ * Sirve para demostrar cuándo, cómo y qué versión aceptó cada persona.
+ */
+export interface ConsentDoc {
+  _id: ObjectId;
+  userId: ObjectId;
+  /** Correo de la cuenta en el momento de aceptar */
+  email: string;
+  document: "terminos" | "privacidad";
+  /** Versión del documento aceptado (src/lib/legal.ts) */
+  version: string;
+  /** Texto exacto de la casilla que se marcó */
+  text: string;
+  /** Formulario donde se aceptó */
+  source: "registro" | "compra";
+  /** Referencia de la orden si se aceptó al comprar */
+  orderRef?: string;
+  acceptedAt: Date;
+  ip: string | null;
+  userAgent: string | null;
+}
+
 export interface LessonAttemptDoc {
   _id: ObjectId;
   userId: ObjectId;
@@ -95,7 +118,7 @@ export interface RunDoc {
   answers: AnswerDoc[];
 }
 
-export type OrderStatus = "pending" | "paid" | "failed";
+export type OrderStatus = "pending" | "paid" | "failed" | "refunded";
 
 export interface OrderDoc {
   _id: ObjectId;
@@ -115,6 +138,16 @@ export interface OrderDoc {
   livemode?: boolean;
   createdAt: Date;
   paidAt?: Date;
+  /** Reembolso registrado desde el panel (la devolución del dinero se hace en Wompi). */
+  refund?: {
+    amount: number;
+    /** Días de Pro que se quitaron a la cuenta (0 si se dejó el acceso) */
+    removedDays: number;
+    note: string;
+    at: Date;
+    /** Correo del administrador que lo registró */
+    by: string;
+  };
 }
 
 export interface PasswordResetDoc {

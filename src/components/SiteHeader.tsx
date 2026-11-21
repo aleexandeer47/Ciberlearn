@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { LEGAL } from "@/lib/legal";
 import { SITE } from "@/lib/site";
 import { getCurrentUser } from "@/lib/server/session";
 
@@ -86,16 +87,23 @@ export function SiteHeader() {
 export function SiteFooter() {
   return (
     <footer className="mt-auto border-t border-desk-line/70">
-      <div className="mx-auto flex max-w-[1200px] flex-col gap-2 px-4 py-8 text-sm text-fog sm:flex-row sm:justify-between sm:px-6">
-        <p>
-          © {SITE.year} {SITE.name}. Hecho en El Salvador.
-        </p>
-        <p className="flex flex-wrap gap-x-4 gap-y-1">
-          <span>Todos los mensajes, marcas y personas del simulador son ficticios.</span>
-          <Link href="/privacidad" className="font-medium text-chalk hover:text-brand">
-            Política de privacidad
-          </Link>
-        </p>
+      <div className="mx-auto flex max-w-[1200px] flex-col gap-4 px-4 py-8 text-sm text-fog sm:px-6">
+        <nav aria-label="Legal" className="flex flex-wrap gap-x-5 gap-y-2">
+          {Object.values(LEGAL).map((d) => (
+            <Link key={d.path} href={d.path} className="font-medium text-chalk hover:text-brand">
+              {d.title}
+            </Link>
+          ))}
+          <a href={`mailto:${SITE.privacyEmail}`} className="font-medium text-chalk hover:text-brand">
+            Contacto
+          </a>
+        </nav>
+        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between">
+          <p>
+            © {SITE.year} {SITE.name}. Hecho en El Salvador.
+          </p>
+          <p>Todos los mensajes, marcas y personas del simulador son ficticios.</p>
+        </div>
       </div>
     </footer>
   );

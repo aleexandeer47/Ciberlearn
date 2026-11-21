@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useActionState, useId, useState } from "react";
 import { login, signup, type AuthState } from "@/app/actions/auth";
+import { ConsentChecks } from "@/components/legal/ConsentChecks";
 
 /** `admin`: login del panel. Siempre vuelve a /admin y no ofrece crear cuenta. */
 export function AuthForm({ mode, admin = false }: { mode: "login" | "signup"; admin?: boolean }) {
@@ -75,6 +76,11 @@ export function AuthForm({ mode, admin = false }: { mode: "login" | "signup"; ad
         </div>
       </Field>
 
+      {isSignup && (
+        // key: al volver con error, React no reinicia defaultChecked; la key lo fuerza
+        <ConsentChecks key={state.error} defaults={state.fields} />
+      )}
+
       {state.error && (
         <p role="alert" className="pop-in rounded-xl bg-bad/15 px-4 py-3 text-sm text-bad-text">
           {state.error}
@@ -84,16 +90,6 @@ export function AuthForm({ mode, admin = false }: { mode: "login" | "signup"; ad
       <button type="submit" disabled={pending} className="btn btn-primary w-full px-6 py-3.5 disabled:opacity-60">
         {pending ? "Un momento…" : isSignup ? "Crear mi cuenta gratis" : "Entrar"}
       </button>
-
-      {isSignup && (
-        <p className="text-center text-xs leading-relaxed text-fog">
-          Al crear tu cuenta aceptas que tratemos tus datos según nuestra{" "}
-          <Link href="/privacidad" className="text-chalk underline underline-offset-2">
-            política de privacidad
-          </Link>
-          .
-        </p>
-      )}
 
       <p className={`text-center text-sm text-fog ${admin ? "hidden" : ""}`}>
         {isSignup ? (

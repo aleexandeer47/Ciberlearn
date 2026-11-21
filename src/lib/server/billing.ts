@@ -13,7 +13,12 @@ export const mockPaymentsEnabled = () => env.paymentsMode === "mock" && !env.isP
 export class CheckoutError extends Error {}
 
 /** Crea la orden y devuelve la URL a la que hay que mandar a la persona. */
-export async function startCheckout(userId: ObjectId, planId: PlanId): Promise<string> {
+export async function startCheckout(
+  userId: ObjectId,
+  planId: PlanId,
+  /** Se ejecuta con la referencia recién creada, antes de mandar a pagar (p. ej. guardar la aceptación). */
+  onOrder?: (reference: string) => Promise<void>,
+): Promise<string> {
   const plan = PLANS[planId];
   const reference = `anz_${randomBytes(9).toString("hex")}`;
   const useMock = mockPaymentsEnabled();
@@ -32,6 +37,7 @@ export async function startCheckout(userId: ObjectId, planId: PlanId): Promise<s
     createdAt: new Date(),
   };
   await orders.insertOne(order);
+  await onOrder?.(reference);
 
   if (useMock) return `/pago/simulado?ref=${reference}`;
 
@@ -96,6 +102,48 @@ export async function failOrder(reference: string, txId: string) {
   const { orders } = await collections();
   // El id del intento rechazado se guarda aparte: providerTxId queda libre para el pago aprobado.
   await orders.updateOne({ reference, status: "pending" }, { $set: { status: "failed", failedTxId: txId } });
+}
+
+export type RefundResult = "refunded" | "not-found" | "not-paid" | "bad-amount";
+
+/**
+ * Registra el reembolso de una orden pagada y, si se pide, quita sus días de Pro.
+ * No mueve dinero: la devolución se hace en el panel de Wompi. Idempotente: una orden se reembolsa una sola vez.
+ */
+export async function refundOrder(input: {
+  reference: string;
+  amount: number;
+  removeDays: boolean;
+  note: string;
+  by: string;
+}): Promise<RefundResult> {
+  const { orders, users } = await collections();
+  const order = await orders.findOne({ reference: input.reference });
+  if (!order) return "not-found";
+  if (order.status !== "paid") return "not-paid";
+  if (!(input.amount > 0) || input.amount - order.amount > 0.001) return "bad-amount";
+
+  const now = new Date();
+  const removedDays = input.removeDays ? order.days : 0;
+  const claimed = await orders.findOneAndUpdate(
+    { _id: order._id, status: "paid" },
+    {
+      $set: {
+        status: "refunded",
+        refund: { amount: Math.round(input.amount * 100) / 100, removedDays, note: input.note, at: now, by: input.by },
+      },
+    },
+  );
+  if (!claimed) return "not-paid";
+
+  if (removedDays) {
+    // Atómico: proUntil - días; si ya no queda tiempo, vuelve al plan gratis.
+    const until = { $subtract: ["$proUntil", removedDays * 864e5] };
+    await users.updateOne({ _id: order.userId, proUntil: { $ne: null } }, [
+      { $set: { proUntil: { $cond: [{ $gt: [until, now] }, until, null] } } },
+    ]);
+  }
+  return "refunded";
 }
 
 export type ConfirmResult = FulfillResult | "not-approved" | "test-ignored" | "unavailable";

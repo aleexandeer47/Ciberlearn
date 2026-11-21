@@ -5,6 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { checkout } from "@/app/actions/billing";
+import { ConsentChecks } from "@/components/legal/ConsentChecks";
+import { LEGAL, RETRACT_DAYS } from "@/lib/legal";
 import { PLANS, type PlanId } from "@/lib/plans";
 
 const PRO_PERKS = [
@@ -95,12 +97,17 @@ export function PlanPicker({ proUntil }: { proUntil: string | null }) {
               </li>
             ))}
           </ul>
-          <form action={checkout} className="mt-8">
+          <form action={checkout} className="mt-8 space-y-4">
             <input type="hidden" name="plan" value={period} />
+            <ConsentChecks tone="paper" />
             <PayButton label={active ? `Extender Pro (${plan.days} días más)` : `Obtener Pro ${period === "pro-anual" ? "anual" : "mensual"}`} />
           </form>
           <p className="mt-3 text-center text-xs text-ink-3">
-            Pago único con tarjeta por medio de Wompi. Sin cobros automáticos.
+            Pago único con tarjeta por medio de Wompi. Sin cobros automáticos. Tienes {RETRACT_DAYS} días para{" "}
+            <a href={LEGAL.reembolsos.path} className="underline underline-offset-2">
+              pedir tu reembolso
+            </a>
+            .
           </p>
         </div>
       </div>

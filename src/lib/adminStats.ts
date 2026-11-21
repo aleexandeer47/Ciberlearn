@@ -6,6 +6,8 @@ export interface PaidOrder {
   livemode?: boolean;
   paidAt?: Date;
   planId: string;
+  /** Si se reembolsó: lo devuelto se resta de las ganancias */
+  refund?: { amount: number };
 }
 
 /** Dinero real = cobrado por Wompi en modo productivo. Lo demás (simulado o pruebas) va aparte. */
@@ -19,19 +21,29 @@ export function summarizeRevenue(orders: PaidOrder[], now = new Date()) {
     real30 = 0,
     realCount = 0,
     test = 0,
-    testCount = 0;
+    testCount = 0,
+    refunded = 0,
+    refundCount = 0;
   const byPlan = new Map<string, { count: number; total: number }>();
 
   for (const o of orders) {
-    const c = cents(o.amount);
+    // Neto: lo cobrado menos lo devuelto
+    const back = o.refund ? cents(o.refund.amount) : 0;
+    const c = cents(o.amount) - back;
     if (isRealMoney(o)) {
+      if (back) {
+        refunded += back;
+        refundCount++;
+      }
       real += c;
-      realCount++;
+      if (c > 0) realCount++;
       if (o.paidAt && o.paidAt.getTime() >= since30) real30 += c;
-      const p = byPlan.get(o.planId) ?? { count: 0, total: 0 };
-      p.count++;
-      p.total += c;
-      byPlan.set(o.planId, p);
+      if (c > 0) {
+        const p = byPlan.get(o.planId) ?? { count: 0, total: 0 };
+        p.count++;
+        p.total += c;
+        byPlan.set(o.planId, p);
+      }
     } else {
       test += c;
       testCount++;
@@ -44,6 +56,8 @@ export function summarizeRevenue(orders: PaidOrder[], now = new Date()) {
     realCount,
     testTotal: test / 100,
     testCount,
+    refundedTotal: refunded / 100,
+    refundCount,
     byPlan: [...byPlan.entries()].map(([planId, v]) => ({ planId, count: v.count, total: v.total / 100 })),
   };
 }
@@ -73,6 +87,40 @@ export function buildSeries(
 
 export const sumLast = (series: DayPoint[], n: number, key: "visits" | "logins" | "signups") =>
   series.slice(-n).reduce((a, p) => a + p[key], 0);
+
+/** ¿Sigue dentro del plazo de retracto (días naturales desde el pago)? */
+export const withinRetract = (paidAt: Date | undefined, days: number, now = new Date()) =>
+  !!paidAt && now.getTime() - paidAt.getTime() < days * 864e5;
+
+/** "Chrome · Windows" a partir del user-agent; el texto completo queda en la base y en el CSV. */
+export function shortUserAgent(ua: string | null | undefined) {
+  if (!ua) return "—";
+  const browser = /Edg\//.test(ua)
+    ? "Edge"
+    : /OPR\/|Opera/.test(ua)
+      ? "Opera"
+      : /SamsungBrowser/.test(ua)
+        ? "Samsung Internet"
+        : /Firefox\//.test(ua)
+          ? "Firefox"
+          : /Chrome\/|CriOS/.test(ua)
+            ? "Chrome"
+            : /Safari\//.test(ua)
+              ? "Safari"
+              : "Otro";
+  const os = /Android/.test(ua)
+    ? "Android"
+    : /iPhone|iPad|iPod/.test(ua)
+      ? "iOS"
+      : /Windows/.test(ua)
+        ? "Windows"
+        : /Mac OS X|Macintosh/.test(ua)
+          ? "macOS"
+          : /Linux/.test(ua)
+            ? "Linux"
+            : "otro sistema";
+  return `${browser} · ${os}`;
+}
 
 export const money = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });

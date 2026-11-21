@@ -9,4 +9,15 @@ export const SITE = {
   // Contacto público para privacidad y datos personales (aparece en /privacidad).
   privacyEmail: "ciberlearnsv@gmail.com",
   year: 2026,
+  /**
+   * Identificación del proveedor que exige la Ley de Protección al Consumidor (art. 4 letra q)
+   * para vender en línea. Se muestra en /terminos; los campos vacíos no aparecen.
+   * COMPLÉTALOS antes de vender: nombre o razón social, NIT, dirección y teléfono.
+   */
+  provider: {
+    legalName: "",
+    nit: "",
+    address: "",
+    phone: "",
+  },
 } as const;

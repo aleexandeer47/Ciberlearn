@@ -30,7 +30,7 @@ async function Result({ searchParams }: { searchParams: Promise<Params> }) {
   if (!order) redirect("/planes");
 
   // Respaldo del webhook: si aún no está pagada y Wompi nos dio la transacción, se confirma con su API.
-  if (order.status !== "paid" && order.provider === "wompi" && txId) {
+  if ((order.status === "pending" || order.status === "failed") && order.provider === "wompi" && txId) {
     const result = await confirmFromRedirect({ reference: ref, txId, userId: user._id });
     console.info("[wompi] confirmación al volver", { reference: ref, result });
     order = (await orders.findOne({ _id: order._id }))!;
@@ -54,6 +54,22 @@ async function Result({ searchParams }: { searchParams: Promise<Params> }) {
         <Link href="/progreso" className="btn btn-primary mt-8 px-7 py-3.5">
           Ir a mi progreso →
         </Link>
+      </div>
+    );
+  }
+
+  if (order.status === "refunded") {
+    return (
+      <div className="pop-in mx-auto max-w-lg text-center">
+        <h1 className="font-display text-3xl font-semibold">Este pago fue reembolsado</h1>
+        <p className="mt-3 text-fog">
+          Devolvimos {order.refund ? `US$${order.refund.amount.toFixed(2)}` : "el pago"} a tu tarjeta. Tu banco puede tardar
+          unos días en mostrarlo.
+        </p>
+        <Link href="/planes" className="btn btn-ghost mt-8 px-7 py-3.5">
+          Ver los planes
+        </Link>
+        <p className="mt-6 font-mono text-xs text-fog/60">Ref. {order.reference}</p>
       </div>
     );
   }

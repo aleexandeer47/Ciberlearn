@@ -1,22 +1,26 @@
-import { ArrowUpRight, CreditCard, LogIn, LogOut, Users, Eye } from "lucide-react";
+import { ArrowUpRight, CreditCard, Download, Eye, LogIn, LogOut, Search, Users } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
 import { logout } from "@/app/actions/auth";
+import { RefundButton } from "@/components/admin/RefundButton";
 import { TrafficChart } from "@/components/admin/TrafficChart";
 import { Logo } from "@/components/SiteHeader";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { money } from "@/lib/adminStats";
+import { money, shortUserAgent, withinRetract } from "@/lib/adminStats";
+import { RETRACT_DAYS } from "@/lib/legal";
 import { PLANS, isPlanId } from "@/lib/plans";
-import { getAdminStats } from "@/lib/server/admin";
+import { getAdminStats, searchAdmin } from "@/lib/server/admin";
 import { getCurrentUser } from "@/lib/server/session";
 import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Administración", robots: { index: false, follow: false } };
 
 const fmtDate = (d: Date) => d.toLocaleDateString("es-SV", { day: "numeric", month: "short", year: "numeric" });
-const fmtDay = (k: string) => new Date(`${k}T12:00:00`).toLocaleDateString("es-SV", { day: "numeric", month: "long" });
+const fmtDateTime = (d: Date) =>
+  d.toLocaleString("es-SV", { timeZone: "America/El_Salvador", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+const fmtDay =(k: string) => new Date(`${k}T12:00:00`).toLocaleDateString("es-SV", { day: "numeric", month: "long" });
 const n = (x: number) => x.toLocaleString("es-SV");
 
 /** `flush`: sin relleno interior, para tarjetas con tabla de borde a borde. */
@@ -49,13 +53,14 @@ function Stat({
   );
 }
 
-async function Dashboard() {
+async function Dashboard({ searchParams }: { searchParams: PageProps<"/admin">["searchParams"] }) {
   const user = await getCurrentUser();
   if (!user) redirect("/admin/entrar");
   // Una cuenta normal no debe saber que esta página existe.
   if (!user.isAdmin) notFound();
 
-  const s = await getAdminStats();
+  const raw = (await searchParams).q;
+  const [s, q] = await Promise.all([getAdminStats(), searchAdmin(typeof raw === "string" ? raw : "")]);
   const proPct = s.users.total ? Math.round((s.users.pro / s.users.total) * 100) : 0;
   const icon = "h-4 w-4";
 
@@ -125,7 +130,16 @@ async function Dashboard() {
             icon={<CreditCard className={icon} strokeWidth={1.75} />}
             label="Ganancias totales"
             value={money(s.revenue.realTotal)}
-            detail={`${money(s.revenue.realLast30)} en 30 días · ${n(s.revenue.realCount)} ventas`}
+            detail={
+              <>
+                {money(s.revenue.realLast30)} en 30 días · {n(s.revenue.realCount)} ventas
+                {s.revenue.refundCount > 0 && (
+                  <span className="block">
+                    {n(s.revenue.refundCount)} reembolsos por {money(s.revenue.refundedTotal)} ya descontados
+                  </span>
+                )}
+              </>
+            }
           />
         </div>
 
@@ -252,36 +266,73 @@ async function Dashboard() {
           </Card>
         </div>
 
-        {/* Últimos pagos */}
+        {/* Búsqueda, pagos y aceptaciones */}
+        <div id="buscar" className="scroll-mt-24 pt-4">
+          <form method="get" action="/admin#buscar" className="flex flex-wrap items-center gap-2">
+            <label htmlFor="q" className="sr-only">
+              Buscar por correo o referencia
+            </label>
+            <div className="relative min-w-0 flex-1 sm:max-w-md">
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-fog" aria-hidden />
+              <input
+                id="q"
+                name="q"
+                defaultValue={q.query}
+                placeholder="Buscar por correo o referencia (anz_…)"
+                className="field pl-10"
+              />
+            </div>
+            <button type="submit" className="btn btn-primary px-5 py-3 text-sm">
+              Buscar
+            </button>
+            {q.query && (
+              <Link href="/admin#buscar" className="btn btn-ghost px-4 py-3 text-sm">
+                Quitar filtro
+              </Link>
+            )}
+          </form>
+          <p className="mt-2 text-xs text-fog">
+            {q.query ? `Resultados para “${q.query}”.` : "Sin filtro: se muestra lo más reciente."}
+          </p>
+        </div>
+
         <Card flush className="overflow-hidden">
           <div className="p-6 pb-4">
-            <h2 className="font-display text-xl">Últimos pagos</h2>
+            <h2 className="font-display text-xl">Pagos</h2>
+            <p className="mt-1 text-sm text-fog">
+              Para reembolsar: devuelve el dinero en el panel de Wompi y luego regístralo aquí con “Reembolsar”.
+            </p>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-left text-sm">
+            <table className="w-full min-w-[820px] text-left text-sm">
               <thead className="border-y border-desk-line bg-desk-3 text-xs text-fog">
                 <tr>
                   <th className="px-6 py-2.5 font-medium">Fecha</th>
                   <th className="px-3 py-2.5 font-medium">Usuario</th>
                   <th className="px-3 py-2.5 font-medium">Plan</th>
                   <th className="px-3 py-2.5 font-medium">Tipo</th>
-                  <th className="px-6 py-2.5 text-right font-medium">Monto</th>
+                  <th className="px-3 py-2.5 text-right font-medium">Monto</th>
+                  <th className="px-6 py-2.5 text-right font-medium">Estado</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-desk-line">
-                {s.recentPaid.length === 0 && (
+                {q.payments.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-fog">
-                      Todavía no hay pagos.
+                    <td colSpan={6} className="px-6 py-8 text-center text-fog">
+                      {q.query ? "No hay pagos que coincidan." : "Todavía no hay pagos."}
                     </td>
                   </tr>
                 )}
-                {s.recentPaid.map((o) => {
+                {q.payments.map((o) => {
                   const real = o.provider === "wompi" && o.livemode === true;
+                  const inRetract = withinRetract(o.paidAt, RETRACT_DAYS);
                   return (
-                    <tr key={o.reference}>
-                      <td className="whitespace-nowrap px-6 py-3 text-fog">{fmtDate(o.paidAt)}</td>
-                      <td className="max-w-[240px] truncate px-3 py-3">{o.email ?? "—"}</td>
+                    <tr key={o.reference} className="align-top">
+                      <td className="whitespace-nowrap px-6 py-3 text-fog">
+                        {fmtDate(o.paidAt)}
+                        <p className="font-mono text-[11px] text-fog/70">{o.reference}</p>
+                      </td>
+                      <td className="max-w-[220px] truncate px-3 py-3">{o.email ?? "—"}</td>
                       <td className="px-3 py-3">{isPlanId(o.planId) ? PLANS[o.planId].name : o.planId}</td>
                       <td className="px-3 py-3">
                         <span
@@ -290,8 +341,32 @@ async function Dashboard() {
                           {real ? "Real" : o.provider === "mock" ? "Simulado" : "Prueba"}
                         </span>
                       </td>
-                      <td className={`px-6 py-3 text-right font-semibold tabular-nums ${real ? "" : "text-fog line-through"}`}>
+                      <td className={`px-3 py-3 text-right font-semibold tabular-nums ${real ? "" : "text-fog line-through"}`}>
                         {money(o.amount)}
+                      </td>
+                      <td className="px-6 py-3 text-right">
+                        {o.status === "refunded" && o.refund ? (
+                          <div className="text-xs">
+                            <span className="rounded-full bg-bad/15 px-2.5 py-0.5 font-semibold text-bad-text">
+                              Reembolsado {money(o.refund.amount)}
+                            </span>
+                            <p className="mt-1 text-fog">
+                              {fmtDateTime(o.refund.at)} · {o.refund.removedDays ? `−${o.refund.removedDays} días` : "sin quitar días"}
+                            </p>
+                            {o.refund.note && <p className="mt-0.5 max-w-[220px] text-fog">{o.refund.note}</p>}
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-end gap-1">
+                            <RefundButton
+                              reference={o.reference}
+                              amount={o.amount}
+                              days={o.days}
+                              email={o.email ?? "—"}
+                              inRetract={inRetract}
+                            />
+                            {inRetract && <span className="text-[11px] text-ok">En plazo de retracto</span>}
+                          </div>
+                        )}
                       </td>
                     </tr>
                   );
@@ -301,19 +376,79 @@ async function Dashboard() {
           </div>
         </Card>
 
+        <Card flush className="overflow-hidden">
+          <div className="flex flex-wrap items-start justify-between gap-3 p-6 pb-4">
+            <div>
+              <h2 className="font-display text-xl">Aceptaciones de términos y privacidad</h2>
+              <p className="mt-1 text-sm text-fog">
+                Cada casilla marcada queda registrada por separado. {n(q.consentTotal)} en total.
+              </p>
+            </div>
+            <a
+              href={`/admin/aceptaciones${q.query ? `?q=${encodeURIComponent(q.query)}` : ""}`}
+              className="btn btn-ghost h-9 px-3 text-sm"
+            >
+              <Download className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+              Descargar CSV
+            </a>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[880px] text-left text-sm">
+              <thead className="border-y border-desk-line bg-desk-3 text-xs text-fog">
+                <tr>
+                  <th className="px-6 py-2.5 font-medium">Fecha y hora (SV)</th>
+                  <th className="px-3 py-2.5 font-medium">Correo</th>
+                  <th className="px-3 py-2.5 font-medium">Documento</th>
+                  <th className="px-3 py-2.5 font-medium">Dónde</th>
+                  <th className="px-3 py-2.5 font-medium">IP</th>
+                  <th className="px-6 py-2.5 font-medium">Navegador</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-desk-line">
+                {q.consents.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-8 text-center text-fog">
+                      {q.query ? "No hay aceptaciones que coincidan." : "Todavía no hay aceptaciones registradas."}
+                    </td>
+                  </tr>
+                )}
+                {q.consents.map((c) => (
+                  <tr key={c.id}>
+                    <td className="whitespace-nowrap px-6 py-3 tabular-nums text-fog">{fmtDateTime(c.acceptedAt)}</td>
+                    <td className="max-w-[220px] truncate px-3 py-3">{c.email}</td>
+                    <td className="px-3 py-3">
+                      {c.document === "terminos" ? "Términos" : "Privacidad"}
+                      <span className="ml-1.5 font-mono text-[11px] text-fog">v{c.version}</span>
+                    </td>
+                    <td className="px-3 py-3">
+                      {c.source === "registro" ? "Registro" : "Compra"}
+                      {c.orderRef && <p className="font-mono text-[11px] text-fog">{c.orderRef}</p>}
+                    </td>
+                    <td className="px-3 py-3 font-mono text-xs text-fog">{c.ip ?? "—"}</td>
+                    <td className="px-6 py-3 text-fog" title={c.userAgent ?? undefined}>
+                      {shortUserAgent(c.userAgent)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+
         <p className="pb-6 text-xs text-fog">
           Visitas: una por navegador y por día, sin guardar datos personales. Inicios de sesión: cada vez que alguien entra
-          o crea su cuenta. Ganancias: pagos aprobados por Wompi en modo productivo.
+          o crea su cuenta. Ganancias: pagos aprobados por Wompi en modo productivo, menos los reembolsos. Aceptaciones: el
+          CSV incluye el texto exacto de cada casilla y el navegador completo, para usarlo como prueba.
         </p>
       </main>
     </>
   );
 }
 
-export default function AdminPage() {
+export default function AdminPage(props: PageProps<"/admin">) {
   return (
     <Suspense fallback={<div className="mx-auto h-[80vh] w-full max-w-[1200px] animate-pulse px-6 py-10" />}>
-      <Dashboard />
+      <Dashboard searchParams={props.searchParams} />
     </Suspense>
   );
 }

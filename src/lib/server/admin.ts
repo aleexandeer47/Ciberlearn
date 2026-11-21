@@ -1,7 +1,9 @@
 import "server-only";
+import type { Filter } from "mongodb";
 import { buildSeries, summarizeRevenue, sumLast } from "@/lib/adminStats";
 import { lastDays, TZ } from "@/lib/dayKey";
 import { collections } from "./db";
+import type { ConsentDoc, OrderDoc } from "./models";
 
 /** Todo lo que muestra el panel de administración, en una sola consulta en paralelo. */
 export async function getAdminStats(now = new Date()) {
@@ -10,7 +12,7 @@ export async function getAdminStats(now = new Date()) {
   const d30 = new Date(now.getTime() - 30 * 864e5);
   const days = lastDays(30, now);
 
-  const [totalUsers, new7, new30, proActive, active30, stats, signupAgg, paid, recentUsers, recentPaid, runs30] =
+  const [totalUsers, new7, new30, proActive, active30, stats, signupAgg, paid, recentUsers, runs30] =
     await Promise.all([
       users.countDocuments(),
       users.countDocuments({ createdAt: { $gte: d7 } }),
@@ -25,31 +27,15 @@ export async function getAdminStats(now = new Date()) {
         ])
         .toArray(),
       orders
-        .find({ status: "paid" }, { projection: { amount: 1, provider: 1, livemode: 1, paidAt: 1, planId: 1 } })
+        .find(
+          { status: { $in: ["paid", "refunded"] } },
+          { projection: { amount: 1, provider: 1, livemode: 1, paidAt: 1, planId: 1, refund: 1 } },
+        )
         .toArray(),
       users
         .find({}, { projection: { name: 1, email: 1, createdAt: 1, proUntil: 1, lastLoginAt: 1 } })
         .sort({ createdAt: -1 })
         .limit(8)
-        .toArray(),
-      orders
-        .aggregate<{ reference: string; amount: number; planId: string; provider: string; livemode?: boolean; paidAt: Date; email?: string }>([
-          { $match: { status: "paid" } },
-          { $sort: { paidAt: -1 } },
-          { $limit: 8 },
-          { $lookup: { from: "users", localField: "userId", foreignField: "_id", as: "u" } },
-          {
-            $project: {
-              reference: 1,
-              amount: 1,
-              planId: 1,
-              provider: 1,
-              livemode: 1,
-              paidAt: 1,
-              email: { $arrayElemAt: ["$u.email", 0] },
-            },
-          },
-        ])
         .toArray(),
       runs.countDocuments({ createdAt: { $gte: d30 } }),
     ]);
@@ -87,8 +73,109 @@ export async function getAdminStats(now = new Date()) {
       lastLoginAt: u.lastLoginAt ?? null,
       isPro: !!u.proUntil && u.proUntil > now,
     })),
-    recentPaid,
   };
 }
 
 export type AdminStats = Awaited<ReturnType<typeof getAdminStats>>;
+
+export interface PaymentRow {
+  reference: string;
+  amount: number;
+  days: number;
+  planId: string;
+  provider: string;
+  status: "paid" | "refunded";
+  livemode?: boolean;
+  paidAt: Date;
+  refund?: { amount: number; removedDays: number; note: string; at: Date; by: string };
+  email?: string;
+}
+
+/** Pagos cobrados (o reembolsados), con el correo de la cuenta. */
+async function findPayments(match: Filter<OrderDoc>, limit: number) {
+  const { orders } = await collections();
+  return orders
+    .aggregate<PaymentRow>([
+      { $match: { status: { $in: ["paid", "refunded"] }, ...match } },
+      { $sort: { paidAt: -1 } },
+      { $limit: limit },
+      { $lookup: { from: "users", localField: "userId", foreignField: "_id", as: "u" } },
+      {
+        $project: {
+          _id: 0,
+          reference: 1,
+          amount: 1,
+          days: 1,
+          planId: 1,
+          provider: 1,
+          status: 1,
+          livemode: 1,
+          paidAt: 1,
+          refund: 1,
+          email: { $arrayElemAt: ["$u.email", 0] },
+        },
+      },
+    ])
+    .toArray();
+}
+
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * Búsqueda del panel: por correo (o parte de él) o por referencia de pago (anz_…).
+ * Sin texto, devuelve lo más reciente.
+ */
+export async function searchAdmin(rawQuery: string) {
+  const q = rawQuery.trim().slice(0, 100);
+  const { users, consents } = await collections();
+
+  let paymentMatch: Filter<OrderDoc> = {};
+  let consentMatch: Filter<ConsentDoc> = {};
+  if (q) {
+    const re = { $regex: escapeRe(q), $options: "i" };
+    const ids = (await users.find({ email: re }, { projection: { _id: 1 } }).limit(50).toArray()).map((u) => u._id);
+    paymentMatch = { $or: [{ reference: q }, { userId: { $in: ids } }] };
+    // El correo guardado en la aceptación sirve aunque la cuenta ya no exista o haya cambiado de correo
+    consentMatch = { $or: [{ orderRef: q }, { userId: { $in: ids } }, { email: re }] };
+  }
+
+  const [payments, consentRows, consentTotal] = await Promise.all([
+    findPayments(paymentMatch, q ? 50 : 15),
+    consents
+      .find(consentMatch)
+      .sort({ acceptedAt: -1, document: -1 })
+      .limit(q ? 100 : 20)
+      .toArray(),
+    consents.countDocuments(),
+  ]);
+
+  return {
+    query: q,
+    payments,
+    consents: consentRows.map((c) => ({
+      id: c._id.toHexString(),
+      email: c.email,
+      document: c.document,
+      version: c.version,
+      source: c.source,
+      orderRef: c.orderRef ?? null,
+      acceptedAt: c.acceptedAt,
+      ip: c.ip,
+      userAgent: c.userAgent,
+    })),
+    consentTotal,
+  };
+}
+
+/** Todas las aceptaciones que coinciden con la búsqueda, para exportarlas como prueba. */
+export async function exportConsents(rawQuery: string) {
+  const q = rawQuery.trim().slice(0, 100);
+  const { users, consents } = await collections();
+  let match: Filter<ConsentDoc> = {};
+  if (q) {
+    const re = { $regex: escapeRe(q), $options: "i" };
+    const ids = (await users.find({ email: re }, { projection: { _id: 1 } }).limit(500).toArray()).map((u) => u._id);
+    match = { $or: [{ orderRef: q }, { userId: { $in: ids } }, { email: re }] };
+  }
+  return consents.find(match).sort({ acceptedAt: -1 }).limit(10000).toArray();
+}

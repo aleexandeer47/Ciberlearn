@@ -4,6 +4,7 @@ import { MongoClient, type Db } from "mongodb";
 import { env } from "./env";
 import type {
   AiChatDoc,
+  ConsentDoc,
   DailyStatDoc,
   LessonAttemptDoc,
   LoginAttemptDoc,
@@ -70,6 +71,7 @@ export async function collections() {
     lessonAttempts: d.collection<LessonAttemptDoc>("lesson_attempts"),
     xpEvents: d.collection<XpEventDoc>("xp_events"),
     aiChats: d.collection<AiChatDoc>("ai_chats"),
+    consents: d.collection<ConsentDoc>("consents"),
   };
 }
 
@@ -110,5 +112,7 @@ export async function ensureIndexes(d: Db) {
     d.collection("ai_chats").createIndex({ userId: 1, day: 1 }),
     // Las conversaciones con la IA se borran solas a los 30 días
     d.collection("ai_chats").createIndex({ createdAt: 1 }, { expireAfterSeconds: 30 * 86400 }),
+    // Registro de aceptaciones de términos y privacidad (sin TTL: es la prueba del consentimiento)
+    d.collection("consents").createIndex({ userId: 1, acceptedAt: -1 }),
   ]);
 }

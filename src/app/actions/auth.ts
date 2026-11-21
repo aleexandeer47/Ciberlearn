@@ -2,13 +2,14 @@
 
 import { MongoServerError, ObjectId } from "mongodb";
 import { redirect } from "next/navigation";
+import { consentError, readConsent, recordConsents } from "@/lib/server/consent";
 import { collections } from "@/lib/server/db";
 import { DUMMY_HASH, hashPassword, verifyPassword } from "@/lib/server/password";
 import { createSession, destroySession } from "@/lib/server/session";
 
 export interface AuthState {
   error?: string;
-  fields?: { name?: string; email?: string };
+  fields?: { name?: string; email?: string; terminos?: boolean; privacidad?: boolean };
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -26,12 +27,15 @@ export async function signup(_prev: AuthState, form: FormData): Promise<AuthStat
   const name = str(form.get("name")).slice(0, 60);
   const email = str(form.get("email")).toLowerCase();
   const password = typeof form.get("password") === "string" ? (form.get("password") as string) : "";
-  const fields = { name, email };
+  const consent = readConsent(form);
+  const fields = { name, email, ...consent };
 
   if (name.length < 2) return { error: "Escribe tu nombre.", fields };
   if (!EMAIL_RE.test(email) || email.length > 254) return { error: "Ese correo no parece válido.", fields };
   if (password.length < 8) return { error: "La contraseña debe tener al menos 8 caracteres.", fields };
   if (password.length > 200) return { error: "La contraseña es demasiado larga.", fields };
+  const missing = consentError(consent);
+  if (missing) return { error: missing, fields };
 
   const { users } = await collections();
   const _id = new ObjectId();
@@ -47,6 +51,13 @@ export async function signup(_prev: AuthState, form: FormData): Promise<AuthStat
   } catch (e) {
     if (e instanceof MongoServerError && e.code === 11000)
       return { error: "Ya existe una cuenta con ese correo. ¿Quieres entrar?", fields };
+    throw e;
+  }
+  try {
+    await recordConsents({ userId: _id, email, source: "registro" });
+  } catch (e) {
+    // Sin prueba de la aceptación no se crea la cuenta.
+    await users.deleteOne({ _id });
     throw e;
   }
   await createSession(_id);

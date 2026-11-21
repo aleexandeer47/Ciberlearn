@@ -30,6 +30,8 @@ const specs = {
     [{ userId: 1, day: 1 }, {}],
     [{ createdAt: 1 }, { expireAfterSeconds: 30 * 86400 }],
   ],
+  // Prueba de aceptación de términos y privacidad: sin TTL
+  consents: [[{ userId: 1, acceptedAt: -1 }, {}]],
   // _id = "YYYY-MM-DD": no necesita índices extra
   daily_stats: [],
   sessions: [
