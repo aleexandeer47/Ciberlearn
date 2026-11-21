@@ -48,6 +48,11 @@ export default function ReembolsosPage() {
         <p>
           Si extendiste Pro con una segunda compra, cada pago tiene sus propios {RETRACT_DAYS} días de retracto.
         </p>
+        <p>
+          Lo mismo aplica al plan Empresa: el encargado tiene {RETRACT_DAYS} días desde cada pago (la compra del año o la de
+          puestos adicionales) para pedir la devolución completa. Al devolverlo se quita lo que compró ese pago: el año del
+          plan o los puestos agregados.
+        </p>
       </Section>
 
       <Section id="otros" title="Otros casos con devolución">

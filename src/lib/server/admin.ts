@@ -87,7 +87,9 @@ export interface PaymentRow {
   status: "paid" | "refunded";
   livemode?: boolean;
   paidAt: Date;
-  refund?: { amount: number; removedDays: number; note: string; at: Date; by: string };
+  refund?: { amount: number; removedDays: number; removedSeats?: number; note: string; at: Date; by: string };
+  title?: string;
+  business?: { action: "renovar" | "agregar"; seats: number };
   email?: string;
 }
 
@@ -112,6 +114,8 @@ async function findPayments(match: Filter<OrderDoc>, limit: number) {
           livemode: 1,
           paidAt: 1,
           refund: 1,
+          title: 1,
+          business: 1,
           email: { $arrayElemAt: ["$u.email", 0] },
         },
       },

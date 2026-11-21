@@ -36,6 +36,25 @@ async function Result({ searchParams }: { searchParams: Promise<Params> }) {
     order = (await orders.findOne({ _id: order._id }))!;
   }
 
+  if (order.status === "paid" && order.business) {
+    return (
+      <div className="pop-in mx-auto max-w-lg text-center">
+        <div className="mx-auto mb-6 w-max -rotate-6 rounded-xl border-4 border-double border-ok px-5 py-2 font-display text-3xl font-bold uppercase text-ok">
+          Pagado
+        </div>
+        <h1 className="font-display text-3xl font-semibold">Tu plan Empresa está activo</h1>
+        <p className="mt-3 text-fog">
+          {order.business.action === "renovar"
+            ? `Tienes ${order.business.seats} puestos. Ahora invita a tu equipo desde el panel de tu empresa.`
+            : `Agregamos ${order.business.seats} puestos a tu empresa.`}
+        </p>
+        <Link href="/empresa" className="btn btn-primary mt-8 px-7 py-3.5">
+          Ir al panel de mi empresa →
+        </Link>
+      </div>
+    );
+  }
+
   if (order.status === "paid") {
     // Se relee: el plan pudo activarse en esta misma petición.
     const fresh = await (await collections()).users.findOne({ _id: user._id }, { projection: { proUntil: 1 } });

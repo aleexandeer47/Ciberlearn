@@ -23,6 +23,53 @@ export interface UserDoc {
   nicknameLower?: string;
   country?: string;
   showInRanking?: boolean;
+  /** Empresa a la que pertenece (plan Empresa). Una persona solo puede estar en una. */
+  orgId?: ObjectId;
+  orgRole?: "owner" | "member";
+  orgJoinedAt?: Date;
+}
+
+/** Empresa con plan Empresa. El encargado (owner) también ocupa un puesto. */
+export interface OrgDoc {
+  _id: ObjectId;
+  name: string;
+  ownerId: ObjectId;
+  /** Puestos pagados */
+  seats: number;
+  /** Personas dentro (incluye al encargado). Se actualiza de forma atómica al entrar o salir. */
+  memberCount: number;
+  /** Fin del periodo pagado. null = aún no paga. */
+  paidUntil: Date | null;
+  /** Código del enlace de invitación; se puede cambiar para invalidar el anterior. */
+  inviteCode: string;
+  /** Invitaciones por correo enviadas hoy (límite diario) */
+  invites?: { day: string; count: number };
+  createdAt: Date;
+}
+
+/** Un simulacro de phishing enviado a los empleados de una empresa. */
+export interface PhishCampaignDoc {
+  _id: ObjectId;
+  orgId: ObjectId;
+  templateId: string;
+  createdBy: ObjectId;
+  createdAt: Date;
+  day: string;
+  targets: number;
+  sent: number;
+}
+
+/** Un correo de simulacro enviado a una persona. El token del enlace solo se guarda como hash. */
+export interface PhishTargetDoc {
+  _id: ObjectId;
+  campaignId: ObjectId;
+  orgId: ObjectId;
+  userId: ObjectId;
+  email: string;
+  tokenHash: string;
+  sentAt: Date | null;
+  /** Abrió el enlace del simulacro */
+  clickedAt?: Date;
 }
 
 /**
@@ -34,15 +81,18 @@ export interface ConsentDoc {
   userId: ObjectId;
   /** Correo de la cuenta en el momento de aceptar */
   email: string;
-  document: "terminos" | "privacidad";
+  /** "empresa": autorización para que una empresa vea su avance y le envíe simulacros */
+  document: "terminos" | "privacidad" | "empresa";
   /** Versión del documento aceptado (src/lib/legal.ts) */
   version: string;
   /** Texto exacto de la casilla que se marcó */
   text: string;
   /** Formulario donde se aceptó */
-  source: "registro" | "compra";
+  source: "registro" | "compra" | "unirse-empresa";
   /** Referencia de la orden si se aceptó al comprar */
   orderRef?: string;
+  /** Empresa a la que se unió (document "empresa") */
+  orgId?: ObjectId;
   acceptedAt: Date;
   ip: string | null;
   userAgent: string | null;
@@ -125,9 +175,14 @@ export interface OrderDoc {
   /** identificadorEnlaceComercio enviado a Wompi */
   reference: string;
   userId: ObjectId;
-  planId: PlanId;
+  /** "empresa" = compra del plan Empresa (ver `business`) */
+  planId: PlanId | "empresa";
   amount: number;
   days: number;
+  /** Nombre del producto para mostrar */
+  title?: string;
+  /** Solo plan Empresa: qué compra y para qué empresa */
+  business?: { orgId: ObjectId; action: "renovar" | "agregar"; seats: number };
   status: OrderStatus;
   provider: "wompi" | "mock";
   providerLinkId?: string;
@@ -143,6 +198,8 @@ export interface OrderDoc {
     amount: number;
     /** Días de Pro que se quitaron a la cuenta (0 si se dejó el acceso) */
     removedDays: number;
+    /** Plan Empresa: puestos que se quitaron */
+    removedSeats?: number;
     note: string;
     at: Date;
     /** Correo del administrador que lo registró */

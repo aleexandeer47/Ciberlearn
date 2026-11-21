@@ -81,7 +81,10 @@ async function Dashboard() {
           <h1 className="mt-2 font-display text-3xl font-semibold sm:text-4xl">Hola, {user.name.split(" ")[0]}</h1>
         </div>
         {user.isPro ? (
-          <p className="rounded-full bg-brand/15 px-4 py-2 text-sm text-brand">Pro hasta el {fmtDate(user.proUntil!)}</p>
+          <p className="rounded-full bg-brand/15 px-4 py-2 text-sm text-brand">
+            Pro hasta el {fmtDate(user.proEnds!)}
+            {user.org?.active && ` · ${user.org.name}`}
+          </p>
         ) : (
           <Link href="/planes" className="btn btn-ghost px-4 py-2 text-sm">
             Plan gratis · Mejorar a Pro

@@ -1,7 +1,7 @@
 import "server-only";
 import { ObjectId } from "mongodb";
 import { headers } from "next/headers";
-import { CONSENT_TEXT, LEGAL, type ConsentDocument } from "@/lib/legal";
+import { CONSENT_TEXT, LEGAL, orgConsentText, type ConsentDocument } from "@/lib/legal";
 import { collections } from "./db";
 import type { ConsentDoc } from "./models";
 
@@ -41,4 +41,23 @@ export async function recordConsents(input: {
   }));
   const { consents } = await collections();
   await consents.insertMany(docs);
+}
+
+/** Guarda la autorización del empleado para que su empresa vea su avance y le envíe simulacros. */
+export async function recordOrgConsent(input: { userId: ObjectId; email: string; orgId: ObjectId; orgName: string }) {
+  const h = await headers();
+  const { consents } = await collections();
+  await consents.insertOne({
+    _id: new ObjectId(),
+    userId: input.userId,
+    email: input.email,
+    document: "empresa",
+    version: LEGAL.privacidad.version,
+    text: orgConsentText(input.orgName),
+    source: "unirse-empresa",
+    orgId: input.orgId,
+    acceptedAt: new Date(),
+    ip: clientIp(h),
+    userAgent: h.get("user-agent")?.slice(0, 300) ?? null,
+  });
 }

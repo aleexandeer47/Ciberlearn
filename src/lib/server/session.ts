@@ -4,6 +4,7 @@ import { ObjectId } from "mongodb";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { cache } from "react";
+import { orgActive } from "@/lib/business";
 import { isProActive } from "@/lib/plans";
 import { collections } from "./db";
 import { env } from "./env";
@@ -47,9 +48,14 @@ export interface CurrentUser {
   _id: UserDoc["_id"];
   email: string;
   name: string;
+  /** Fin del Pro individual (comprado por la persona) */
   proUntil: Date | null;
+  /** Pro activo por compra propia o por pertenecer a una empresa con plan vigente */
   isPro: boolean;
+  /** Hasta cuándo tiene Pro, por la vía que dure más; null si no tiene */
+  proEnds: Date | null;
   isAdmin: boolean;
+  org: { _id: ObjectId; name: string; role: "owner" | "member"; active: boolean; paidUntil: Date | null } | null;
 }
 
 /** Usuario de la petición actual (memoizado por petición con React cache). */
@@ -63,13 +69,25 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   if (!session) return null;
   const user = await users.findOne({ _id: session.userId }, { projection: { passwordHash: 0 } });
   if (!user) return null;
+
+  let org: CurrentUser["org"] = null;
+  if (user.orgId) {
+    const { orgs } = await collections();
+    const o = await orgs.findOne({ _id: user.orgId }, { projection: { name: 1, paidUntil: 1 } });
+    if (o) org = { _id: o._id, name: o.name, role: user.orgRole ?? "member", active: orgActive(o.paidUntil), paidUntil: o.paidUntil };
+  }
+  const own = isProActive(user.proUntil);
+  const ends = [own ? user.proUntil : null, org?.active ? org.paidUntil : null].filter((d): d is Date => !!d);
+
   return {
     id: user._id.toHexString(),
     _id: user._id,
     email: user.email,
     name: user.name,
     proUntil: user.proUntil,
-    isPro: isProActive(user.proUntil),
+    isPro: ends.length > 0,
+    proEnds: ends.length ? new Date(Math.max(...ends.map((d) => d.getTime()))) : null,
     isAdmin: user.role === "admin",
+    org,
   };
 });

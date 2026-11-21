@@ -25,7 +25,7 @@ describe("consentimiento", () => {
   it("cada documento tiene ruta y versión con fecha", () => {
     for (const d of Object.values(LEGAL)) {
       expect(d.path).toMatch(/^\/[a-z]+$/);
-      expect(d.version).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(d.version).toMatch(/^\d{4}-\d{2}-\d{2}(\.\d+)?$/);
     }
   });
 });

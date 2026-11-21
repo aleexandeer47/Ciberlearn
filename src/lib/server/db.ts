@@ -9,7 +9,10 @@ import type {
   LessonAttemptDoc,
   LoginAttemptDoc,
   OrderDoc,
+  OrgDoc,
   PasswordResetDoc,
+  PhishCampaignDoc,
+  PhishTargetDoc,
   RunDoc,
   SessionDoc,
   UserDoc,
@@ -72,6 +75,9 @@ export async function collections() {
     xpEvents: d.collection<XpEventDoc>("xp_events"),
     aiChats: d.collection<AiChatDoc>("ai_chats"),
     consents: d.collection<ConsentDoc>("consents"),
+    orgs: d.collection<OrgDoc>("orgs"),
+    phishCampaigns: d.collection<PhishCampaignDoc>("phish_campaigns"),
+    phishTargets: d.collection<PhishTargetDoc>("phish_targets"),
   };
 }
 
@@ -114,5 +120,13 @@ export async function ensureIndexes(d: Db) {
     d.collection("ai_chats").createIndex({ createdAt: 1 }, { expireAfterSeconds: 30 * 86400 }),
     // Registro de aceptaciones de términos y privacidad (sin TTL: es la prueba del consentimiento)
     d.collection("consents").createIndex({ userId: 1, acceptedAt: -1 }),
+    // Plan Empresa
+    d.collection("orgs").createIndex({ inviteCode: 1 }, { unique: true }),
+    d.collection("orgs").createIndex({ ownerId: 1 }, { unique: true }),
+    d.collection("users").createIndex({ orgId: 1 }, { partialFilterExpression: { orgId: { $exists: true } } }),
+    d.collection("phish_campaigns").createIndex({ orgId: 1, createdAt: -1 }),
+    d.collection("phish_targets").createIndex({ tokenHash: 1 }, { unique: true }),
+    d.collection("phish_targets").createIndex({ orgId: 1, userId: 1 }),
+    d.collection("phish_targets").createIndex({ campaignId: 1 }),
   ]);
 }

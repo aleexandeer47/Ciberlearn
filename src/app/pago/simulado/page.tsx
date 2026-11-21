@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { mockPay } from "@/app/actions/billing";
 import { PageShell } from "@/components/SiteHeader";
-import { PLANS } from "@/lib/plans";
+import { isPlanId, PLANS } from "@/lib/plans";
 import { mockPaymentsEnabled } from "@/lib/server/billing";
 import { collections } from "@/lib/server/db";
 import { getCurrentUser } from "@/lib/server/session";
@@ -18,7 +18,7 @@ async function MockCheckout({ searchParams }: { searchParams: Promise<{ ref?: st
   const { orders } = await collections();
   const order = await orders.findOne({ reference: ref, userId: user._id });
   if (!order) redirect("/planes");
-  const plan = PLANS[order.planId];
+  const title = order.title ?? (isPlanId(order.planId) ? PLANS[order.planId].name : "Compra");
 
   return (
     <div className="mx-auto max-w-md">
@@ -27,12 +27,14 @@ async function MockCheckout({ searchParams }: { searchParams: Promise<{ ref?: st
       </p>
       <div className="rounded-3xl bg-paper p-7 text-ink ring-1 ring-line">
         <p className="font-mono text-xs text-ink-3">Resumen de compra</p>
-        <h1 className="mt-2 font-display text-2xl font-semibold">{plan.name}</h1>
+        <h1 className="mt-2 font-display text-2xl font-semibold">{title}</h1>
         <div className="mt-6 space-y-2 border-y border-line py-4 text-sm">
-          <div className="flex justify-between">
-            <span className="text-ink-2">Acceso Pro</span>
-            <span>{order.days} días</span>
-          </div>
+          {order.days > 0 && (
+            <div className="flex justify-between">
+              <span className="text-ink-2">Acceso Pro</span>
+              <span>{order.days} días</span>
+            </div>
+          )}
           <div className="flex justify-between">
             <span className="text-ink-2">Referencia</span>
             <span className="font-mono text-xs">{order.reference}</span>

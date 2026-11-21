@@ -52,7 +52,7 @@ const nextConfig: NextConfig = {
       { source: "/(.*)", headers: securityHeaders },
       // El panel y las páginas de cuenta no deben guardarse en cachés intermedias
       {
-        source: "/(admin|progreso|certificado|pago|restablecer)(.*)",
+        source: "/(admin|progreso|certificado|pago|restablecer|empresa|simulacro)(.*)",
         headers: [{ key: "Cache-Control", value: "private, no-store" }],
       },
     ];

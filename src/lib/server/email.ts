@@ -6,6 +6,8 @@ export interface Email {
   subject: string;
   html: string;
   text: string;
+  /** Nombre visible del remitente; la dirección siempre es la de EMAIL_FROM (verificada). */
+  fromName?: string;
 }
 
 type Provider = "mailjet" | "resend" | null;
@@ -33,7 +35,9 @@ export async function sendEmail(mail: Email): Promise<{ sent: boolean }> {
     console.info(`[email] (sin servicio configurado) Para: ${mail.to} | ${mail.subject}\n${mail.text}`);
     return { sent: false };
   }
-  const from = parseFrom(process.env.EMAIL_FROM!)!;
+  const base = parseFrom(process.env.EMAIL_FROM!)!;
+  // Sin comillas ni < > para que no rompa la cabecera From
+  const from = { ...base, name: mail.fromName?.replace(/["<>\r\n]/g, "").slice(0, 70) || base.name };
 
   try {
     if (p === "mailjet") {

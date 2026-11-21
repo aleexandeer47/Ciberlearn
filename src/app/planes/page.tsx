@@ -5,7 +5,8 @@ import { PlanPicker } from "@/components/billing/PlanPicker";
 import { PageShell } from "@/components/SiteHeader";
 import { FEATURES } from "@/lib/plans";
 import { getCurrentUser } from "@/lib/server/session";
-import { SITE } from "@/lib/site";
+import Link from "next/link";
+import { BUSINESS } from "@/lib/business";
 
 export const metadata: Metadata = {
   title: "Planes",
@@ -16,7 +17,7 @@ const FAQ = [
   ["¿Se renueva solo?", "No. Pagas una vez y tienes Pro por 30 días o un año. La fecha de vencimiento aparece en tu progreso, y si pagas de nuevo los días se suman."],
   ["¿Cómo pago?", "Con tarjeta de crédito o débito por medio de Wompi, la pasarela de Banco Agrícola. No guardamos los datos de tu tarjeta."],
   ["¿El certificado es oficial?", "Es un certificado interno de finalización: demuestra que completaste el entrenamiento, pero no es una certificación profesional acreditada."],
-  ["¿Y para mi empresa o colegio?", "Estamos preparando planes por equipo con panel e informes. Escríbenos y te avisamos primero."],
+  ["¿Y para mi empresa o colegio?", "Con el plan Empresa cada persona de tu equipo recibe Pro, y tú ves su avance, descargas informes y envías simulacros de phishing."],
 ];
 
 function Cell({ v }: { v: boolean | string }) {
@@ -31,7 +32,8 @@ async function CurrentPlan() {
     <>
       {user?.isPro && (
         <p className="mx-auto mb-8 w-max rounded-full bg-ok/15 px-4 py-2 text-sm text-ok">
-          Tienes Pro hasta el {user.proUntil!.toLocaleDateString("es-SV", { day: "numeric", month: "long", year: "numeric" })}
+          Tienes Pro hasta el {user.proEnds!.toLocaleDateString("es-SV", { day: "numeric", month: "long", year: "numeric" })}
+          {user.org?.active && ` · por ${user.org.name}`}
         </p>
       )}
       <PlanPicker proUntil={user?.proUntil?.toISOString() ?? null} />
@@ -96,18 +98,18 @@ export default function PlanesPage() {
           ))}
         </section>
 
-        <section className="mt-16 flex flex-col items-start justify-between gap-4 rounded-3xl border border-dashed border-desk-line p-7 sm:flex-row sm:items-center">
+        <section className="mt-16 flex flex-col items-start justify-between gap-5 rounded-3xl bg-field p-7 sm:flex-row sm:items-center">
           <div>
-            <h2 className="font-display text-xl font-semibold">Equipos y colegios</h2>
-            <p className="mt-1 text-fog">Panel, informes y escenarios a la medida de tu organización.</p>
+            <p className="eyebrow">Plan Empresa</p>
+            <h2 className="mt-2 font-display text-2xl font-semibold">Entrena a todo tu equipo</h2>
+            <p className="mt-1 max-w-xl text-graphite">
+              Pro para cada empleado, panel de avance, informe descargable y simulacros de phishing. US${BUSINESS.seatPrice}{" "}
+              por persona al año, desde {BUSINESS.minSeats} personas.
+            </p>
           </div>
-          {SITE.contactEmail ? (
-            <a href={`mailto:${SITE.contactEmail}`} className="btn btn-ghost px-6 py-3">
-              Hablar con nosotros
-            </a>
-          ) : (
-            <span className="rounded-full border border-desk-line px-6 py-3 text-sm text-fog">Próximamente</span>
-          )}
+          <Link href="/empresa" className="btn btn-primary shrink-0 px-6 py-3">
+            Ver plan Empresa
+          </Link>
         </section>
       </div>
     </PageShell>

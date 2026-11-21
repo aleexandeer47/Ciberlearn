@@ -243,12 +243,12 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/admin">["
             <h2 className="font-display text-xl">Ventas por plan</h2>
             <p className="mt-1 text-sm text-fog">Solo pagos reales cobrados por Wompi.</p>
             <ul className="mt-5 space-y-3">
-              {(["pro-mensual", "pro-anual"] as const).map((id) => {
+              {(["pro-mensual", "pro-anual", "empresa"] as const).map((id) => {
                 const p = s.revenue.byPlan.find((x) => x.planId === id);
                 return (
                   <li key={id} className="flex items-baseline justify-between gap-3">
                     <span className="text-sm">
-                      {PLANS[id].name}
+                      {id === "empresa" ? "Empresa" : PLANS[id].name}
                       <span className="ml-1 text-fog">· {n(p?.count ?? 0)}</span>
                     </span>
                     <span className="font-semibold tabular-nums">{money(p?.total ?? 0)}</span>
@@ -333,7 +333,7 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/admin">["
                         <p className="font-mono text-[11px] text-fog/70">{o.reference}</p>
                       </td>
                       <td className="max-w-[220px] truncate px-3 py-3">{o.email ?? "—"}</td>
-                      <td className="px-3 py-3">{isPlanId(o.planId) ? PLANS[o.planId].name : o.planId}</td>
+                      <td className="px-3 py-3">{o.title ?? (isPlanId(o.planId) ? PLANS[o.planId].name : o.planId)}</td>
                       <td className="px-3 py-3">
                         <span
                           className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${real ? "bg-ok/15 text-ok" : "bg-desk-3 text-fog"}`}
@@ -351,7 +351,12 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/admin">["
                               Reembolsado {money(o.refund.amount)}
                             </span>
                             <p className="mt-1 text-fog">
-                              {fmtDateTime(o.refund.at)} · {o.refund.removedDays ? `−${o.refund.removedDays} días` : "sin quitar días"}
+                              {fmtDateTime(o.refund.at)} ·{" "}
+                              {o.refund.removedSeats
+                                ? `−${o.refund.removedSeats} puestos`
+                                : o.refund.removedDays
+                                  ? `−${o.refund.removedDays} días`
+                                  : "sin quitar acceso"}
                             </p>
                             {o.refund.note && <p className="mt-0.5 max-w-[220px] text-fog">{o.refund.note}</p>}
                           </div>
@@ -360,7 +365,13 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/admin">["
                             <RefundButton
                               reference={o.reference}
                               amount={o.amount}
-                              days={o.days}
+                              removeLabel={
+                                o.business?.action === "agregar"
+                                  ? `Quitar los ${o.business.seats} puestos de esta compra`
+                                  : o.business
+                                    ? `Quitar los ${o.days} días del plan Empresa`
+                                    : `Quitar los ${o.days} días de Pro de este pago`
+                              }
                               email={o.email ?? "—"}
                               inRetract={inRetract}
                             />
@@ -417,11 +428,11 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/admin">["
                     <td className="whitespace-nowrap px-6 py-3 tabular-nums text-fog">{fmtDateTime(c.acceptedAt)}</td>
                     <td className="max-w-[220px] truncate px-3 py-3">{c.email}</td>
                     <td className="px-3 py-3">
-                      {c.document === "terminos" ? "Términos" : "Privacidad"}
+                      {c.document === "terminos" ? "Términos" : c.document === "privacidad" ? "Privacidad" : "Autorización a empresa"}
                       <span className="ml-1.5 font-mono text-[11px] text-fog">v{c.version}</span>
                     </td>
                     <td className="px-3 py-3">
-                      {c.source === "registro" ? "Registro" : "Compra"}
+                      {c.source === "registro" ? "Registro" : c.source === "compra" ? "Compra" : "Unirse a empresa"}
                       {c.orderRef && <p className="font-mono text-[11px] text-fog">{c.orderRef}</p>}
                     </td>
                     <td className="px-3 py-3 font-mono text-xs text-fog">{c.ip ?? "—"}</td>

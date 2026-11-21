@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { A, LegalPage, MailLink, ProviderInfo, Section } from "@/components/legal/LegalPage";
 import { LEGAL, RETRACT_DAYS } from "@/lib/legal";
 import { AI_LIMITS } from "@/lib/ai/personas";
+import { BUSINESS } from "@/lib/business";
 import { PLANS } from "@/lib/plans";
 import { SITE } from "@/lib/site";
 
@@ -16,6 +17,7 @@ const SECTIONS = [
   { id: "cuenta", title: "Tu cuenta" },
   { id: "uso", title: "Uso permitido" },
   { id: "planes", title: "Plan gratis y plan Pro" },
+  { id: "empresa", title: "Plan Empresa" },
   { id: "retracto", title: "Retracto y reembolsos" },
   { id: "ia", title: "Chats con IA" },
   { id: "propiedad", title: "Propiedad intelectual" },
@@ -118,6 +120,36 @@ export default function TerminosPage() {
             te cobraron y Pro no se activó, escríbenos y lo resolvemos o te devolvemos el dinero.
           </li>
           <li>Las funciones marcadas como “próximamente” no están incluidas todavía en lo que pagas.</li>
+        </ul>
+      </Section>
+
+      <Section id="empresa" title="Plan Empresa">
+        <ul className="list-disc space-y-2 pl-5">
+          <li>
+            Quien compra el plan Empresa es el <strong className="text-chalk">encargado</strong> de su organización. Al
+            comprar declara que puede contratar en nombre de ella. El encargado también ocupa un puesto.
+          </li>
+          <li>
+            Cuesta US${BUSINESS.seatPrice} por persona al año, desde {BUSINESS.minSeats} personas, en un pago único sin
+            renovación automática. Se pueden agregar puestos pagando la parte proporcional de los días que faltan.
+          </li>
+          <li>
+            Cada persona se une con su propia cuenta desde el enlace de invitación y tiene Pro mientras el plan de la
+            empresa esté vigente. Si sale de la empresa o el encargado la quita, conserva su cuenta y su progreso, pero pierde
+            el Pro de la empresa.
+          </li>
+          <li>
+            Al unirse, cada persona autoriza de forma expresa que el encargado vea su avance y le envíe simulacros. Esa
+            autorización queda registrada.
+          </li>
+          <li>
+            Los simulacros de phishing solo pueden enviarse a personas que se unieron al equipo y deben usarse únicamente
+            para capacitar. El encargado no puede usarlos para sancionar a nadie de forma automática ni para obtener datos:
+            los simulacros nunca piden contraseñas ni información.
+          </li>
+          <li>
+            El encargado debe tratar el avance de su equipo como información confidencial y usarla solo para capacitación.
+          </li>
         </ul>
       </Section>
 

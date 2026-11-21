@@ -1,6 +1,7 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
 import { MongoServerError, ObjectId } from "mongodb";
+import { BUSINESS } from "@/lib/business";
 import { PLANS, type PlanId } from "@/lib/plans";
 import { SITE } from "@/lib/site";
 import { collections } from "./db";
@@ -12,14 +13,14 @@ export const mockPaymentsEnabled = () => env.paymentsMode === "mock" && !env.isP
 
 export class CheckoutError extends Error {}
 
-/** Crea la orden y devuelve la URL a la que hay que mandar a la persona. */
-export async function startCheckout(
-  userId: ObjectId,
-  planId: PlanId,
-  /** Se ejecuta con la referencia recién creada, antes de mandar a pagar (p. ej. guardar la aceptación). */
-  onOrder?: (reference: string) => Promise<void>,
+/** Se ejecuta con la referencia recién creada, antes de mandar a pagar (p. ej. guardar la aceptación). */
+type OnOrder = (reference: string) => Promise<void>;
+
+/** Crea una orden pendiente y su enlace de pago; devuelve la URL a la que hay que mandar a la persona. */
+async function openOrder(
+  input: Pick<OrderDoc, "userId" | "planId" | "amount" | "days" | "title" | "business"> & { description: string },
+  onOrder?: OnOrder,
 ): Promise<string> {
-  const plan = PLANS[planId];
   const reference = `anz_${randomBytes(9).toString("hex")}`;
   const useMock = mockPaymentsEnabled();
   if (!useMock && !wompiConfigured()) throw new CheckoutError("Los pagos todavía no están configurados.");
@@ -28,10 +29,12 @@ export async function startCheckout(
   const order: OrderDoc = {
     _id: new ObjectId(),
     reference,
-    userId,
-    planId,
-    amount: plan.price,
-    days: plan.days,
+    userId: input.userId,
+    planId: input.planId,
+    amount: input.amount,
+    days: input.days,
+    title: input.title,
+    ...(input.business ? { business: input.business } : {}),
     status: "pending",
     provider: useMock ? "mock" : "wompi",
     createdAt: new Date(),
@@ -43,14 +46,46 @@ export async function startCheckout(
 
   const link = await createPaymentLink({
     reference,
-    amount: plan.price,
-    productName: `${SITE.name} ${plan.name}`,
-    description: `Acceso Pro por ${plan.days} días`,
+    amount: input.amount,
+    productName: `${SITE.name} ${input.title}`,
+    description: input.description,
     redirectUrl: `${env.appUrl}/pago/resultado?ref=${reference}`,
     webhookUrl: `${env.appUrl}/api/wompi/webhook`,
   });
   await orders.updateOne({ _id: order._id }, { $set: { providerLinkId: String(link.idEnlace) } });
   return link.urlEnlace;
+}
+
+/** Compra del plan Pro individual. */
+export function startCheckout(userId: ObjectId, planId: PlanId, onOrder?: OnOrder): Promise<string> {
+  const plan = PLANS[planId];
+  return openOrder(
+    { userId, planId, amount: plan.price, days: plan.days, title: plan.name, description: `Acceso Pro por ${plan.days} días` },
+    onOrder,
+  );
+}
+
+/** Compra del plan Empresa: un año para N puestos ("renovar") o puestos extra hasta el vencimiento ("agregar"). */
+export function startBusinessCheckout(
+  userId: ObjectId,
+  b: { orgId: ObjectId; orgName: string; action: "renovar" | "agregar"; seats: number; amount: number },
+  onOrder?: OnOrder,
+): Promise<string> {
+  const renew = b.action === "renovar";
+  return openOrder(
+    {
+      userId,
+      planId: "empresa",
+      amount: b.amount,
+      days: renew ? BUSINESS.days : 0,
+      title: renew ? `Empresa · ${b.seats} puestos por 1 año` : `Empresa · ${b.seats} puestos adicionales`,
+      business: { orgId: b.orgId, action: b.action, seats: b.seats },
+      description: renew
+        ? `Plan Empresa para ${b.orgName}: ${b.seats} empleados por ${BUSINESS.days} días`
+        : `${b.seats} puestos adicionales para ${b.orgName} hasta el vencimiento del plan`,
+    },
+    onOrder,
+  );
 }
 
 export type FulfillResult = "activated" | "already-paid" | "not-found" | "amount-mismatch" | "tx-used";
@@ -86,6 +121,25 @@ export async function fulfillOrder(input: {
     throw e;
   }
   if (!claimed) return "already-paid";
+
+  if (order.business) {
+    const { orgs } = await collections();
+    const b = order.business;
+    if (b.action === "renovar") {
+      // Atómico: paidUntil = max(paidUntil, ahora) + días, con los puestos comprados
+      await orgs.updateOne({ _id: b.orgId }, [
+        {
+          $set: {
+            paidUntil: { $add: [{ $max: [{ $ifNull: ["$paidUntil", now] }, now] }, order.days * 864e5] },
+            seats: b.seats,
+          },
+        },
+      ]);
+    } else {
+      await orgs.updateOne({ _id: b.orgId }, { $inc: { seats: b.seats } });
+    }
+    return "activated";
+  }
 
   // Atómico: proUntil = max(proUntil, ahora) + días
   await users.updateOne({ _id: order.userId }, [
@@ -125,18 +179,38 @@ export async function refundOrder(input: {
 
   const now = new Date();
   const removedDays = input.removeDays ? order.days : 0;
+  const removedSeats = input.removeDays && order.business?.action === "agregar" ? order.business.seats : 0;
   const claimed = await orders.findOneAndUpdate(
     { _id: order._id, status: "paid" },
     {
       $set: {
         status: "refunded",
-        refund: { amount: Math.round(input.amount * 100) / 100, removedDays, note: input.note, at: now, by: input.by },
+        refund: {
+          amount: Math.round(input.amount * 100) / 100,
+          removedDays,
+          ...(removedSeats ? { removedSeats } : {}),
+          note: input.note,
+          at: now,
+          by: input.by,
+        },
       },
     },
   );
   if (!claimed) return "not-paid";
 
-  if (removedDays) {
+  if (input.removeDays && order.business) {
+    // Plan Empresa: se quita lo que compró esa orden (el año o los puestos extra)
+    const { orgs } = await collections();
+    const b = order.business;
+    if (b.action === "renovar") {
+      const until = { $subtract: ["$paidUntil", order.days * 864e5] };
+      await orgs.updateOne({ _id: b.orgId, paidUntil: { $ne: null } }, [
+        { $set: { paidUntil: { $cond: [{ $gt: [until, now] }, until, null] } } },
+      ]);
+    } else {
+      await orgs.updateOne({ _id: b.orgId }, [{ $set: { seats: { $max: [1, { $subtract: ["$seats", b.seats] }] } } }]);
+    }
+  } else if (removedDays) {
     // Atómico: proUntil - días; si ya no queda tiempo, vuelve al plan gratis.
     const until = { $subtract: ["$proUntil", removedDays * 864e5] };
     await users.updateOne({ _id: order.userId, proUntil: { $ne: null } }, [

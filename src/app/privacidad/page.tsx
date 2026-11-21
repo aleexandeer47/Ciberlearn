@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 /*
  * Cada dato, cookie y proveedor que se menciona aquí corresponde a lo que hace el código:
  *  - users / sessions / runs / orders / consents / login_attempts / password_resets / daily_stats /
- *    lesson_attempts / xp_events / ai_chats (MongoDB)
+ *    lesson_attempts / xp_events / ai_chats / orgs / phish_campaigns / phish_targets (MongoDB)
  *  - cookie "ciberlearn_session" y claves de localStorage/sessionStorage del navegador (ver /cookies)
  *  - proveedores: MongoDB Atlas, Wompi, Mailjet, Anthropic y Vercel
  * Si cambia el sistema (nuevos datos, analítica, proveedores), actualiza esta página y su versión en src/lib/legal.ts.
@@ -22,6 +22,7 @@ const SECTIONS = [
   { id: "datos", title: "Qué datos recogemos" },
   { id: "usos", title: "Para qué los usamos" },
   { id: "base", title: "Tu consentimiento" },
+  { id: "empresa", title: "Si te unes a una empresa" },
   { id: "navegador", title: "Cookies" },
   { id: "terceros", title: "Con quién los compartimos" },
   { id: "conservacion", title: "Cuánto tiempo los guardamos" },
@@ -143,6 +144,29 @@ export default function PrivacidadPage() {
         </p>
       </Section>
 
+      <Section id="empresa" title="Si te unes a una empresa">
+        <p>
+          Con el plan Empresa, una organización paga Pro para su equipo. Si te unes a una desde su enlace de invitación, te
+          pedimos una autorización aparte, que queda registrada con la fecha, para que:
+        </p>
+        <ul className="list-disc space-y-2 pl-5">
+          <li>
+            El encargado de esa empresa vea tu nombre, tu correo, las lecciones que completaste, tu XP, tus rondas y tu
+            puntaje promedio en el simulador, la señal que más se te escapa, cuándo entraste por última vez y los resultados
+            de los simulacros.
+          </li>
+          <li>
+            La empresa te envíe simulacros de phishing: correos de práctica que imitan una estafa. Guardamos a quién se
+            envió cada uno, cuándo y si abriste su enlace. Esos correos nunca piden datos.
+          </li>
+        </ul>
+        <p>
+          La empresa no ve tu contraseña, tus pagos personales, tus conversaciones con la IA ni el registro de tus
+          aceptaciones. Puedes salir de la empresa cuando quieras desde la página Empresa; desde ese momento deja de ver tu
+          avance. Si quieres que también se borren los resultados de simulacros anteriores, escríbenos a <MailLink />.
+        </p>
+      </Section>
+
       <Section id="navegador" title="Cookies">
         <p>
           Solo usamos una cookie necesaria para mantener tu sesión y algunos datos que se quedan en tu propio navegador. No
@@ -152,7 +176,11 @@ export default function PrivacidadPage() {
       </Section>
 
       <Section id="terceros" title="Con quién los compartimos">
-        <p>Para funcionar usamos proveedores que tratan datos por cuenta nuestra y solo para prestarnos su servicio:</p>
+        <p>
+          Si te unes a una empresa, su encargado recibe los datos de tu avance que se describen en{" "}
+          <A href="#empresa">Si te unes a una empresa</A>, porque tú lo autorizas. Además, para funcionar usamos
+          proveedores que tratan datos por cuenta nuestra y solo para prestarnos su servicio:
+        </p>
         <ul className="space-y-3">
           <Item label="MongoDB Atlas">Aloja la base de datos donde se guardan las cuentas, el progreso y los pagos.</Item>
           <Item label="Vercel">Aloja y sirve el sitio web.</Item>
@@ -179,6 +207,9 @@ export default function PrivacidadPage() {
           <li>
             Registro de tus aceptaciones: mientras tu cuenta exista y, si hiciste una compra, el mismo tiempo que el
             registro de ese pago.
+          </li>
+          <li>
+            Resultados de simulacros de tu empresa: mientras la empresa tenga su cuenta, o hasta que pidas borrarlos.
           </li>
           <li>Sesiones: hasta 30 días, o antes si cierras sesión.</li>
           <li>Conversaciones de los chats con IA: se borran de forma automática a los 30 días.</li>

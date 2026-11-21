@@ -89,6 +89,9 @@ export function SiteFooter() {
     <footer className="mt-auto border-t border-desk-line/70">
       <div className="mx-auto flex max-w-[1200px] flex-col gap-4 px-4 py-8 text-sm text-fog sm:px-6">
         <nav aria-label="Legal" className="flex flex-wrap gap-x-5 gap-y-2">
+          <Link href="/empresa" className="font-medium text-chalk hover:text-brand">
+            Para empresas
+          </Link>
           {Object.values(LEGAL).map((d) => (
             <Link key={d.path} href={d.path} className="font-medium text-chalk hover:text-brand">
               {d.title}

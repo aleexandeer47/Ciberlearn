@@ -17,6 +17,7 @@ const specs = {
     [{ createdAt: -1 }, {}],
     [{ xp: -1 }, {}],
     [{ nicknameLower: 1 }, { unique: true, partialFilterExpression: { nicknameLower: { $type: "string" } } }],
+    [{ orgId: 1 }, { partialFilterExpression: { orgId: { $exists: true } } }],
   ],
   lesson_attempts: [
     [{ userId: 1, lessonId: 1 }, { unique: true }],
@@ -32,6 +33,17 @@ const specs = {
   ],
   // Prueba de aceptación de términos y privacidad: sin TTL
   consents: [[{ userId: 1, acceptedAt: -1 }, {}]],
+  // Plan Empresa
+  orgs: [
+    [{ inviteCode: 1 }, { unique: true }],
+    [{ ownerId: 1 }, { unique: true }],
+  ],
+  phish_campaigns: [[{ orgId: 1, createdAt: -1 }, {}]],
+  phish_targets: [
+    [{ tokenHash: 1 }, { unique: true }],
+    [{ orgId: 1, userId: 1 }, {}],
+    [{ campaignId: 1 }, {}],
+  ],
   // _id = "YYYY-MM-DD": no necesita índices extra
   daily_stats: [],
   sessions: [

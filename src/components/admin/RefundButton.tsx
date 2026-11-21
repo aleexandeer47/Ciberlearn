@@ -7,13 +7,14 @@ import { refundAction, type RefundState } from "@/app/actions/admin";
 export function RefundButton({
   reference,
   amount,
-  days,
+  removeLabel,
   email,
   inRetract,
 }: {
   reference: string;
   amount: number;
-  days: number;
+  /** Texto de la casilla que quita lo comprado (días de Pro, días o puestos de Empresa) */
+  removeLabel: string;
   email: string;
   inRetract: boolean;
 }) {
@@ -89,7 +90,7 @@ export function RefundButton({
           </label>
           <label className="flex gap-2.5 text-sm">
             <input type="checkbox" name="removeDays" value="si" defaultChecked={state.values?.removeDays ?? true} className="mt-0.5 h-4 w-4 accent-[var(--brand)]" />
-            <span>Quitar los {days} días de Pro de este pago</span>
+            <span>{removeLabel}</span>
           </label>
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium">Motivo (opcional)</span>

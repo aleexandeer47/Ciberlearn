@@ -1,7 +1,5 @@
 import { SITE } from "@/lib/site";
-
-const escapeHtml = (s: string) =>
-  s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+import { escapeHtml } from "./escape";
 
 /** Correo de recuperación. Sin imágenes ni estilos externos para que llegue bien a cualquier bandeja. */
 export function resetPasswordEmail({ name, link, minutes }: { name: string; link: string; minutes: number }) {
