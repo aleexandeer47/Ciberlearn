@@ -27,6 +27,7 @@ const specs = {
     [{ reference: 1 }, { unique: true }],
     [{ userId: 1, createdAt: -1 }, {}],
     [{ status: 1, paidAt: -1 }, {}],
+    [{ providerTxId: 1 }, { unique: true, partialFilterExpression: { providerTxId: { $type: "string" } } }],
   ],
   login_attempts: [
     [{ createdAt: 1 }, { expireAfterSeconds: 15 * 60 }],

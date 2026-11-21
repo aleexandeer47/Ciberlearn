@@ -67,7 +67,10 @@ export interface OrderDoc {
   status: OrderStatus;
   provider: "wompi" | "mock";
   providerLinkId?: string;
+  /** Transacción que pagó la orden. Única: un pago no puede activar dos órdenes. */
   providerTxId?: string;
+  /** Último intento rechazado, solo informativo. */
+  failedTxId?: string;
   livemode?: boolean;
   createdAt: Date;
   paidAt?: Date;

@@ -64,6 +64,11 @@ export async function ensureIndexes(d: Db) {
     d.collection("users").createIndex({ email: 1 }, { unique: true }),
     d.collection("users").createIndex({ createdAt: -1 }),
     d.collection("orders").createIndex({ status: 1, paidAt: -1 }),
+    // Un mismo pago no puede activar dos órdenes
+    d.collection("orders").createIndex(
+      { providerTxId: 1 },
+      { unique: true, partialFilterExpression: { providerTxId: { $type: "string" } } },
+    ),
     d.collection("sessions").createIndex({ tokenHash: 1 }, { unique: true }),
     // TTL: Mongo borra solo las sesiones vencidas
     d.collection("sessions").createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),

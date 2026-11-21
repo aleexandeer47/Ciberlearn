@@ -63,3 +63,28 @@ export async function createPaymentLink(input: {
 }
 
 export const wompiConfigured = () => !!(env.wompiAppId && env.wompiApiSecret);
+
+export interface WompiTransaction {
+  idTransaccion: string;
+  /** false = transacción de prueba (aplicativo en modo de prueba) */
+  esReal: boolean;
+  esAprobada: boolean;
+  monto: number;
+  montoOriginal?: number | null;
+  fechaTransaccion?: string | null;
+}
+
+/**
+ * GET /TransaccionCompra/{id}: estado de una transacción, consultado directo a Wompi.
+ * Es la verificación que recomienda Wompi para enlaces de pago (el redirect no trae
+ * si fue aprobada). Devuelve null si no existe.
+ */
+export async function getTransaction(id: string): Promise<WompiTransaction | null> {
+  const res = await fetch(`${API}/TransaccionCompra/${encodeURIComponent(id)}`, {
+    headers: { authorization: `Bearer ${await getToken()}` },
+    cache: "no-store",
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`Wompi: no se pudo consultar la transacción (${res.status})`);
+  return (await res.json()) as WompiTransaction;
+}
