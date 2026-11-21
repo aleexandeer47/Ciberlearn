@@ -9,12 +9,12 @@ import { PLANS, type PlanId } from "@/lib/plans";
 
 const PRO_PERKS = [
   "Vidas infinitas en la ruta guiada",
-  "Chats ilimitados con la IA estafadora",
+  "Chats con la IA estafadora (próximamente)",
   "6 mensajes avanzados, contrarreloj y entrenamiento",
   "Historial completo y evolución",
   "Certificado de finalización",
 ];
-const FREE_PERKS = ["Ruta guiada con 5 vidas", "1 chat con IA al día", "Ranking mundial, XP e insignias", "Simulador clásico"];
+const FREE_PERKS = ["Ruta guiada con 5 vidas", "Ranking mundial, XP e insignias", "Simulador clásico"];
 
 function PayButton({ label }: { label: string }) {
   const { pending } = useFormStatus();

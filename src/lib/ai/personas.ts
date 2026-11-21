@@ -74,7 +74,7 @@ export const PERSONAS: Persona[] = [
 export const PERSONA_BY_ID = new Map(PERSONAS.map((p) => [p.id, p]));
 
 export const AI_LIMITS = {
-  freePerDay: 1,
+  /** Exclusivo de Pro */
   proPerDay: 30,
   /** Mensajes de la persona por chat */
   maxUserTurns: 10,

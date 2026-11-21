@@ -1,22 +1,20 @@
 "use client";
 
-import { Bot, Lock, Phone, RotateCcw, Send, ShieldAlert, ShieldCheck, Smartphone } from "lucide-react";
+import { Crown, Hammer, LogIn, Phone, RotateCcw, Send, ShieldAlert, ShieldCheck, Smartphone, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { sendMessage, startChat, type ChatMsg } from "@/app/actions/ai";
+import { sendMessage, startChat, type ChatAccess, type ChatMsg } from "@/app/actions/ai";
 import type { Persona } from "@/lib/ai/personas";
 
 type PublicPersona = Pick<Persona, "id" | "title" | "description" | "from" | "channel">;
+type Notice = "proximamente" | "pro" | "login" | null;
 
-interface Props {
+interface Props extends ChatAccess {
   personas: PublicPersona[];
-  left: number;
-  limit: number;
-  isPro: boolean;
-  configured: boolean;
 }
 
-export function ChatArena({ personas, left: initialLeft, limit, isPro, configured }: Props) {
+export function ChatArena({ personas, enabled, loggedIn, isPro, left: initialLeft, limit }: Props) {
+  const [notice, setNotice] = useState<Notice>(null);
   const [left, setLeft] = useState(initialLeft);
   const [persona, setPersona] = useState<PublicPersona | null>(null);
   const [chatId, setChatId] = useState<string | null>(null);
@@ -34,10 +32,17 @@ export function ChatArena({ personas, left: initialLeft, limit, isPro, configure
 
   const begin = async (p: PublicPersona) => {
     setError(null);
+    // Avisos sin gastar una llamada: el servidor igual lo valida.
+    if (!enabled) return setNotice("proximamente");
+    if (!loggedIn) return setNotice("login");
+    if (!isPro) return setNotice("pro");
     setBusy(true);
     const r = await startChat(p.id);
     setBusy(false);
-    if (!r.ok) return setError(r.error);
+    if (!r.ok) {
+      if (r.code === "proximamente" || r.code === "pro" || r.code === "login") return setNotice(r.code);
+      return setError(r.error);
+    }
     setPersona(p);
     setChatId(r.chatId);
     setMsgs(r.messages);
@@ -73,27 +78,22 @@ export function ChatArena({ personas, left: initialLeft, limit, isPro, configure
     setError(null);
   };
 
-  if (!configured) {
-    return (
-      <div className="rounded-3xl border border-dashed border-desk-line p-10 text-center">
-        <Bot className="mx-auto h-10 w-10 text-fog" strokeWidth={1.5} aria-hidden />
-        <p className="mt-4 font-semibold">Los chats con IA estarán disponibles muy pronto</p>
-        <p className="mt-1 text-sm text-fog">Falta configurar el servicio de IA.</p>
-      </div>
-    );
-  }
-
   // Selección de escenario
   if (!persona) {
     return (
       <div>
+        {notice && <NoticeDialog kind={notice} onClose={() => setNotice(null)} />}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-fog">
-            {isPro ? `Te quedan ${left} de ${limit} chats hoy.` : left > 0 ? "Tienes 1 chat gratis hoy." : "Ya usaste tu chat gratis de hoy."}
+            {!enabled
+              ? "Exclusivo del plan Pro. Muy pronto."
+              : isPro
+                ? `Te quedan ${left} de ${limit} chats hoy.`
+                : "Exclusivo del plan Pro."}
           </p>
           {!isPro && (
             <Link href="/planes" className="text-sm font-semibold text-brand hover:underline">
-              Chats ilimitados con Pro
+              Ver plan Pro
             </Link>
           )}
         </div>
@@ -101,20 +101,21 @@ export function ChatArena({ personas, left: initialLeft, limit, isPro, configure
         <ul className="grid gap-4 sm:grid-cols-2">
           {personas.map((p) => {
             const Icon = p.channel === "Llamada" ? Phone : Smartphone;
-            const locked = left <= 0;
             return (
               <li key={p.id}>
                 <button
                   type="button"
                   onClick={() => begin(p)}
-                  disabled={busy || locked}
-                  className="group flex h-full w-full flex-col rounded-3xl border border-desk-line bg-desk-2 p-6 text-left transition-[border-color,transform] duration-150 hover:-translate-y-0.5 hover:border-brand active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:border-desk-line"
+                  disabled={busy}
+                  className="group flex h-full w-full flex-col rounded-3xl border border-desk-line bg-desk-2 p-6 text-left transition-[border-color,transform] duration-150 hover:-translate-y-0.5 hover:border-brand active:scale-[0.99] disabled:cursor-wait"
                 >
                   <span className="flex items-center justify-between">
                     <span className="grid h-10 w-10 place-items-center rounded-xl bg-field text-brand">
                       <Icon className="h-5 w-5" strokeWidth={1.75} aria-hidden />
                     </span>
-                    {locked && <Lock className="h-4 w-4 text-fog" strokeWidth={2} aria-hidden />}
+                    <span className="inline-flex items-center gap-1 rounded-full bg-field px-2.5 py-1 text-xs font-semibold text-brand">
+                      <Crown className="h-3.5 w-3.5" strokeWidth={2} aria-hidden /> Pro
+                    </span>
                   </span>
                   <span className="mt-4 font-display text-xl">{p.title}</span>
                   <span className="mt-1 text-sm text-fog">{p.description}</span>
@@ -236,6 +237,79 @@ export function ChatArena({ personas, left: initialLeft, limit, isPro, configure
           </div>
         )}
       </aside>
+    </div>
+  );
+}
+
+
+const NOTICES = {
+  proximamente: {
+    Icon: Hammer,
+    title: "Aún no está listo",
+    text: "Estamos trabajando en los chats con IA. Muy pronto podrás practicar contra un estafador que conversa contigo. Será exclusivo del plan Pro.",
+    cta: null,
+  },
+  pro: {
+    Icon: Crown,
+    title: "Exclusivo del plan Pro",
+    text: "Los chats con IA están incluidos en Pro, junto con vidas infinitas en la ruta y el pack de mensajes avanzados.",
+    cta: { href: "/planes", label: "Ver plan Pro" },
+  },
+  login: {
+    Icon: LogIn,
+    title: "Inicia sesión",
+    text: "Necesitas una cuenta con plan Pro para usar los chats con IA.",
+    cta: { href: "/entrar?next=/ia", label: "Entrar" },
+  },
+} as const;
+
+function NoticeDialog({ kind, onClose }: { kind: Exclude<Notice, null>; onClose: () => void }) {
+  const n = NOTICES[kind];
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    closeRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 backdrop-blur-sm" onClick={onClose}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ia-notice-title"
+        className="pop-in relative w-full max-w-md rounded-3xl border border-desk-line bg-desk-2 p-7 text-center shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          ref={closeRef}
+          type="button"
+          onClick={onClose}
+          className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-lg text-fog hover:bg-desk-3 hover:text-chalk"
+          aria-label="Cerrar"
+        >
+          <X className="h-5 w-5" strokeWidth={2} />
+        </button>
+        <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-field text-brand">
+          <n.Icon className="h-7 w-7" strokeWidth={1.75} aria-hidden />
+        </span>
+        <h2 id="ia-notice-title" className="mt-5 font-display text-2xl">
+          {n.title}
+        </h2>
+        <p className="mt-2 leading-relaxed text-fog">{n.text}</p>
+        <div className="mt-6 flex flex-col justify-center gap-2 sm:flex-row">
+          {n.cta && (
+            <Link href={n.cta.href} className="btn btn-primary h-11 px-5">
+              {n.cta.label}
+            </Link>
+          )}
+          <button type="button" onClick={onClose} className="btn btn-ghost h-11 px-5">
+            Entendido
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

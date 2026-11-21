@@ -21,7 +21,7 @@ export const isPlanId = (v: unknown): v is PlanId => typeof v === "string" && v 
 export const FEATURES: { label: string; free: boolean | string; pro: boolean | string }[] = [
   { label: "Ruta guiada: 12 lecciones, 48 ejercicios", free: true, pro: true },
   { label: "Vidas en la ruta", free: "5 (1 cada 30 min)", pro: "infinitas" },
-  { label: "Chats con IA que intentan estafarte", free: "1 al día", pro: "ilimitados*" },
+  { label: "Chats con IA que intentan estafarte", free: false, pro: "próximamente" },
   { label: "Ranking mundial y XP", free: true, pro: true },
   { label: "Simulador clásico (10 mensajes)", free: true, pro: true },
   { label: "Skills por tipo de señal e insignias", free: true, pro: true },

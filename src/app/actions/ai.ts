@@ -4,13 +4,13 @@ import Anthropic from "@anthropic-ai/sdk";
 import { ObjectId } from "mongodb";
 import { AI_LIMITS, PERSONA_BY_ID } from "@/lib/ai/personas";
 import { dayKey } from "@/lib/dayKey";
-import { aiConfigured, scammerTurn } from "@/lib/server/ai";
+import { aiEnabled, scammerTurn } from "@/lib/server/ai";
 import { collections } from "@/lib/server/db";
 import { getCurrentUser } from "@/lib/server/session";
 import { addXp } from "@/lib/server/xp";
 
 export type ChatMsg = { role: "user" | "assistant"; content: string };
-type Err = { ok: false; error: string; code?: "login" | "limite" | "no-config" };
+type Err = { ok: false; error: string; code?: "login" | "limite" | "proximamente" | "pro" };
 
 async function usedToday(userId: ObjectId) {
   const { aiChats } = await collections();
@@ -18,21 +18,17 @@ async function usedToday(userId: ObjectId) {
 }
 
 export async function startChat(personaId: string): Promise<{ ok: true; chatId: string; messages: ChatMsg[]; left: number } | Err> {
+  // El servidor también lo bloquea: aunque alguien llame a la acción a mano, no gasta IA.
+  if (!aiEnabled()) return { ok: false, error: "Los chats con IA aún no están listos. Estamos trabajando en ello.", code: "proximamente" };
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: "Inicia sesión para usar los chats.", code: "login" };
-  if (!aiConfigured()) return { ok: false, error: "Los chats con IA todavía no están configurados.", code: "no-config" };
+  if (!user.isPro) return { ok: false, error: "Los chats con IA son exclusivos del plan Pro.", code: "pro" };
   const persona = PERSONA_BY_ID.get(personaId);
   if (!persona) return { ok: false, error: "Ese escenario no existe." };
 
-  const limit = user.isPro ? AI_LIMITS.proPerDay : AI_LIMITS.freePerDay;
+  const limit = AI_LIMITS.proPerDay;
   const used = await usedToday(user._id);
-  if (used >= limit) {
-    return {
-      ok: false,
-      code: "limite",
-      error: user.isPro ? "Llegaste al máximo de chats de hoy. Vuelve mañana." : "Ya usaste tu chat gratis de hoy. Con Pro tienes chats ilimitados.",
-    };
-  }
+  if (used >= limit) return { ok: false, code: "limite", error: "Llegaste al máximo de chats de hoy. Vuelve mañana." };
 
   const { aiChats } = await collections();
   const now = new Date();
@@ -47,8 +43,10 @@ export type SendResult =
   | Err;
 
 export async function sendMessage(chatId: string, text: string): Promise<SendResult> {
+  if (!aiEnabled()) return { ok: false, error: "Los chats con IA aún no están listos.", code: "proximamente" };
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: "Inicia sesión.", code: "login" };
+  if (!user.isPro) return { ok: false, error: "Los chats con IA son exclusivos del plan Pro.", code: "pro" };
   const content = String(text ?? "").trim().slice(0, AI_LIMITS.maxMessageLength);
   if (!content) return { ok: false, error: "Escribe un mensaje." };
   if (!ObjectId.isValid(chatId)) return { ok: false, error: "Chat no válido." };
@@ -109,9 +107,20 @@ export async function sendMessage(chatId: string, text: string): Promise<SendRes
   return { ok: true, reply: status === "active" ? turn.reply : "", status, feedback: status !== "active" ? feedback : undefined, xp, tactics: turn.tactics };
 }
 
-export async function chatsLeft(): Promise<{ left: number; limit: number; isPro: boolean; configured: boolean } | null> {
+export interface ChatAccess {
+  /** false = la función aún no se lanzó: se muestra "próximamente" */
+  enabled: boolean;
+  loggedIn: boolean;
+  isPro: boolean;
+  left: number;
+  limit: number;
+}
+
+export async function chatAccess(): Promise<ChatAccess> {
   const user = await getCurrentUser();
-  if (!user) return null;
-  const limit = user.isPro ? AI_LIMITS.proPerDay : AI_LIMITS.freePerDay;
-  return { left: Math.max(0, limit - (await usedToday(user._id))), limit, isPro: user.isPro, configured: aiConfigured() };
+  const enabled = aiEnabled();
+  const limit = AI_LIMITS.proPerDay;
+  if (!user) return { enabled, loggedIn: false, isPro: false, left: 0, limit };
+  const left = enabled && user.isPro ? Math.max(0, limit - (await usedToday(user._id))) : 0;
+  return { enabled, loggedIn: true, isPro: user.isPro, left, limit };
 }

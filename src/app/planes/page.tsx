@@ -81,7 +81,7 @@ export default function PlanesPage() {
               </tbody>
             </table>
           </div>
-          <p className="mt-3 text-xs text-fog">* Uso justo: hasta 30 chats con IA por día.</p>
+          <p className="mt-3 text-xs text-fog">Los chats con IA llegarán pronto para Pro, con un uso justo de hasta 30 por día.</p>
         </section>
 
         <section className="mt-16 grid gap-4 md:grid-cols-2">

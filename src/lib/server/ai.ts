@@ -10,7 +10,11 @@ import type { Persona } from "@/lib/ai/personas";
  * Modelo configurable con AI_MODEL (por defecto el más capaz disponible).
  */
 
-export const aiConfigured = () => !!process.env.ANTHROPIC_API_KEY;
+/**
+ * La función se lanza a propósito con AI_CHAT_ENABLED=true (y la clave de Anthropic).
+ * Mientras tanto la página muestra los escenarios con el aviso de "próximamente".
+ */
+export const aiEnabled = () => process.env.AI_CHAT_ENABLED === "true" && !!process.env.ANTHROPIC_API_KEY;
 const model = () => process.env.AI_MODEL || "claude-opus-5-5";
 
 let client: Anthropic | null = null;
