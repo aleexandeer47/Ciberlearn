@@ -9,6 +9,7 @@ import { scoreScenario } from "@/lib/scoring";
 import { collections } from "@/lib/server/db";
 import type { AnswerDoc, RunMode } from "@/lib/server/models";
 import { getCurrentUser } from "@/lib/server/session";
+import { addXp, xpFromRun } from "@/lib/server/xp";
 
 export interface RunInput {
   mode: RunMode;
@@ -61,5 +62,6 @@ export async function saveRun(input: RunInput): Promise<SaveRunResult> {
   const score = Math.round(answers.reduce((acc, x) => acc + x.points, 0) / answers.length);
   const { runs } = await collections();
   await runs.insertOne({ _id: new ObjectId(), userId: user._id, mode: input.mode, createdAt: new Date(), score, answers });
+  await addXp(user._id, xpFromRun(answers.map((a) => a.points)), "simulador");
   return { ok: true, score };
 }

@@ -2,7 +2,18 @@ import "server-only";
 import { setServers } from "node:dns";
 import { MongoClient, type Db } from "mongodb";
 import { env } from "./env";
-import type { DailyStatDoc, LoginAttemptDoc, OrderDoc, PasswordResetDoc, RunDoc, SessionDoc, UserDoc } from "./models";
+import type {
+  AiChatDoc,
+  DailyStatDoc,
+  LessonAttemptDoc,
+  LoginAttemptDoc,
+  OrderDoc,
+  PasswordResetDoc,
+  RunDoc,
+  SessionDoc,
+  UserDoc,
+  XpEventDoc,
+} from "./models";
 
 // En desarrollo Next recarga módulos: guardamos el cliente en globalThis para
 // no abrir una conexión nueva en cada cambio. (Nombre con versión: una versión
@@ -56,6 +67,9 @@ export async function collections() {
     loginAttempts: d.collection<LoginAttemptDoc>("login_attempts"),
     passwordResets: d.collection<PasswordResetDoc>("password_resets"),
     dailyStats: d.collection<DailyStatDoc>("daily_stats"),
+    lessonAttempts: d.collection<LessonAttemptDoc>("lesson_attempts"),
+    xpEvents: d.collection<XpEventDoc>("xp_events"),
+    aiChats: d.collection<AiChatDoc>("ai_chats"),
   };
 }
 
@@ -81,5 +95,20 @@ export async function ensureIndexes(d: Db) {
     // Se borran solos 1 día después de vencer (la validez real es de 1 hora).
     d.collection("password_resets").createIndex({ expiresAt: 1 }, { expireAfterSeconds: 86400 }),
     d.collection("password_resets").createIndex({ email: 1, createdAt: -1 }),
+    // Ruta, XP, ranking y chats con IA
+    d.collection("users").createIndex({ xp: -1 }),
+    d.collection("users").createIndex(
+      { nicknameLower: 1 },
+      { unique: true, partialFilterExpression: { nicknameLower: { $type: "string" } } },
+    ),
+    d.collection("lesson_attempts").createIndex({ userId: 1, lessonId: 1 }, { unique: true }),
+    // Intentos abandonados se borran solos a los 2 días
+    d.collection("lesson_attempts").createIndex({ startedAt: 1 }, { expireAfterSeconds: 2 * 86400 }),
+    d.collection("xp_events").createIndex({ createdAt: -1, userId: 1 }),
+    // El total queda en users.xp; los eventos solo sirven para el ranking semanal
+    d.collection("xp_events").createIndex({ createdAt: 1 }, { expireAfterSeconds: 60 * 86400 }),
+    d.collection("ai_chats").createIndex({ userId: 1, day: 1 }),
+    // Las conversaciones con la IA se borran solas a los 30 días
+    d.collection("ai_chats").createIndex({ createdAt: 1 }, { expireAfterSeconds: 30 * 86400 }),
   ]);
 }

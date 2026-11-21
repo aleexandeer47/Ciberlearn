@@ -61,10 +61,11 @@ export function SiteHeader() {
         {/* Enlaces al centro (escritorio) */}
         <nav className="hidden items-center gap-1 text-[15px] font-medium md:flex" aria-label="Principal">
           {[
+            ["/ruta", "Ruta"],
             ["/simulador", "Simulador"],
-            ["/#enlaces", "Disecciona un enlace"],
+            ["/ia", "Chats IA"],
+            ["/ranking", "Ranking"],
             ["/planes", "Planes"],
-            ["/#empresas", "Empresas"],
           ].map(([href, label]) => (
             <Link key={href} href={href} className="rounded-lg px-2.5 py-2 text-chalk transition-colors hover:text-brand">
               {label}

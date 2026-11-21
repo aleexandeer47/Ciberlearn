@@ -8,13 +8,13 @@ import { checkout } from "@/app/actions/billing";
 import { PLANS, type PlanId } from "@/lib/plans";
 
 const PRO_PERKS = [
-  "6 mensajes avanzados extra",
-  "Modo contrarreloj",
-  "Entrenamiento de tu skill más débil",
+  "Vidas infinitas en la ruta guiada",
+  "Chats ilimitados con la IA estafadora",
+  "6 mensajes avanzados, contrarreloj y entrenamiento",
   "Historial completo y evolución",
   "Certificado de finalización",
 ];
-const FREE_PERKS = ["Simulador clásico de 10 mensajes", "Cuenta, nivel y XP", "Skills e insignias"];
+const FREE_PERKS = ["Ruta guiada con 5 vidas", "1 chat con IA al día", "Ranking mundial, XP e insignias", "Simulador clásico"];
 
 function PayButton({ label }: { label: string }) {
   const { pending } = useFormStatus();

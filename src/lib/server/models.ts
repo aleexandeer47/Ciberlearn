@@ -13,6 +13,47 @@ export interface UserDoc {
   /** Solo se asigna con `npm run admin -- correo`; nunca desde la web. */
   role?: "admin";
   lastLoginAt?: Date;
+  /** XP total (ruta + simulador + chats con IA). Lo usa el ranking. */
+  xp?: number;
+  /** Vidas de la ruta; la regeneración se calcula al leer (src/lib/lives.ts). */
+  lives?: { count: number; updatedAt: Date };
+  path?: { completed: string[] };
+  /** Perfil público del ranking: nunca se muestran nombre real ni correo. */
+  nickname?: string;
+  nicknameLower?: string;
+  country?: string;
+  showInRanking?: boolean;
+}
+
+export interface LessonAttemptDoc {
+  _id: ObjectId;
+  userId: ObjectId;
+  lessonId: string;
+  /** exerciseId -> si la primera respuesta fue correcta */
+  answers: Record<string, boolean>;
+  startedAt: Date;
+}
+
+export interface XpEventDoc {
+  _id: ObjectId;
+  userId: ObjectId;
+  amount: number;
+  source: "simulador" | "ruta" | "ia";
+  createdAt: Date;
+}
+
+export interface AiChatDoc {
+  _id: ObjectId;
+  userId: ObjectId;
+  personaId: string;
+  /** Día en El Salvador, para el límite diario */
+  day: string;
+  messages: { role: "user" | "assistant"; content: string }[];
+  status: "active" | "won" | "lost" | "abandoned";
+  verdict?: string;
+  xpAwarded?: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 /** Contadores por día (hora de El Salvador). Sin datos personales. */

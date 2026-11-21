@@ -15,6 +15,20 @@ const specs = {
   users: [
     [{ email: 1 }, { unique: true }],
     [{ createdAt: -1 }, {}],
+    [{ xp: -1 }, {}],
+    [{ nicknameLower: 1 }, { unique: true, partialFilterExpression: { nicknameLower: { $type: "string" } } }],
+  ],
+  lesson_attempts: [
+    [{ userId: 1, lessonId: 1 }, { unique: true }],
+    [{ startedAt: 1 }, { expireAfterSeconds: 2 * 86400 }],
+  ],
+  xp_events: [
+    [{ createdAt: -1, userId: 1 }, {}],
+    [{ createdAt: 1 }, { expireAfterSeconds: 60 * 86400 }],
+  ],
+  ai_chats: [
+    [{ userId: 1, day: 1 }, {}],
+    [{ createdAt: 1 }, { expireAfterSeconds: 30 * 86400 }],
   ],
   // _id = "YYYY-MM-DD": no necesita índices extra
   daily_stats: [],

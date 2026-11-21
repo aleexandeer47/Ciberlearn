@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 // Cambia esta fecha cada vez que modifiques el contenido.
-const UPDATED = "20 de noviembre de 2026";
+const UPDATED = "21 de noviembre de 2026";
 
 /*
  * Cada dato, cookie y proveedor que se menciona aquí corresponde a lo que hace el código:
@@ -121,6 +121,16 @@ export default function PrivacidadPage() {
                   transacción que nos entrega Wompi. No recibimos ni guardamos el número, la fecha de vencimiento ni el
                   código de seguridad de tu tarjeta.
                 </Item>
+                <Item label="Ruta guiada y ranking">
+                  Las lecciones que completas, tus vidas, tu XP y, si lo eliges, un apodo y un país. En el ranking público
+                  solo se muestran tu apodo, tu país y tu XP; nunca tu nombre ni tu correo. Puedes ocultarte del ranking
+                  cuando quieras.
+                </Item>
+                <Item label="Chats con IA">
+                  Si usas la práctica con IA, guardamos los mensajes que escribes en esa conversación y el resultado. Esos
+                  mensajes se envían a nuestro proveedor de inteligencia artificial para generar las respuestas. Es un
+                  ejercicio: no escribas datos reales en esos chats.
+                </Item>
                 <Item label="Datos de seguridad">
                   Cuando un inicio de sesión falla, guardamos el correo usado y la hora durante 15 minutos, para frenar
                   intentos de adivinar contraseñas. Si pides recuperar tu contraseña, guardamos una versión cifrada del
@@ -179,6 +189,9 @@ export default function PrivacidadPage() {
                   de Wompi, bajo sus propias condiciones y política de privacidad.
                 </Item>
                 <Item label="Mailjet">Envía los correos del servicio, como la recuperación de contraseña.</Item>
+                <Item label="Anthropic">
+                  Genera las respuestas de los chats de práctica con IA. Recibe los mensajes de esas conversaciones y nada más.
+                </Item>
                 <Item label="Proveedor de hosting">Aloja y sirve el sitio web.</Item>
               </ul>
               <p>
@@ -191,6 +204,8 @@ export default function PrivacidadPage() {
               <ul className="list-disc space-y-2 pl-5">
                 <li>Datos de tu cuenta y progreso: mientras tu cuenta exista. Si pides borrarla, los eliminamos.</li>
                 <li>Sesiones: hasta 30 días, o antes si cierras sesión.</li>
+                <li>Conversaciones de los chats con IA: se borran de forma automática a los 30 días.</li>
+                <li>Registro detallado de XP para el ranking semanal: 60 días (tu XP total se queda en tu cuenta).</li>
                 <li>Intentos de inicio de sesión fallidos: 15 minutos.</li>
                 <li>Enlaces de recuperación de contraseña: vencen en 1 hora y se borran de forma automática después.</li>
                 <li>

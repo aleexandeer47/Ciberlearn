@@ -19,10 +19,12 @@ export const PLANS: Record<PlanId, Plan> = {
 export const isPlanId = (v: unknown): v is PlanId => typeof v === "string" && v in PLANS;
 
 export const FEATURES: { label: string; free: boolean | string; pro: boolean | string }[] = [
+  { label: "Ruta guiada: 12 lecciones, 48 ejercicios", free: true, pro: true },
+  { label: "Vidas en la ruta", free: "5 (1 cada 30 min)", pro: "infinitas" },
+  { label: "Chats con IA que intentan estafarte", free: "1 al día", pro: "ilimitados*" },
+  { label: "Ranking mundial y XP", free: true, pro: true },
   { label: "Simulador clásico (10 mensajes)", free: true, pro: true },
-  { label: "Cuenta, nivel y XP", free: true, pro: true },
-  { label: "Skills por tipo de señal", free: true, pro: true },
-  { label: "Insignias", free: true, pro: true },
+  { label: "Skills por tipo de señal e insignias", free: true, pro: true },
   { label: "Pack de mensajes avanzados", free: false, pro: "6 extra" },
   { label: "Modo contrarreloj", free: false, pro: true },
   { label: "Entrenamiento de tu skill más débil", free: false, pro: true },
