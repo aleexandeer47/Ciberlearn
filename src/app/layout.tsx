@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Geist_Mono, Inter } from "next/font/google";
+import { Suspense } from "react";
 import { THEME_SCRIPT } from "@/components/theme/theme";
+import { VisitBeacon } from "@/components/VisitBeacon";
 import { SITE } from "@/lib/site";
 import "./globals.css";
 
@@ -34,7 +36,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="min-h-full flex flex-col font-sans">
+        {children}
+        <Suspense>
+          <VisitBeacon />
+        </Suspense>
+      </body>
     </html>
   );
 }

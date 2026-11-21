@@ -7,6 +7,7 @@ import { cache } from "react";
 import { isProActive } from "@/lib/plans";
 import { collections } from "./db";
 import { env } from "./env";
+import { bump } from "./metrics";
 import type { UserDoc } from "./models";
 
 const COOKIE = "ciberlearn_session";
@@ -18,8 +19,10 @@ export async function createSession(userId: UserDoc["_id"]) {
   const token = randomBytes(32).toString("base64url");
   const now = new Date();
   const expiresAt = new Date(now.getTime() + MAX_AGE_DAYS * 864e5);
-  const { sessions } = await collections();
+  const { sessions, users } = await collections();
   await sessions.insertOne({ _id: new ObjectId(), tokenHash: sha256(token), userId, createdAt: now, expiresAt });
+  await users.updateOne({ _id: userId }, { $set: { lastLoginAt: now } });
+  await bump("logins");
   (await cookies()).set(COOKIE, token, {
     httpOnly: true,
     secure: env.isProd,
@@ -46,6 +49,7 @@ export interface CurrentUser {
   name: string;
   proUntil: Date | null;
   isPro: boolean;
+  isAdmin: boolean;
 }
 
 /** Usuario de la petición actual (memoizado por petición con React cache). */
@@ -66,5 +70,6 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     name: user.name,
     proUntil: user.proUntil,
     isPro: isProActive(user.proUntil),
+    isAdmin: user.role === "admin",
   };
 });

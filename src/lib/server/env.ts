@@ -19,8 +19,6 @@ export const env = {
   wompiApiSecret: process.env.WOMPI_API_SECRET ?? "",
   /** En producción se rechazan transacciones de prueba salvo que esto sea "true". */
   wompiAllowTest: process.env.WOMPI_ALLOW_TEST === "true",
-  /** Clave de Resend (resend.com > API Keys). Vacía = no se envían correos. */
-  resendApiKey: process.env.RESEND_API_KEY ?? "",
-  /** Remitente verificado en Resend, ej. "Ciberlearn <hola@tudominio.com>" */
-  emailFrom: process.env.EMAIL_FROM ?? "",
+  // Correo: MAILJET_API_KEY, MAILJET_SECRET_KEY (o RESEND_API_KEY) y EMAIL_FROM se leen
+  // directamente en src/lib/server/email.ts en cada envío.
 };

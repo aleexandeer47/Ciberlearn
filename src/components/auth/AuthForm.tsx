@@ -5,9 +5,11 @@ import { useSearchParams } from "next/navigation";
 import { useActionState, useId, useState } from "react";
 import { login, signup, type AuthState } from "@/app/actions/auth";
 
-export function AuthForm({ mode }: { mode: "login" | "signup" }) {
+/** `admin`: login del panel. Siempre vuelve a /admin y no ofrece crear cuenta. */
+export function AuthForm({ mode, admin = false }: { mode: "login" | "signup"; admin?: boolean }) {
   const [state, action, pending] = useActionState<AuthState, FormData>(mode === "login" ? login : signup, {});
-  const next = useSearchParams().get("next") ?? "";
+  const fromUrl = useSearchParams().get("next") ?? "";
+  const next = admin ? "/admin" : fromUrl;
   const [show, setShow] = useState(false);
   const id = useId();
   const isSignup = mode === "signup";
@@ -83,7 +85,17 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         {pending ? "Un momento…" : isSignup ? "Crear mi cuenta gratis" : "Entrar"}
       </button>
 
-      <p className="text-center text-sm text-fog">
+      {isSignup && (
+        <p className="text-center text-xs leading-relaxed text-fog">
+          Al crear tu cuenta aceptas que tratemos tus datos según nuestra{" "}
+          <Link href="/privacidad" className="text-chalk underline underline-offset-2">
+            política de privacidad
+          </Link>
+          .
+        </p>
+      )}
+
+      <p className={`text-center text-sm text-fog ${admin ? "hidden" : ""}`}>
         {isSignup ? (
           <>
             ¿Ya tienes cuenta?{" "}

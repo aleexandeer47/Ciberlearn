@@ -35,6 +35,16 @@ Los pagos usan **enlaces de pago de Wompi El Salvador** (pago único; no hay cob
 3. Wompi necesita llegar al webhook: en local usa un túnel (ngrok, cloudflared) y pon esa URL en `APP_URL`.
 4. Con el comercio en modo desarrollo, las transacciones de prueba llegan con `EsProductiva: false`. En producción se ignoran salvo que `WOMPI_ALLOW_TEST=true`.
 
+## Panel de administración (`/admin`)
+
+Muestra visitas, inicios de sesión, usuarios nuevos, gratis vs Pro, ganancias (solo pagos reales de Wompi; los simulados aparecen aparte), un gráfico de 30 días y los últimos usuarios y pagos.
+
+1. Crea tu cuenta normal en `/registro`.
+2. Dale permiso de administrador: `npm run admin -- tucorreo@ejemplo.com` (para quitarlo: `--quitar`).
+3. Entra en `/admin`. Sin sesión te manda a `/admin/entrar`; una cuenta sin permiso recibe 404.
+
+Las visitas se cuentan una vez por navegador y por día (`/api/visit`, colección `daily_stats`), sin guardar datos personales. Los inicios de sesión se cuentan al crear cada sesión.
+
 ## Correos (recuperar contraseña)
 
 `/recuperar` envía un enlace de un solo uso que vence en 1 hora. `/restablecer` cambia la contraseña, cierra las demás sesiones e inicia sesión.

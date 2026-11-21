@@ -12,7 +12,12 @@ const client = await new MongoClient(uri, { serverSelectionTimeoutMS: 5000 }).co
 const db = client.db(name);
 
 const specs = {
-  users: [[{ email: 1 }, { unique: true }]],
+  users: [
+    [{ email: 1 }, { unique: true }],
+    [{ createdAt: -1 }, {}],
+  ],
+  // _id = "YYYY-MM-DD": no necesita índices extra
+  daily_stats: [],
   sessions: [
     [{ tokenHash: 1 }, { unique: true }],
     [{ expiresAt: 1 }, { expireAfterSeconds: 0 }],
@@ -21,6 +26,7 @@ const specs = {
   orders: [
     [{ reference: 1 }, { unique: true }],
     [{ userId: 1, createdAt: -1 }, {}],
+    [{ status: 1, paidAt: -1 }, {}],
   ],
   login_attempts: [
     [{ createdAt: 1 }, { expireAfterSeconds: 15 * 60 }],

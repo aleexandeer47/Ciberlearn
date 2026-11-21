@@ -6,5 +6,7 @@ export const SITE = {
     "Simulador gratuito en español para aprender a reconocer phishing en correos, SMS y chats, con ejemplos pensados para El Salvador.",
   // Correo de contacto para empresas. Vacío = el botón muestra "Próximamente".
   contactEmail: "",
+  // Contacto público para privacidad y datos personales (aparece en /privacidad).
+  privacyEmail: "ciberlearnsv@gmail.com",
   year: 2026,
 } as const;

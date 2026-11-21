@@ -10,6 +10,17 @@ export interface UserDoc {
   createdAt: Date;
   /** Fin del periodo Pro pagado. null = plan gratis. */
   proUntil: Date | null;
+  /** Solo se asigna con `npm run admin -- correo`; nunca desde la web. */
+  role?: "admin";
+  lastLoginAt?: Date;
+}
+
+/** Contadores por día (hora de El Salvador). Sin datos personales. */
+export interface DailyStatDoc {
+  /** "2026-11-20" */
+  _id: string;
+  visits?: number;
+  logins?: number;
 }
 
 export interface SessionDoc {

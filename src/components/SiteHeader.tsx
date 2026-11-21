@@ -89,7 +89,12 @@ export function SiteFooter() {
         <p>
           © {SITE.year} {SITE.name}. Hecho en El Salvador.
         </p>
-        <p>Todos los mensajes, marcas y personas del simulador son ficticios.</p>
+        <p className="flex flex-wrap gap-x-4 gap-y-1">
+          <span>Todos los mensajes, marcas y personas del simulador son ficticios.</span>
+          <Link href="/privacidad" className="font-medium text-chalk hover:text-brand">
+            Política de privacidad
+          </Link>
+        </p>
       </div>
     </footer>
   );
