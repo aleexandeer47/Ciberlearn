@@ -1,4 +1,4 @@
-import { Check, Lock, Play, Trophy, Zap } from "lucide-react";
+import { Check, Flame, Lock, Play, Trophy, Zap } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
@@ -6,7 +6,7 @@ import { Suspense } from "react";
 import { Hearts } from "@/components/path/Hearts";
 import { PageShell } from "@/components/SiteHeader";
 import { view } from "@/lib/lives";
-import { isUnlocked, LESSON_ORDER, UNITS } from "@/lib/path/content";
+import { isUnlocked, LESSON_ORDER, UNITS, type Unit } from "@/lib/path/content";
 import { collections } from "@/lib/server/db";
 import { getCurrentUser } from "@/lib/server/session";
 
@@ -17,6 +17,39 @@ export const metadata: Metadata = {
 
 // Desplazamiento en zigzag de los nodos, como un camino
 const OFFSETS = ["0px", "56px", "0px", "-56px"];
+
+/** Encabezado de cada unidad con su nivel; la prueba final (Experto) tiene su propio estilo. */
+function UnitBanner({ unit, index }: { unit: Unit; index: number }) {
+  const expert = unit.level === "Experto";
+  return (
+    <div className={`relative overflow-hidden rounded-3xl p-6 text-white ${expert ? "bg-[#0b1220] ring-2 ring-[#f59e0b]" : "bg-brand"}`}>
+      {expert && (
+        <Flame
+          className="pointer-events-none absolute -bottom-6 -right-4 h-36 w-36 text-[#f59e0b] opacity-15"
+          strokeWidth={1.5}
+          aria-hidden
+        />
+      )}
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="text-sm font-semibold opacity-80">{expert ? "Prueba final" : `Unidad ${index + 1}`}</p>
+        <span
+          className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.08em] ${
+            expert ? "bg-[#f59e0b] text-[#0b1220]" : "bg-white/20"
+          }`}
+        >
+          {unit.level}
+        </span>
+      </div>
+      <h2 className="mt-1 font-display text-2xl">{unit.title}</h2>
+      <p className="mt-1 max-w-xl opacity-90">{unit.description}</p>
+      {expert && (
+        <p className="mt-3 text-sm font-semibold text-[#fbbf24]">
+          {unit.lessons[0].exercises.length} preguntas por lección. Lee cada detalle.
+        </p>
+      )}
+    </div>
+  );
+}
 
 async function PathMap() {
   // Las vidas dependen de la hora actual: siempre por petición.
@@ -47,11 +80,7 @@ async function PathMap() {
         <div className="mt-12 space-y-14">
           {UNITS.map((unit, u) => (
             <section key={unit.id}>
-              <div className="rounded-3xl bg-brand p-6 text-white">
-                <p className="text-sm font-semibold opacity-80">Unidad {u + 1}</p>
-                <h2 className="mt-1 font-display text-2xl">{unit.title}</h2>
-                <p className="mt-1 opacity-90">{unit.description}</p>
-              </div>
+              <UnitBanner unit={unit} index={u} />
               <ol className="mt-8 flex flex-col items-center gap-6">
                 {unit.lessons.map((lesson, l) => {
                   const done = completed.has(lesson.id);

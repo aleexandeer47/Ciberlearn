@@ -30,10 +30,13 @@ export interface Lesson {
   exercises: Exercise[];
 }
 
+export type Level = "Básico" | "Intermedio" | "Avanzado" | "Experto";
+
 export interface Unit {
   id: string;
   title: string;
   description: string;
+  level: Level;
   lessons: Lesson[];
 }
 
@@ -71,6 +74,7 @@ export const UNITS: Unit[] = [
     id: "u1",
     title: "¿Quién te escribe?",
     description: "Remitentes, números y dominios: lo primero que hay que mirar.",
+    level: "Básico",
     lessons: [
       {
         id: "u1l1",
@@ -108,6 +112,7 @@ export const UNITS: Unit[] = [
     id: "u2",
     title: "Presión y emociones",
     description: "Urgencia, miedo, premios y familia: cómo te apuran para que no pienses.",
+    level: "Básico",
     lessons: [
       {
         id: "u2l1",
@@ -145,6 +150,7 @@ export const UNITS: Unit[] = [
     id: "u3",
     title: "Enlaces y archivos",
     description: "Lee un enlace antes de tocarlo y desconfía de los archivos que no pediste.",
+    level: "Intermedio",
     lessons: [
       {
         id: "u3l1",
@@ -182,6 +188,7 @@ export const UNITS: Unit[] = [
     id: "u4",
     title: "Estafas de hoy en El Salvador",
     description: "Remesas, billeteras, compraventas y llamadas: los casos que más circulan.",
+    level: "Intermedio",
     lessons: [
       {
         id: "u4l1",
@@ -211,6 +218,164 @@ export const UNITS: Unit[] = [
           o("u4l3e2", "Te llaman “del banco” y te sientes presionado. ¿Mejor opción?", ["Seguir la llamada", "Colgar y llamar tú al número de tu tarjeta", "Dar solo la mitad de los datos", "Pedir su nombre"], 1, "Cuelga y llama tú a un número oficial que ya conoces."),
           v("u4l3e3", "Correo", "Dirección General de Tributos <notificaciones@tributos.gob.sv>", "Recordatorio: el plazo para presentar tu declaración vence el 30. Ingresa al portal como de costumbre.", "legit", "Dominio .gob.sv oficial, sin enlace para dar datos y te manda al portal de siempre."),
           v("u4l3e4", "SMS", "+503 6000-0000", "Hacienda: tiene una devolución de $312. Ingrese su cuenta bancaria y PIN en devolucion-hacienda.top", "phishing", "Nadie necesita tu PIN para depositarte, y .top no es un dominio del gobierno."),
+        ],
+      },
+    ],
+  },
+  {
+    id: "u5",
+    title: "Redes sociales y mensajería",
+    description: "Cuentas robadas, perfiles falsos, sorteos e inversiones que no existen.",
+    level: "Intermedio",
+    lessons: [
+      {
+        id: "u5l1",
+        title: "Cuentas robadas",
+        exercises: [
+          v("u5l1e1", "Chat", "Carlos (contacto guardado)", "Te va a llegar un código por SMS, es de un sorteo en el que te inscribí. Mandámelo porfa 🙏", "phishing", "Le robaron la cuenta a Carlos. Ese código sirve para registrar TU cuenta en otro celular."),
+          o("u5l1e2", "¿Para qué sirve el código de 6 dígitos que llega cuando alguien registra tu número en una app de mensajería?", ["Para entrar a un sorteo", "Para que ese celular se quede con tu cuenta", "Para verificar tu edad", "No sirve para nada"], 1, "Quien tenga ese código puede abrir tu cuenta en su teléfono y escribirle a todos tus contactos."),
+          o("u5l1e3", "¿Qué te protege mejor si alguien llega a conseguir ese código?", ["Cambiar tu foto de perfil", "Activar la verificación en dos pasos con un PIN propio", "Salirte de los grupos", "Bloquear al contacto"], 1, "Con el PIN de dos pasos, el código solo no basta para quedarse con tu cuenta."),
+          v("u5l1e4", "Chat", "Grupo: Familia López", "Tía Rosa: Ya llegué a la casa, gracias por traerme 😊", "legit", "Conversación normal en un grupo que ya conoces. No pide códigos, dinero ni enlaces."),
+        ],
+      },
+      {
+        id: "u5l2",
+        title: "Perfiles falsos",
+        exercises: [
+          o("u5l2e1", "Te quejas en público del banco y una página “Banco Izalco Oficial” con 300 seguidores te pide tu tarjeta por mensaje privado. Es:", ["Atención al cliente", "Una página falsa que se aprovecha de las quejas públicas", "Un canal nuevo del banco", "Un sorteo"], 1, "Los estafadores buscan quejas y responden rápido haciéndose pasar por soporte. El banco no pide tu tarjeta por chat."),
+          v("u5l2e2", "Chat", "Súper La Ceiba ✔ (perfil creado hace 2 días)", "¡Felicidades! Ganaste una canasta navideña. Para el envío, ingresa los datos de tu tarjeta en laceiba-canastas.shop", "phishing", "Perfil recién creado, premio que no buscaste, pide tarjeta y el dominio no es el de la tienda."),
+          o("u5l2e3", "¿Qué señal NO te ayuda a saber si un perfil es oficial?", ["Que lo enlace la página web oficial", "Su antigüedad y sus publicaciones", "Que tenga el logo y diga “oficial” en el nombre", "El dominio de los enlaces que comparte"], 2, "Cualquiera puede copiar un logo y escribir “oficial”. Comprueba desde la web oficial."),
+          v("u5l2e4", "Correo", "Billetera Tunco <comunidad@billeteratunco.com.sv>", "Síguenos en redes: los enlaces oficiales están en billeteratunco.com.sv/redes. Nunca te pediremos claves por mensaje.", "legit", "Dominio oficial y te manda a comprobar los perfiles en su propia web."),
+        ],
+      },
+      {
+        id: "u5l3",
+        title: "Sorteos, inversiones y romance",
+        exercises: [
+          v("u5l3e1", "Chat", "Inversiones Pacífico 📈", "Gané $800 esta semana con este grupo 😱 Entra con $50 y el asesor te lo multiplica. Mira mis capturas.", "phishing", "Ganancias garantizadas y capturas como prueba: las capturas se fabrican y el dinero no vuelve."),
+          o("u5l3e2", "En una plataforma ves que tus ganancias crecen, pero para retirar te piden pagar un “impuesto” primero. ¿Qué pasa?", ["Es normal en inversiones", "Es estafa: el saldo es falso y seguirán pidiendo pagos", "Pago y retiro", "Pido un descuento"], 1, "El saldo que ves es inventado. Cada pago “para retirar” lleva a otro cobro."),
+          o("u5l3e3", "Alguien que conociste en línea hace semanas nunca acepta videollamada y ahora necesita dinero para un boleto. Probablemente es:", ["Mala suerte", "Una estafa romántica", "Un sorteo", "Un error del banco"], 1, "Ganarse tu confianza durante semanas y luego pedir dinero es el patrón de la estafa romántica."),
+          o("u5l3e4", "¿Cuál sorteo es más creíble?", ["Mensaje privado de un desconocido que dice que ganaste", "Publicación en la página oficial con bases, fechas y ganador anunciado en público", "Correo que pide $5 para entregarte el premio", "SMS desde un número extranjero"], 1, "Los sorteos reales tienen bases públicas y no te cobran por entregar el premio."),
+        ],
+      },
+    ],
+  },
+  {
+    id: "u6",
+    title: "Tus cuentas y contraseñas",
+    description: "Contraseñas fuertes, verificación en dos pasos, tu chip y las apps falsas.",
+    level: "Avanzado",
+    lessons: [
+      {
+        id: "u6l1",
+        title: "Contraseñas",
+        exercises: [
+          o("u6l1e1", "¿Cuál contraseña es más segura?", ["Izalco2026!", "maria1990", "tres-pupusas-de-loroco-sin-curtido", "12345678"], 2, "Una frase larga y rara es más difícil de adivinar que una palabra corta con símbolos."),
+          o("u6l1e2", "Usas la misma contraseña en todo y se filtra la de una tienda en línea. ¿Qué riesgo corres?", ["Ninguno", "Que la prueben en tu correo y en tu banco", "Solo pierdes la cuenta de la tienda", "Que se borre tu cuenta"], 1, "Los atacantes prueban las contraseñas filtradas en otros sitios. Usa una distinta en cada uno."),
+          o("u6l1e3", "¿Para qué sirve un gestor de contraseñas?", ["Para compartirlas con amigos", "Para crear y recordar una distinta por sitio, y no autocompletarla en sitios falsos", "Para quitarles seguridad", "Para imprimirlas"], 1, "Además, si el dominio no coincide, el gestor no rellena la contraseña: es una alarma útil."),
+          o("u6l1e4", "¿Dónde es seguro escribir la contraseña de tu banco?", ["En un formulario que llegó por correo", "Solo en la app oficial o en la dirección que tú escribes", "En un chat de soporte", "Respondiendo un SMS"], 1, "Tu contraseña solo va en el sitio o la app oficial a los que entras por tu cuenta."),
+        ],
+      },
+      {
+        id: "u6l2",
+        title: "Verificación en dos pasos",
+        exercises: [
+          o("u6l2e1", "¿Qué hace la verificación en dos pasos?", ["Te pide algo más que la contraseña para entrar", "Te cambia la contraseña", "Bloquea los anuncios", "Te da dos cuentas"], 0, "Aunque roben tu contraseña, les falta el segundo paso."),
+          o("u6l2e2", "¿Cuál segundo paso es más difícil de robar con una página falsa?", ["Código por SMS", "Código por correo", "Llave de seguridad física (USB o NFC)", "Pregunta secreta"], 2, "La llave física verifica el dominio real del sitio: en una página falsa simplemente no funciona."),
+          o("u6l2e3", "Te llega un código para AUTORIZAR una transferencia que no hiciste. ¿Qué significa?", ["Un error del banco", "Que alguien ya tiene tu usuario y clave: no compartas el código y llama al banco", "Que ganaste algo", "Que debes reenviarlo"], 1, "El código llega porque alguien inició la operación con tus datos. Cambia tu clave y avisa al banco."),
+          o("u6l2e4", "Alguien te llama y te pide ese código “solo para verificar que eres tú”. ¿Quién puede necesitarlo?", ["El banco", "Tu compañía de teléfono", "Nadie: el código es solo para ti", "La policía"], 2, "Ninguna empresa legítima te pide que le dictes un código de verificación."),
+        ],
+      },
+      {
+        id: "u6l3",
+        title: "Tu celular y tus apps",
+        exercises: [
+          o("u6l3e1", "Tu celular queda de repente “sin servicio” y te llegan correos de cambio de contraseña. ¿Qué puede estar pasando?", ["Una falla de la antena", "Que duplicaron tu chip (SIM) para recibir tus códigos", "Que se acabó el saldo", "Una actualización"], 1, "Con un duplicado de tu chip reciben tus SMS. Llama a tu compañía de teléfono desde otro celular cuanto antes."),
+          v("u6l3e2", "SMS", "+503 7000-1111", "Banco Izalco: descargue la nueva app de seguridad desde izalco-seguro.apk para evitar el bloqueo de su cuenta.", "phishing", "Un archivo .apk por SMS instala una app fuera de la tienda oficial, normalmente para espiar tu celular."),
+          o("u6l3e3", "¿Dónde es seguro descargar la app de tu banco?", ["De un enlace por SMS", "De la tienda oficial de tu celular, revisando que el desarrollador sea el banco", "De un grupo de chat", "De cualquier sitio que tenga el logo"], 1, "Incluso en la tienda oficial hay copias: revisa el nombre del desarrollador y las descargas."),
+          o("u6l3e4", "Una app de linterna pide permiso para leer tus SMS y ver tu pantalla. ¿Qué haces?", ["Acepto todo", "Niego los permisos y la desinstalo", "Se los doy solo hoy", "La recomiendo"], 1, "Una linterna no necesita tus mensajes. Con esos permisos pueden leer tus códigos del banco."),
+        ],
+      },
+    ],
+  },
+  {
+    id: "u7",
+    title: "Estafas en el trabajo",
+    description: "Fraude del jefe, facturas con cuentas cambiadas y soporte técnico falso.",
+    level: "Avanzado",
+    lessons: [
+      {
+        id: "u7l1",
+        title: "El jefe y las transferencias",
+        exercises: [
+          v("u7l1e1", "Correo", "Ricardo Méndez, Gerente <r.mendez@grupoatlacatl.com.sv>", "Recibí la cotización. La revisamos el lunes en la reunión de las 10. Gracias.", "legit", "Dominio correcto, tono normal y no pide pagos ni secretos."),
+          v("u7l1e2", "Correo", "Ricardo Méndez, Gerente <r.mendez@grupoatIacatl.com.sv>", "Estoy en una reunión. Haz hoy una transferencia de $4,800 a esta cuenta. No lo comentes con nadie.", "phishing", "Mira el dominio: “atIacatl” lleva una I mayúscula en vez de l. Además: urgencia, dinero y secreto."),
+          o("u7l1e3", "¿Qué regla protege mejor a una empresa del fraude del jefe?", ["Responder rápido", "Confirmar por llamada a un número conocido toda transferencia nueva o cambio de cuenta, y que la aprueben dos personas", "Usar solo correo personal", "Pagar en efectivo"], 1, "Un proceso fijo de verificación funciona aunque el correo parezca perfecto."),
+          o("u7l1e4", "Te piden comprar tarjetas de regalo para “unos clientes” y mandar los códigos en foto. Es:", ["Un trámite contable", "Fraude: el dinero de esas tarjetas no se puede recuperar", "Un bono para ti", "Normal en diciembre"], 1, "Las tarjetas de regalo son como efectivo: una vez enviados los códigos, se pierden."),
+        ],
+      },
+      {
+        id: "u7l2",
+        title: "Facturas y proveedores",
+        exercises: [
+          v("u7l2e1", "Correo", "Distribuidora Lempa <cobros@distlempa.com.sv>", "Adjuntamos la factura de octubre (DTE en PDF y JSON). Los datos de pago son los mismos de siempre.", "legit", "Dominio del proveedor, formato esperado de factura electrónica y sin cambios en los datos de pago."),
+          v("u7l2e2", "Correo", "Distribuidora Lempa <cobros@distlempa.com.sv>", "Por una auditoría cambiamos de banco. Desde hoy paguen a la cuenta 0099-1123-44. Es urgente para evitar recargos.", "phishing", "Aunque el dominio sea el real, el buzón pudo ser hackeado. Un cambio de cuenta con prisa se confirma por teléfono."),
+          o("u7l2e3", "La factura trae un botón “Ver factura” que pide el usuario y la clave de tu correo. ¿Qué haces?", ["Pongo mi clave", "No la pongo: entro al portal oficial por mi cuenta", "La reenvío a mi jefe", "Respondo con mi clave"], 1, "Ver una factura nunca requiere la contraseña de tu correo."),
+          o("u7l2e4", "¿Qué dato de una factura cambian más los estafadores?", ["El logo", "El número de cuenta bancaria", "La fecha", "El NIT del cliente"], 1, "Cambiar solo la cuenta hace que el pago real termine en manos del estafador."),
+        ],
+      },
+      {
+        id: "u7l3",
+        title: "Soporte técnico falso",
+        exercises: [
+          v("u7l3e1", "Llamada", "Número desconocido", "“Somos de soporte técnico. Su computadora tiene un virus; instale este programa para que la revisemos a distancia.”", "phishing", "Nadie te llama para avisar de un virus. Ese programa les da control total de tu computadora."),
+          o("u7l3e2", "Aparece una ventana con alarma: “Su equipo está bloqueado, llame al 800-…”. ¿Qué haces?", ["Llamo", "Cierro el navegador (forzándolo si hace falta) y no llamo", "Pago para desbloquear", "Apago el router"], 1, "Es una página web que asusta. Cerrarla basta; el número es de los estafadores."),
+          v("u7l3e3", "Correo", "Mesa de ayuda <mesadeayuda@grupoatlacatl.com.sv>", "Abrimos el ticket #4471 que reportaste ayer sobre la impresora. Pasaremos a tu escritorio mañana.", "legit", "Responde a algo que tú pediste, desde el dominio de la empresa y sin pedir claves."),
+          o("u7l3e4", "Alguien de “TI” te pide tu contraseña para arreglar tu cuenta. ¿Qué respondes?", ["Se la doy", "TI no necesita mi contraseña; lo confirmo con la mesa de ayuda oficial", "Se la mando por escrito", "Le doy la mitad"], 1, "El personal de TI real puede restablecer tu cuenta sin conocer tu contraseña."),
+        ],
+      },
+    ],
+  },
+  {
+    id: "u8",
+    title: "Prueba final: nivel experto",
+    description: "Trampas casi perfectas, mensajes reales que parecen falsos y un caso completo. Aquí hasta los expertos se equivocan.",
+    level: "Experto",
+    lessons: [
+      {
+        id: "u8l1",
+        title: "Enlaces imposibles",
+        exercises: [
+          e("u8l1e1", "¿A qué sitio te lleva realmente este enlace?", ["bancoizalco.com.sv", "login-seguro.top", "A los dos", "A ninguno: no abre"], 1, "Todo lo que va antes de la “@” se trata como un nombre de usuario y se ignora. El sitio real es login-seguro.top.", "https://bancoizalco.com.sv@login-seguro.top/inicio"),
+          o("u8l1e2", "La barra de direcciones muestra “xn--bancoizlco-7fg.com.sv” en lugar del nombre que esperabas. ¿Qué significa?", ["Es la versión técnica de un dominio con letras de otro alfabeto: no es bancoizalco.com.sv", "Es el sitio oficial cifrado", "Es un error del navegador, ignóralo", "Es la versión móvil del banco"], 0, "Los dominios con letras especiales (como una “а” cirílica) se escriben así por dentro. Se ven iguales al real, pero son otro sitio."),
+          e("u8l1e3", "El enlace empieza con el dominio real del banco. ¿Dónde terminas?", ["En bancoizalco.com.sv", "En bancoizalco-clientes.top, tras pasar por el banco", "En ninguno", "En la app del banco"], 1, "Es una redirección: el banco te reenvía a lo que diga “destino”. Mira también lo que viene después del “?”.", "https://bancoizalco.com.sv/salir?destino=https://bancoizalco-clientes.top/clave"),
+          e("u8l1e4", "¿Cuál de estos enlaces SÍ está en el sitio de la DGT (tributos.gob.sv)?", ["tributos.gob.sv.consulta-dte.com/inicio", "tributos-gob.sv/dte", "portal.tributos.gob.sv/dte/consulta?ref=tributos.gob.sv.xyz", "tributos.gob.sv-dte.com"], 2, "El dominio es lo que va antes de la primera “/”: portal.tributos.gob.sv. Lo que viene después del “?” no cambia el sitio."),
+          o("u8l1e5", "Abres el adjunto “Comprobante.html” y aparece el inicio de sesión de Grupo Atlacatl. La dirección empieza con “file:///C:/Users/…”. ¿Qué pasa?", ["Es la intranet en modo sin conexión", "Es una página falsa guardada en tu computadora: lo que escribas se envía al atacante", "Es seguro porque no tiene “http”", "Es un PDF"], 1, "Un .html adjunto puede dibujar cualquier página de inicio de sesión. No hay dominio que revisar porque está en tu disco."),
+          e("u8l1e6", "Expandes un enlace acortado y ves: https://mercadito.com.sv.pagos.mercadito-sv.com/confirmar. ¿Quién es el dueño de ese sitio?", ["mercadito.com.sv", "mercadito-sv.com", "com.sv", "pagos.mercadito"], 1, "Se lee de derecha a izquierda desde la primera “/”: el dominio registrado es mercadito-sv.com. Todo lo demás son subdominios que puso el estafador."),
+        ],
+      },
+      {
+        id: "u8l2",
+        title: "Mensajes casi perfectos",
+        exercises: [
+          v("u8l2e1", "Correo", "Banco Izalco <avisos@bancoizalco.com.sv>", "Actualizamos los términos de tu cuenta. Puedes leerlos en la sección Documentos de la app. No tienes que hacer nada.", "legit", "Dominio oficial, sin enlaces ni pedidos, y te manda a la app que ya tienes. No todo es trampa."),
+          v("u8l2e2", "Correo", "Banco Izalco <avisos@bancoizalco.com.sv>", "Por una actualización del sistema, responda a este correo con su usuario y clave para mantener activa su banca en línea.", "phishing", "El remitente se puede falsificar o venir de una cuenta hackeada. Lo que delata la trampa es el pedido: un banco jamás pide tu clave."),
+          v("u8l2e3", "Chat", "Andrea López (contacto guardado)", "¡Hola! Te mandé por error un código de 6 dígitos a tu número, ¿me lo pasás porfa? 🙏", "phishing", "Es un contacto real con la cuenta robada. El código es para quitarte la tuya y seguir la cadena."),
+          v("u8l2e4", "SMS", "BancoIzalco (código corto 2250)", "Banco Izalco: compra rechazada de $849.00 en ElectroMundo. Si no la reconoce, bloquee su tarjeta en bancoizalco-alertas.com", "phishing", "Los SMS falsos pueden aparecer en el mismo hilo que los reales. El dominio bancoizalco-alertas.com no es el del banco."),
+          v("u8l2e5", "Llamada", "Aparece como 2200-1234 (el número oficial del banco)", "“Soy del área de fraudes. Para revertir el cargo le enviaré un código; léamelo para confirmar que es usted.”", "phishing", "El número que aparece en pantalla se puede falsificar. El código es para autorizar una operación con tu cuenta."),
+          v("u8l2e6", "Correo", "EnvíaYa <notificaciones@enviaya.com.sv>", "Tu paquete EY-552910 no se entregó porque no había nadie. Reprograma desde la app de EnvíaYa o llama al número de nuestra web.", "legit", "Dominio oficial, no trae enlace ni cobro, y te manda a la app o a la web de siempre."),
+        ],
+      },
+      {
+        id: "u8l3",
+        title: "El caso completo",
+        exercises: [
+          o("u8l3e1", "Trabajas en finanzas. Un proveedor de siempre escribe desde su correo real, en el mismo hilo de las facturas, y te pasa una cuenta bancaria nueva. ¿Qué haces?", ["La actualizo: el correo es el real", "Pido la carta del banco por correo", "Llamo al proveedor al número que ya teníamos registrado, no al del correo", "Pago la mitad a cada cuenta"], 2, "Si su buzón fue hackeado, el estafador responde dentro del hilo real y también puede falsificar la carta. Solo una llamada a un número conocido lo confirma."),
+          o("u8l3e2", "Esa noche te llegan 15 notificaciones seguidas para aprobar un inicio de sesión que no hiciste. ¿Qué haces?", ["Apruebo una para que paren", "Rechazo todas, cambio mi contraseña y aviso a TI", "Apago el celular", "Las ignoro"], 1, "Ya tienen tu contraseña y esperan que apruebes por cansancio. Rechaza y cambia la contraseña."),
+          o("u8l3e3", "Un “documento compartido” te pide entrar con tu cuenta de trabajo y luego una app llamada “Visor de PDF” pide permiso para “leer tu correo y enviar correos en tu nombre”. ¿Qué es lo peligroso?", ["Nada, es un visor", "Darle a esa app acceso a tu correo, aunque no hayas escrito tu contraseña en ningún sitio falso", "Que sea un PDF", "Que pida iniciar sesión"], 1, "Con ese permiso la app lee y envía correos por ti, incluso si cambias la contraseña después. Un visor de PDF no necesita tu correo."),
+          v("u8l3e4", "Llamada", "Número desconocido", "“Soy el gerente general.” (La voz suena igual a la suya.) “Estoy en una reunión, haz hoy una transferencia a este proveedor. No me llames, no puedo hablar.”", "phishing", "Las voces se pueden clonar con IA a partir de videos o audios. “No me llames” es justo lo que impide verificar."),
+          v("u8l3e5", "Correo", "Soporte TI <soporte@grupoatlacatl.com.sv>", "El viernes a las 6 p. m. haremos mantenimiento del correo. Puede que no funcione por 30 minutos. No tienes que hacer nada.", "legit", "Aviso informativo desde el dominio de la empresa, sin enlaces ni pedidos de claves."),
+          o("u8l3e6", "Te das cuenta de que escribiste tu contraseña en una página falsa hace 10 minutos. ¿Qué es lo mejor?", ["Esperar a ver si pasa algo", "Cambiarla desde el sitio oficial, cerrar las sesiones abiertas, avisar a TI o al banco y revisar movimientos", "Borrar el correo para no dejar rastro", "Cambiar solo la contraseña de tu correo personal"], 1, "Actuar en minutos hace la diferencia. Avisar no es vergonzoso: ayuda a frenar el ataque para todos."),
         ],
       },
     ],

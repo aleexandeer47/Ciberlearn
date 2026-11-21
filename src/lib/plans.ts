@@ -19,7 +19,8 @@ export const PLANS: Record<PlanId, Plan> = {
 export const isPlanId = (v: unknown): v is PlanId => typeof v === "string" && v in PLANS;
 
 export const FEATURES: { label: string; free: boolean | string; pro: boolean | string }[] = [
-  { label: "Ruta guiada: 12 lecciones, 48 ejercicios", free: true, pro: true },
+  // Se comprueba en content.test.ts (no se importa content.ts aquí: este archivo también va al navegador)
+  { label: "Ruta guiada: 24 lecciones, 102 ejercicios", free: true, pro: true },
   { label: "Vidas en la ruta", free: "5 (1 cada 30 min)", pro: "infinitas" },
   { label: "Chats con IA que intentan estafarte", free: false, pro: "próximamente" },
   { label: "Ranking mundial y XP", free: true, pro: true },

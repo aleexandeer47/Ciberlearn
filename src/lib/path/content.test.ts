@@ -1,15 +1,37 @@
 import { describe, expect, it } from "vitest";
+import { FEATURES } from "@/lib/plans";
 import { isUnlocked, LESSON_ORDER, LESSONS, publicLesson, UNITS } from "./content";
 
 describe("contenido de la ruta", () => {
   const all = LESSONS.flatMap((l) => l.exercises);
 
-  it("tiene 4 unidades, 12 lecciones y 48 ejercicios con ids únicos", () => {
-    expect(UNITS).toHaveLength(4);
-    expect(LESSONS).toHaveLength(12);
-    expect(all).toHaveLength(48);
-    expect(new Set(all.map((x) => x.id)).size).toBe(48);
-    expect(new Set(LESSONS.map((l) => l.id)).size).toBe(12);
+  it("tiene 8 unidades, 24 lecciones y 102 ejercicios con ids únicos", () => {
+    expect(UNITS).toHaveLength(8);
+    expect(LESSONS).toHaveLength(24);
+    expect(all).toHaveLength(102);
+    expect(new Set(all.map((x) => x.id)).size).toBe(all.length);
+    expect(new Set(LESSONS.map((l) => l.id)).size).toBe(LESSONS.length);
+  });
+
+  it("cada id de ejercicio empieza con el de su lección", () => {
+    for (const l of LESSONS) for (const x of l.exercises) expect(x.id.startsWith(l.id)).toBe(true);
+  });
+
+  it("la última unidad es la prueba de nivel experto, más larga que el resto", () => {
+    const last = UNITS[UNITS.length - 1];
+    expect(last.level).toBe("Experto");
+    for (const l of last.lessons) expect(l.exercises.length).toBeGreaterThan(4);
+    // Mezcla trampas con mensajes reales para no premiar decir “trampa” a todo
+    const verdicts = last.lessons.flatMap((l) => l.exercises).filter((x) => x.kind === "veredicto");
+    expect(verdicts.some((x) => x.answer === "legit")).toBe(true);
+  });
+
+  it("la página de planes anuncia la cantidad real de lecciones y ejercicios", () => {
+    expect(FEATURES[0].label).toBe(`Ruta guiada: ${LESSONS.length} lecciones, ${all.length} ejercicios`);
+  });
+
+  it("las opciones no se repiten dentro de un ejercicio", () => {
+    for (const x of all) if (x.kind !== "veredicto") expect(new Set(x.options).size).toBe(x.options.length);
   });
 
   it("cada respuesta apunta a una opción que existe y hay explicación", () => {
