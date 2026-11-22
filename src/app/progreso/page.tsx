@@ -1,4 +1,4 @@
-import { Award, Crosshair, Flame, Inbox, Layers, Lock, Swords, Timer } from "lucide-react";
+import { Award, Crosshair, Flame, Inbox, Layers, Lock, Mail, Swords, Timer } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -66,6 +66,7 @@ async function Dashboard() {
 
   const modes = [
     { href: "/simulador", title: "Clásico", desc: "Los 10 mensajes de siempre", pro: false, icon: Inbox },
+    { href: "/bandeja", title: "Bandeja", desc: "Un día de correo simulado", pro: true, icon: Mail },
     { href: "/simulador/pro", title: "Pack avanzado", desc: "6 mensajes difíciles nuevos", pro: true, icon: Layers },
     { href: "/simulador/contrarreloj", title: "Contrarreloj", desc: "40 segundos por mensaje", pro: true, icon: Timer },
     {
@@ -227,7 +228,7 @@ async function Dashboard() {
       )}
 
       {/* Modos */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {modes.map((m) => {
           const locked = m.pro && !user.isPro;
           return (

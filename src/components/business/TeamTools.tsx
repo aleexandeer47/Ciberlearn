@@ -2,7 +2,77 @@
 
 import { Check, Copy, Send, UserMinus } from "lucide-react";
 import { useActionState, useState } from "react";
-import { inviteByEmail, launchSimulation, removeMember, type InviteState, type SimState } from "@/app/actions/org";
+import {
+  inviteByEmail,
+  launchSimulation,
+  removeMember,
+  reportSuspicious,
+  setMemberArea,
+  type InviteState,
+  type SimState,
+  type SuspiciousState,
+} from "@/app/actions/org";
+import { AREAS, type AreaId } from "@/lib/business";
+
+/** El encargado cambia el área de una persona; se guarda al elegir. */
+export function AreaSelect({ userId, value, name }: { userId: string; value: AreaId | null; name: string }) {
+  return (
+    <form action={setMemberArea}>
+      <input type="hidden" name="userId" value={userId} />
+      <select
+        name="area"
+        defaultValue={value ?? ""}
+        onChange={(e) => e.currentTarget.form?.requestSubmit()}
+        className="field h-9 min-w-36 py-0 text-sm"
+        aria-label={`Área de ${name}`}
+      >
+        <option value="">Sin área</option>
+        {(Object.keys(AREAS) as AreaId[]).map((id) => (
+          <option key={id} value={id}>
+            {AREAS[id].label}
+          </option>
+        ))}
+      </select>
+    </form>
+  );
+}
+
+/** “Reportar phishing” para empleados. */
+export function ReportSuspiciousForm() {
+  const [state, action, pending] = useActionState<SuspiciousState, FormData>(reportSuspicious, {});
+  if (state.ok)
+    return (
+      <p role="status" className={`rounded-2xl p-4 text-sm ${state.simulacro ? "bg-ok/15 text-ok" : "bg-field text-graphite"}`}>
+        {state.simulacro
+          ? "¡Bien visto! Era un simulacro de tu empresa y lo detectaste. Quedó registrado a tu favor."
+          : "Gracias. Le avisamos a tu encargado para que lo revise. No abras enlaces ni adjuntos de ese correo."}
+      </p>
+    );
+  return (
+    <form action={action} className="space-y-3">
+      <label className="block">
+        <span className="mb-1.5 block text-sm font-medium">Asunto del correo</span>
+        <input name="subject" required minLength={3} maxLength={200} placeholder="Copia el asunto tal cual" className="field" />
+      </label>
+      <label className="block">
+        <span className="mb-1.5 block text-sm font-medium">Remitente (opcional)</span>
+        <input name="sender" maxLength={120} placeholder="Ej.: soporte@algo-raro.com" className="field" />
+      </label>
+      <label className="block">
+        <span className="mb-1.5 block text-sm font-medium">¿Qué te pareció raro? (opcional)</span>
+        <textarea name="notes" maxLength={500} rows={2} className="field resize-y py-2" />
+      </label>
+      {state.error && (
+        <p role="alert" className="text-sm text-bad-text">
+          {state.error}
+        </p>
+      )}
+      <button type="submit" disabled={pending} className="btn h-11 bg-[#f97316] px-5 text-sm text-white hover:brightness-95 disabled:opacity-60">
+        {pending ? "Enviando…" : "Reportar phishing"}
+      </button>
+    </form>
+  );
+}
 
 export function CopyLink({ url }: { url: string }) {
   const [done, setDone] = useState(false);

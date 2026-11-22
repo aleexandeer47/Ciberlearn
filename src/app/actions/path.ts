@@ -4,7 +4,7 @@ import { ObjectId } from "mongodb";
 import { isUnlocked, LESSON_BY_ID, LESSON_ORDER, XP } from "@/lib/path/content";
 import { loseOne, regen, view, type LivesView } from "@/lib/lives";
 import { collections } from "@/lib/server/db";
-import { getCurrentUser } from "@/lib/server/session";
+import { extraUnlocked, getCurrentUser } from "@/lib/server/session";
 import { addXp } from "@/lib/server/xp";
 
 /*
@@ -20,7 +20,8 @@ export async function startLesson(lessonId: string): Promise<{ ok: true; lives: 
   const { users, lessonAttempts } = await collections();
   const doc = await users.findOne({ _id: user._id }, { projection: { lives: 1, path: 1 } });
   const completed = new Set(doc?.path?.completed ?? []);
-  if (!LESSON_BY_ID.has(lessonId) || !isUnlocked(lessonId, completed)) return { ok: false, error: "bloqueada" };
+  const open = isUnlocked(lessonId, completed) || extraUnlocked(user).has(lessonId);
+  if (!LESSON_BY_ID.has(lessonId) || !open) return { ok: false, error: "bloqueada" };
 
   const lives = view(doc?.lives, user.isPro);
   if (!lives.infinite && lives.count <= 0) return { ok: false, error: "sin-vidas", lives };

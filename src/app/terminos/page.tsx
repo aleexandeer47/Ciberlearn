@@ -149,7 +149,13 @@ export default function TerminosPage() {
             los simulacros nunca piden contraseñas ni información.
           </li>
           <li>
-            El encargado debe tratar el avance de su equipo como información confidencial y usarla solo para capacitación.
+            El encargado puede asignar un área a cada persona; eso abre las lecciones clave de esa área sin cambiar el resto
+            de la ruta. El índice de preparación y el informe para gerencia son orientativos: resumen el avance en la
+            plataforma, no certifican la seguridad de la empresa.
+          </li>
+          <li>
+            El encargado debe tratar el avance de su equipo y los correos que le reporten como información confidencial y
+            usarla solo para capacitación y seguridad.
           </li>
         </ul>
       </Section>

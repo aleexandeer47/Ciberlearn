@@ -3,7 +3,17 @@
 import { MongoServerError, ObjectId } from "mongodb";
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
-import { addSeatsPrice, BUSINESS, isValidSeats, orgActive, parseEmails, PHISH_BY_ID, yearPrice } from "@/lib/business";
+import {
+  addSeatsPrice,
+  BUSINESS,
+  isAreaId,
+  isValidSeats,
+  orgActive,
+  parseEmails,
+  PHISH_BY_ID,
+  subjectMatches,
+  yearPrice,
+} from "@/lib/business";
 import { dayKey } from "@/lib/dayKey";
 import { inviteEmail, simulationEmail } from "@/lib/emails/business";
 import { ORG_CONSENT_FIELD } from "@/lib/legal";
@@ -285,6 +295,67 @@ export async function launchSimulation(_prev: SimState, form: FormData): Promise
   }
   refresh();
   return { sent, targets: members.length };
+}
+
+// ---------------------------------------------------------------- reportar y áreas
+
+export interface SuspiciousState {
+  ok?: boolean;
+  /** true: era un simulacro y lo detectó */
+  simulacro?: boolean;
+  error?: string;
+}
+
+/**
+ * “Reportar phishing”: un empleado reporta un correo sospechoso. Si coincide con un simulacro que recibió
+ * (últimos 14 días) cuenta como detectado; si no, se guarda para que lo vea su encargado.
+ */
+export async function reportSuspicious(_prev: SuspiciousState, form: FormData): Promise<SuspiciousState> {
+  const user = await getCurrentUser();
+  if (!user?.org) return { error: "Esta opción es para equipos con plan Empresa." };
+  const subject = String(form.get("subject") ?? "").trim().replace(/\s+/g, " ").slice(0, 200);
+  const sender = String(form.get("sender") ?? "").trim().slice(0, 120);
+  const notes = String(form.get("notes") ?? "").trim().slice(0, 500);
+  if (subject.length < 3) return { error: "Copia el asunto del correo." };
+
+  const { phishTargets, phishCampaigns, orgReports, orgs } = await collections();
+  const since = new Date(Date.now() - 14 * 864e5);
+  const targets = await phishTargets.find({ orgId: user.org._id, userId: user._id, sentAt: { $gt: since } }).toArray();
+  if (targets.length) {
+    const [org, campaigns] = await Promise.all([
+      orgs.findOne({ _id: user.org._id }, { projection: { name: 1 } }),
+      phishCampaigns.find({ _id: { $in: targets.map((t) => t.campaignId) } }, { projection: { templateId: 1 } }).toArray(),
+    ]);
+    const templateOf = new Map(campaigns.map((c) => [c._id.toHexString(), c.templateId]));
+    const hit = targets.find((t) => {
+      const tpl = PHISH_BY_ID.get(templateOf.get(t.campaignId.toHexString()) ?? "");
+      return tpl && org && subjectMatches(subject, tpl.subject(org.name));
+    });
+    if (hit) {
+      await phishTargets.updateOne({ _id: hit._id, reportedAt: { $exists: false } }, { $set: { reportedAt: new Date() } });
+      return { ok: true, simulacro: true };
+    }
+  }
+
+  if ((await orgReports.countDocuments({ userId: user._id, createdAt: { $gt: new Date(Date.now() - 864e5) } })) >= 10)
+    return { error: "Llegaste al límite de reportes por hoy." };
+  await orgReports.insertOne({ _id: new ObjectId(), orgId: user.org._id, userId: user._id, subject, sender, notes, createdAt: new Date() });
+  return { ok: true, simulacro: false };
+}
+
+/** El encargado asigna (o quita) el área de una persona de su equipo. */
+export async function setMemberArea(form: FormData) {
+  const owner = await currentOwner();
+  if (!owner) return;
+  const id = String(form.get("userId") ?? "");
+  const area = form.get("area");
+  if (!ObjectId.isValid(id)) return;
+  const { users } = await collections();
+  await users.updateOne(
+    { _id: new ObjectId(id), orgId: owner.org._id },
+    isAreaId(area) ? { $set: { orgArea: area } } : { $unset: { orgArea: "" } },
+  );
+  refresh();
 }
 
 /** La persona abrió el enlace de un simulacro. Público: el token es la única credencial. */

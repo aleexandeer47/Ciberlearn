@@ -6,7 +6,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { view } from "@/lib/lives";
 import { isUnlocked, LESSON_BY_ID, LESSON_ORDER, publicLesson } from "@/lib/path/content";
 import { collections } from "@/lib/server/db";
-import { getCurrentUser } from "@/lib/server/session";
+import { extraUnlocked, getCurrentUser } from "@/lib/server/session";
 
 export const metadata: Metadata = { title: "Lección", robots: { index: false } };
 
@@ -23,7 +23,7 @@ async function Lesson({ params }: { params: Promise<{ leccion: string }> }) {
   if (!user) redirect(`/entrar?next=/ruta/${leccion}`);
   const { users } = await collections();
   const doc = await users.findOne({ _id: user._id }, { projection: { path: 1, lives: 1 } });
-  if (!isUnlocked(leccion, new Set(doc?.path?.completed ?? []))) redirect("/ruta");
+  if (!isUnlocked(leccion, new Set(doc?.path?.completed ?? [])) && !extraUnlocked(user).has(leccion)) redirect("/ruta");
 
   // Solo se manda la lección sin respuestas
   return <LessonPlayer lesson={publicLesson(lesson)} initialLives={view(doc?.lives, user.isPro)} />;

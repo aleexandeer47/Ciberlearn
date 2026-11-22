@@ -146,5 +146,103 @@ export const PHISH_TEMPLATES: PhishTemplate[] = [
 
 export const PHISH_BY_ID = new Map(PHISH_TEMPLATES.map((t) => [t.id, t]));
 
+// ---------------------------------------------------------------------------------------------
+// Rutas por área: el encargado asigna un área a cada persona y sus lecciones clave se desbloquean.
+// ---------------------------------------------------------------------------------------------
+
+export type AreaId = "finanzas" | "atencion" | "direccion" | "operaciones";
+
+export const AREAS: Record<AreaId, { label: string; focus: string; lessons: string[] }> = {
+  finanzas: {
+    label: "Finanzas y pagos",
+    focus: "Fraude del jefe, facturas con cuentas cambiadas y transferencias urgentes.",
+    lessons: ["u7l1", "u7l2", "u1l3", "u4l3", "u8l3"],
+  },
+  atencion: {
+    label: "Atención al cliente y ventas",
+    focus: "Llamadas falsas, perfiles que suplantan a la empresa, remesas y soporte falso.",
+    lessons: ["u4l3", "u5l2", "u4l1", "u7l3", "u2l1"],
+  },
+  direccion: {
+    label: "Dirección y gerencia",
+    focus: "Mensajes casi perfectos, voces clonadas, cuentas robadas y verificación en dos pasos.",
+    lessons: ["u7l1", "u8l2", "u5l1", "u6l2", "u8l3"],
+  },
+  operaciones: {
+    label: "Operaciones y personal general",
+    focus: "Leer enlaces, archivos y QR, contraseñas y apps del celular.",
+    lessons: ["u3l1", "u3l2", "u6l1", "u6l3", "u2l2"],
+  },
+};
+
+export const isAreaId = (v: unknown): v is AreaId => typeof v === "string" && v in AREAS;
+
+// ---------------------------------------------------------------------------------------------
+// Índice de preparación (0-100): cuánto está preparada la empresa contra el phishing.
+// ---------------------------------------------------------------------------------------------
+
+export interface ReadinessInput {
+  /** Avance promedio de la ruta (0-100) */
+  pathPct: number | null;
+  /** Puntaje promedio en la bandeja de entrenamiento (0-100) */
+  inboxScore: number | null;
+  /** % de simulacros en los que hicieron clic (0-100) */
+  clickRate: number | null;
+  /** % de simulacros que reportaron (0-100) */
+  reportRate: number | null;
+}
+
+const WEIGHTS = { pathPct: 0.3, inboxScore: 0.25, clickRate: 0.3, reportRate: 0.15 } as const;
+
+/** Promedio ponderado; los datos que aún no existen se excluyen y su peso se reparte. */
+export function readinessScore(x: ReadinessInput) {
+  const parts: [number, number][] = [];
+  if (x.pathPct !== null) parts.push([x.pathPct, WEIGHTS.pathPct]);
+  if (x.inboxScore !== null) parts.push([x.inboxScore, WEIGHTS.inboxScore]);
+  if (x.clickRate !== null) parts.push([100 - x.clickRate, WEIGHTS.clickRate]);
+  if (x.reportRate !== null) parts.push([x.reportRate, WEIGHTS.reportRate]);
+  if (!parts.length) return null;
+  const w = parts.reduce((a, [, k]) => a + k, 0);
+  return Math.round(parts.reduce((a, [v, k]) => a + Math.max(0, Math.min(100, v)) * k, 0) / w);
+}
+
+export function readinessLevel(score: number) {
+  if (score >= 75) return { label: "Preparada", tone: "ok" as const };
+  if (score >= 50) return { label: "En progreso", tone: "warn" as const };
+  return { label: "En riesgo", tone: "bad" as const };
+}
+
+/** Recomendaciones concretas a partir de los puntos débiles (para el informe de gerencia). */
+export function recommendations(x: ReadinessInput, weakestSkill: string | null, membersWithoutArea: number) {
+  const out: string[] = [];
+  if (x.pathPct === null || x.pathPct < 50)
+    out.push("Pide que cada persona complete al menos una lección por semana de la ruta guiada.");
+  if (x.clickRate === null) out.push("Envía un primer simulacro de phishing para medir cómo reacciona el equipo.");
+  else if (x.clickRate > 20) out.push("Más de 1 de cada 5 personas cayó en un simulacro: repite uno al mes y comenta los resultados con el equipo.");
+  if (x.reportRate !== null && x.reportRate < 30)
+    out.push("Pocas personas reportan los correos sospechosos: recuérdales usar “Reportar phishing” en vez de solo borrarlos.");
+  if (x.inboxScore === null) out.push("Pide al equipo que practique en la bandeja de entrenamiento: simula un día normal de correo.");
+  else if (x.inboxScore < 70) out.push("El puntaje en la bandeja de entrenamiento es bajo: practiquen con una bandeja por semana.");
+  if (weakestSkill) out.push(`Refuercen la señal que más se les escapa: “${weakestSkill}”.`);
+  if (membersWithoutArea > 0)
+    out.push(`Asigna un área a ${membersWithoutArea === 1 ? "1 persona" : `${membersWithoutArea} personas`} para abrir las lecciones clave de su puesto.`);
+  return out.slice(0, 5);
+}
+
+/** ¿El asunto que reporta un empleado corresponde al de un simulacro? (sin importar mayúsculas, tildes ni espacios) */
+export function subjectMatches(reported: string, sent: string) {
+  const norm = (s: string) =>
+    s
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+  const a = norm(reported);
+  const b = norm(sent);
+  if (a.length < 8 || !b) return false;
+  return b.includes(a) || a.includes(b) || b.includes(a.slice(0, 24));
+}
+
 /** Porcentaje entero, 0 si no hay base. */
 export const pct = (part: number, total: number) => (total ? Math.round((part / total) * 100) : 0);

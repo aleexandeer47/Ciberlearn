@@ -4,8 +4,8 @@
 
 // Formato de versión: AAAA-MM-DD, con ".2", ".3"… si cambia más de una vez el mismo día.
 export const LEGAL = {
-  terminos: { path: "/terminos", title: "Términos y condiciones", version: "2026-11-21.3", updated: "21 de noviembre de 2026" },
-  privacidad: { path: "/privacidad", title: "Política de privacidad", version: "2026-11-21.3", updated: "21 de noviembre de 2026" },
+  terminos: { path: "/terminos", title: "Términos y condiciones", version: "2026-11-22", updated: "22 de noviembre de 2026" },
+  privacidad: { path: "/privacidad", title: "Política de privacidad", version: "2026-11-22", updated: "22 de noviembre de 2026" },
   cookies: { path: "/cookies", title: "Política de cookies", version: "2026-11-21", updated: "21 de noviembre de 2026" },
   reembolsos: { path: "/reembolsos", title: "Política de reembolso", version: "2026-11-21.2", updated: "21 de noviembre de 2026" },
 } as const;

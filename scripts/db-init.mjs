@@ -39,6 +39,16 @@ const specs = {
     [{ userId: 1, createdAt: -1 }, {}],
     [{ reviewedAt: 1 }, { expireAfterSeconds: 90 * 86400, partialFilterExpression: { status: "rejected" } }],
   ],
+  inbox_sessions: [
+    [{ createdAt: 1 }, { expireAfterSeconds: 86400 }],
+    [{ userId: 1 }, {}],
+  ],
+  inbox_results: [
+    [{ userId: 1, createdAt: -1 }, {}],
+    [{ orgId: 1, createdAt: -1 }, {}],
+  ],
+  org_reports: [[{ orgId: 1, createdAt: -1 }, {}]],
+  org_scores: [[{ orgId: 1, month: 1 }, {}]],
   lesson_attempts: [
     [{ userId: 1, lessonId: 1 }, { unique: true }],
     [{ startedAt: 1 }, { expireAfterSeconds: 2 * 86400 }],

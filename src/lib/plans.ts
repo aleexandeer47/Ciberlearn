@@ -26,6 +26,7 @@ export const FEATURES: { label: string; free: boolean | string; pro: boolean | s
   { label: "Ranking mundial y XP", free: true, pro: true },
   { label: "Simulador clásico (10 mensajes)", free: true, pro: true },
   { label: "Skills por tipo de señal e insignias", free: true, pro: true },
+  { label: "Bandeja de entrenamiento (correo simulado)", free: false, pro: true },
   { label: "Pack de mensajes avanzados", free: false, pro: "6 extra" },
   { label: "Modo contrarreloj", free: false, pro: true },
   { label: "Entrenamiento de tu skill más débil", free: false, pro: true },

@@ -4,7 +4,7 @@ import { ObjectId } from "mongodb";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { cache } from "react";
-import { orgActive } from "@/lib/business";
+import { AREAS, orgActive, type AreaId } from "@/lib/business";
 import { isProActive } from "@/lib/plans";
 import { collections } from "./db";
 import { env } from "./env";
@@ -55,7 +55,20 @@ export interface CurrentUser {
   /** Hasta cuándo tiene Pro, por la vía que dure más; null si no tiene */
   proEnds: Date | null;
   isAdmin: boolean;
-  org: { _id: ObjectId; name: string; role: "owner" | "member"; active: boolean; paidUntil: Date | null } | null;
+  org: {
+    _id: ObjectId;
+    name: string;
+    role: "owner" | "member";
+    active: boolean;
+    paidUntil: Date | null;
+    area: AreaId | null;
+  } | null;
+}
+
+/** Lecciones que se abren sin seguir el orden: las del área asignada por una empresa con plan vigente. */
+export function extraUnlocked(user: CurrentUser | null): ReadonlySet<string> {
+  const area = user?.org?.active ? user.org.area : null;
+  return new Set(area ? AREAS[area].lessons : []);
 }
 
 /** Usuario de la petición actual (memoizado por petición con React cache). */
@@ -74,7 +87,15 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   if (user.orgId) {
     const { orgs } = await collections();
     const o = await orgs.findOne({ _id: user.orgId }, { projection: { name: 1, paidUntil: 1 } });
-    if (o) org = { _id: o._id, name: o.name, role: user.orgRole ?? "member", active: orgActive(o.paidUntil), paidUntil: o.paidUntil };
+    if (o)
+      org = {
+        _id: o._id,
+        name: o.name,
+        role: user.orgRole ?? "member",
+        active: orgActive(o.paidUntil),
+        paidUntil: o.paidUntil,
+        area: user.orgArea ?? null,
+      };
   }
   const own = isProActive(user.proUntil);
   const ends = [own ? user.proUntil : null, org?.active ? org.paidUntil : null].filter((d): d is Date => !!d);

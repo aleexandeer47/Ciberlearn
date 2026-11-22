@@ -1,7 +1,8 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { ObjectId } from "mongodb";
-import { orgActive, pct } from "@/lib/business";
+import { AREAS, orgActive, pct, readinessScore, type AreaId } from "@/lib/business";
+import { dayKey } from "@/lib/dayKey";
 import { LESSONS } from "@/lib/path/content";
 import { CATEGORY_LABELS } from "@/lib/scenarios/categories";
 import type { SignalCategory } from "@/lib/scenarios/types";
@@ -58,6 +59,12 @@ export interface MemberRow {
   name: string;
   email: string;
   role: "owner" | "member";
+  area: AreaId | null;
+  /** Lecciones de su área completadas */
+  areaDone: number;
+  inboxAvg: number | null;
+  inboxCount: number;
+  simsReported: number;
   joinedAt: Date | null;
   lastLoginAt: Date | null;
   xp: number;
@@ -72,17 +79,17 @@ export interface MemberRow {
 
 /** Todo lo que ve el encargado: avance de cada persona, puntos débiles del equipo y simulacros. */
 export async function teamReport(orgId: ObjectId) {
-  const { users, runs, phishTargets, phishCampaigns } = await collections();
+  const { users, runs, phishTargets, phishCampaigns, inboxResults, orgReports } = await collections();
   const members = await users
     .find(
       { orgId },
-      { projection: { name: 1, email: 1, orgRole: 1, orgJoinedAt: 1, lastLoginAt: 1, xp: 1, path: 1 } },
+      { projection: { name: 1, email: 1, orgRole: 1, orgJoinedAt: 1, lastLoginAt: 1, xp: 1, path: 1, orgArea: 1 } },
     )
     .sort({ orgRole: -1, name: 1 })
     .toArray();
   const ids = members.map((m) => m._id);
 
-  const [runAgg, skillAgg, simAgg, campaigns, campaignAgg] = await Promise.all([
+  const [runAgg, skillAgg, simAgg, campaigns, campaignAgg, inboxAgg, reports] = await Promise.all([
     runs
       .aggregate<{ _id: ObjectId; n: number; avg: number; last: Date }>([
         { $match: { userId: { $in: ids } } },
@@ -104,23 +111,45 @@ export async function teamReport(orgId: ObjectId) {
       ])
       .toArray(),
     phishTargets
-      .aggregate<{ _id: ObjectId; sent: number; clicked: number }>([
+      .aggregate<{ _id: ObjectId; sent: number; clicked: number; reported: number }>([
         { $match: { orgId, sentAt: { $ne: null } } },
-        { $group: { _id: "$userId", sent: { $sum: 1 }, clicked: { $sum: { $cond: [{ $ifNull: ["$clickedAt", false] }, 1, 0] } } } },
+        {
+          $group: {
+            _id: "$userId",
+            sent: { $sum: 1 },
+            clicked: { $sum: { $cond: [{ $ifNull: ["$clickedAt", false] }, 1, 0] } },
+            reported: { $sum: { $cond: [{ $ifNull: ["$reportedAt", false] }, 1, 0] } },
+          },
+        },
       ])
       .toArray(),
     phishCampaigns.find({ orgId }).sort({ createdAt: -1 }).limit(10).toArray(),
     phishTargets
-      .aggregate<{ _id: ObjectId; clicked: number }>([
-        { $match: { orgId, clickedAt: { $exists: true } } },
-        { $group: { _id: "$campaignId", clicked: { $sum: 1 } } },
+      .aggregate<{ _id: ObjectId; clicked: number; reported: number }>([
+        { $match: { orgId } },
+        {
+          $group: {
+            _id: "$campaignId",
+            clicked: { $sum: { $cond: [{ $ifNull: ["$clickedAt", false] }, 1, 0] } },
+            reported: { $sum: { $cond: [{ $ifNull: ["$reportedAt", false] }, 1, 0] } },
+          },
+        },
       ])
       .toArray(),
+    inboxResults
+      .aggregate<{ _id: ObjectId; avg: number; n: number }>([
+        { $match: { userId: { $in: ids } } },
+        { $group: { _id: "$userId", avg: { $avg: "$score" }, n: { $sum: 1 } } },
+      ])
+      .toArray(),
+    orgReports.find({ orgId }).sort({ createdAt: -1 }).limit(20).toArray(),
   ]);
 
   const runBy = new Map(runAgg.map((r) => [r._id.toHexString(), r]));
   const simBy = new Map(simAgg.map((r) => [r._id.toHexString(), r]));
-  const clickBy = new Map(campaignAgg.map((r) => [r._id.toHexString(), r.clicked]));
+  const campBy = new Map(campaignAgg.map((r) => [r._id.toHexString(), r]));
+  const inboxBy = new Map(inboxAgg.map((r) => [r._id.toHexString(), r]));
+  const nameBy = new Map(members.map((m) => [m._id.toHexString(), m.name]));
 
   // Habilidad más débil por persona y del equipo completo (solo categorías con al menos 3 señales vistas)
   const perUser = new Map<string, { c: SignalCategory; total: number; found: number }[]>();
@@ -142,11 +171,19 @@ export async function teamReport(orgId: ObjectId) {
     const k = m._id.toHexString();
     const r = runBy.get(k);
     const s = simBy.get(k);
+    const ib = inboxBy.get(k);
+    const area = m.orgArea && AREAS[m.orgArea] ? m.orgArea : null;
+    const doneSet = new Set(m.path?.completed ?? []);
     return {
       id: k,
       name: m.name,
       email: m.email,
       role: m.orgRole ?? "member",
+      area,
+      areaDone: area ? AREAS[area].lessons.filter((id) => doneSet.has(id)).length : 0,
+      inboxAvg: ib ? Math.round(ib.avg) : null,
+      inboxCount: ib?.n ?? 0,
+      simsReported: s?.reported ?? 0,
       joinedAt: m.orgJoinedAt ?? null,
       lastLoginAt: m.lastLoginAt ?? null,
       xp: m.xp ?? 0,
@@ -166,20 +203,57 @@ export async function teamReport(orgId: ObjectId) {
 
   const sent = rows.reduce((a, r) => a + r.simsSent, 0);
   const clicked = rows.reduce((a, r) => a + r.simsClicked, 0);
+  const reported = rows.reduce((a, r) => a + r.simsReported, 0);
+  const pathPct = rows.length ? Math.round(rows.reduce((a, r) => a + pct(r.lessonsDone, LESSONS.length), 0) / rows.length) : null;
+  const inboxRows = rows.filter((r) => r.inboxAvg !== null);
+  const inboxScore = inboxRows.length ? Math.round(inboxRows.reduce((a, r) => a + r.inboxAvg!, 0) / inboxRows.length) : null;
+  const readinessInput = {
+    pathPct,
+    inboxScore,
+    clickRate: sent ? pct(clicked, sent) : null,
+    reportRate: sent ? pct(reported, sent) : null,
+  };
 
   return {
     rows,
     totalLessons: LESSONS.length,
     skills,
-    sims: { sent, clicked, rate: pct(clicked, sent) },
+    sims: { sent, clicked, reported, rate: pct(clicked, sent), reportRate: pct(reported, sent) },
+    inboxScore,
+    pathPct: pathPct ?? 0,
+    readiness: readinessScore(readinessInput),
+    readinessInput,
+    reports: reports.map((r) => ({
+      id: r._id.toHexString(),
+      by: nameBy.get(r.userId.toHexString()) ?? "Ex miembro",
+      subject: r.subject,
+      sender: r.sender,
+      notes: r.notes,
+      createdAt: r.createdAt,
+    })),
     campaigns: campaigns.map((c) => ({
       id: c._id.toHexString(),
       templateId: c.templateId,
       createdAt: c.createdAt,
       sent: c.sent,
-      clicked: clickBy.get(c._id.toHexString()) ?? 0,
+      clicked: campBy.get(c._id.toHexString())?.clicked ?? 0,
+      reported: campBy.get(c._id.toHexString())?.reported ?? 0,
     })),
   };
+}
+
+/** Guarda el índice del mes (uno por empresa y mes) y devuelve los últimos 6 meses. */
+export async function recordReadiness(orgId: ObjectId, score: number | null) {
+  const { orgScores } = await collections();
+  const month = dayKey().slice(0, 7);
+  if (score !== null)
+    await orgScores.updateOne(
+      { _id: `${orgId.toHexString()}:${month}` },
+      { $set: { orgId, month, score, updatedAt: new Date() } },
+      { upsert: true },
+    );
+  const rows = await orgScores.find({ orgId }).sort({ month: -1 }).limit(6).toArray();
+  return rows.reverse().map((r) => ({ month: r.month, score: r.score }));
 }
 
 export type TeamReport = Awaited<ReturnType<typeof teamReport>>;

@@ -1,4 +1,5 @@
 import type { ObjectId } from "mongodb";
+import type { AreaId } from "@/lib/business";
 import type { PlanId } from "@/lib/plans";
 import type { SignalCategory, Verdict } from "@/lib/scenarios/types";
 
@@ -27,6 +28,8 @@ export interface UserDoc {
   orgId?: ObjectId;
   orgRole?: "owner" | "member";
   orgJoinedAt?: Date;
+  /** Área asignada por el encargado: desbloquea sus lecciones clave */
+  orgArea?: AreaId;
   /** Estafa del día: racha de días seguidos respondiendo */
   daily?: { lastDay: string; streak: number; best: number };
   /** Identificador público de la tarjeta de logro (/logro/…); solo se crea si la persona la comparte */
@@ -126,6 +129,48 @@ export interface PhishTargetDoc {
   sentAt: Date | null;
   /** Abrió el enlace del simulacro */
   clickedAt?: Date;
+  /** Lo reportó como sospechoso desde la página de su empresa */
+  reportedAt?: Date;
+}
+
+/** Correo sospechoso que un empleado reportó y que no era un simulacro: le llega al encargado. */
+export interface OrgReportDoc {
+  _id: ObjectId;
+  orgId: ObjectId;
+  userId: ObjectId;
+  subject: string;
+  sender: string;
+  notes: string;
+  createdAt: Date;
+}
+
+/** Índice de preparación de una empresa por mes (para ver su evolución). */
+export interface OrgScoreDoc {
+  _id: string; // `${orgId}:${AAAA-MM}`
+  orgId: ObjectId;
+  month: string;
+  score: number;
+  updatedAt: Date;
+}
+
+/** Sesión de la bandeja de entrenamiento (de un solo uso: se borra al terminar). */
+export interface InboxSessionDoc {
+  _id: ObjectId;
+  userId: ObjectId;
+  emailIds: string[];
+  createdAt: Date;
+}
+
+export interface InboxResultDoc {
+  _id: ObjectId;
+  userId: ObjectId;
+  orgId?: ObjectId;
+  score: number;
+  reported: number;
+  phishing: number;
+  clicked: number;
+  falsePositives: number;
+  createdAt: Date;
 }
 
 /**
@@ -167,7 +212,7 @@ export interface XpEventDoc {
   _id: ObjectId;
   userId: ObjectId;
   amount: number;
-  source: "simulador" | "ruta" | "ia" | "diaria";
+  source: "simulador" | "ruta" | "ia" | "diaria" | "bandeja";
   createdAt: Date;
 }
 

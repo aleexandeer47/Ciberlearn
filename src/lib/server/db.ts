@@ -8,6 +8,10 @@ import type {
   ChallengePlayDoc,
   ConsentDoc,
   DailyAnswerDoc,
+  InboxResultDoc,
+  InboxSessionDoc,
+  OrgReportDoc,
+  OrgScoreDoc,
   ScamReportDoc,
   DailyStatDoc,
   LessonAttemptDoc,
@@ -86,6 +90,10 @@ export async function collections() {
     challengePlays: d.collection<ChallengePlayDoc>("challenge_plays"),
     dailyAnswers: d.collection<DailyAnswerDoc>("daily_answers"),
     scamReports: d.collection<ScamReportDoc>("scam_reports"),
+    orgReports: d.collection<OrgReportDoc>("org_reports"),
+    orgScores: d.collection<OrgScoreDoc>("org_scores"),
+    inboxSessions: d.collection<InboxSessionDoc>("inbox_sessions"),
+    inboxResults: d.collection<InboxResultDoc>("inbox_results"),
   };
 }
 
@@ -152,6 +160,13 @@ export async function ensureIndexes(d: Db) {
       { reviewedAt: 1 },
       { expireAfterSeconds: 90 * 86400, partialFilterExpression: { status: "rejected" } },
     ),
+    // Fase 2: bandeja, reportes del equipo e índice de preparación
+    d.collection("inbox_sessions").createIndex({ createdAt: 1 }, { expireAfterSeconds: 86400 }),
+    d.collection("inbox_sessions").createIndex({ userId: 1 }),
+    d.collection("inbox_results").createIndex({ userId: 1, createdAt: -1 }),
+    d.collection("inbox_results").createIndex({ orgId: 1, createdAt: -1 }),
+    d.collection("org_reports").createIndex({ orgId: 1, createdAt: -1 }),
+    d.collection("org_scores").createIndex({ orgId: 1, month: 1 }),
     d.collection("users").createIndex({ shareId: 1 }, { unique: true, partialFilterExpression: { shareId: { $type: "string" } } }),
     d.collection("users").createIndex(
       { "certificate.code": 1 },

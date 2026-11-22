@@ -168,12 +168,17 @@ export default function PrivacidadPage() {
         <ul className="list-disc space-y-2 pl-5">
           <li>
             El encargado de esa empresa vea tu nombre, tu correo, las lecciones que completaste, tu XP, tus rondas y tu
-            puntaje promedio en el simulador, la señal que más se te escapa, cuándo entraste por última vez y los resultados
-            de los simulacros.
+            puntaje promedio en el simulador y en la bandeja de entrenamiento, la señal que más se te escapa, cuándo
+            entraste por última vez, el área que te asignó y los resultados de los simulacros (si hiciste clic o si lo
+            reportaste).
           </li>
           <li>
             La empresa te envíe simulacros de phishing: correos de práctica que imitan una estafa. Guardamos a quién se
-            envió cada uno, cuándo y si abriste su enlace. Esos correos nunca piden datos.
+            envió cada uno, cuándo, si abriste su enlace y si lo reportaste. Esos correos nunca piden datos.
+          </li>
+          <li>
+            Si usas “Reportar phishing” desde la página de tu empresa, tu encargado verá tu nombre y el asunto, el
+            remitente y la nota que escribas.
           </li>
         </ul>
         <p>

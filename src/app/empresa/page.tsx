@@ -1,16 +1,32 @@
-import { BarChart3, Building2, Download, FileSpreadsheet, MailWarning, RefreshCw, ShieldCheck, Users } from "lucide-react";
+import {
+  BarChart3,
+  Building2,
+  Check,
+  Download,
+  FileSpreadsheet,
+  FileText,
+  Flag,
+  Inbox,
+  MailWarning,
+  RefreshCw,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
 import { leaveOrg, rotateInvite } from "@/app/actions/org";
 import { AddSeats, SeatCheckout } from "@/components/business/SeatCheckout";
-import { CopyLink, InviteForm, RemoveMemberButton, SimLauncher } from "@/components/business/TeamTools";
+import { ReadinessGauge, ReadinessHistory, ReadinessParts } from "@/components/business/Readiness";
+import { AreaSelect, CopyLink, InviteForm, RemoveMemberButton, ReportSuspiciousForm, SimLauncher } from "@/components/business/TeamTools";
 import { PageShell } from "@/components/SiteHeader";
-import { BUSINESS, daysLeft, orgActive, pct, PHISH_BY_ID, PHISH_TEMPLATES } from "@/lib/business";
+import { AREAS, BUSINESS, daysLeft, orgActive, pct, PHISH_BY_ID, PHISH_TEMPLATES } from "@/lib/business";
+import { defang } from "@/lib/community";
+import { LESSON_BY_ID } from "@/lib/path/content";
 import { collections } from "@/lib/server/db";
 import { env } from "@/lib/server/env";
-import { teamReport } from "@/lib/server/org";
+import { recordReadiness, teamReport } from "@/lib/server/org";
 import { getCurrentUser, type CurrentUser } from "@/lib/server/session";
 
 export const metadata: Metadata = {
@@ -44,9 +60,11 @@ function Notice({ tone, children }: { tone: "ok" | "bad"; children: ReactNode })
 
 const FEATURES = [
   { icon: ShieldCheck, title: "Pro para cada persona", text: "Ruta completa, vidas infinitas, mensajes avanzados, contrarreloj y certificado." },
-  { icon: BarChart3, title: "Panel del encargado", text: "Quién avanza, quién va atrasado y en qué tipo de estafa falla más tu equipo." },
-  { icon: MailWarning, title: "Simulacros de phishing", text: "Envía correos falsos controlados y mide quién hace clic. Quien cae aprende al instante." },
-  { icon: FileSpreadsheet, title: "Informe descargable", text: "El avance de todo el equipo en una hoja de cálculo, para gerencia o auditoría." },
+  { icon: BarChart3, title: "Índice de preparación", text: "Una cifra de 0 a 100 con su evolución mes a mes, y qué mejorar primero." },
+  { icon: MailWarning, title: "Simulacros y reportes", text: "Envía correos falsos controlados: mide quién hace clic y quién los reporta." },
+  { icon: FileSpreadsheet, title: "Informe para gerencia", text: "Un informe listo para imprimir o guardar en PDF, y los datos en hoja de cálculo." },
+  { icon: Inbox, title: "Bandeja de entrenamiento", text: "Un día de correo simulado para practicar qué reportar, qué borrar y en qué confiar." },
+  { icon: Users, title: "Rutas por área", text: "Finanzas, atención al cliente, gerencia u operaciones: las lecciones clave de cada puesto." },
 ];
 
 function Pitch({ user, error }: { user: CurrentUser | null; error?: string }) {
@@ -108,10 +126,14 @@ function Pitch({ user, error }: { user: CurrentUser | null; error?: string }) {
 
 // ------------------------------------------------------------------ empleado
 
-function MemberView({ user, joined }: { user: CurrentUser; joined: boolean }) {
+async function MemberView({ user, joined }: { user: CurrentUser; joined: boolean }) {
   const org = user.org!;
+  const { users } = await collections();
+  const doc = await users.findOne({ _id: user._id }, { projection: { path: 1 } });
+  const done = new Set(doc?.path?.completed ?? []);
+  const area = org.area ? AREAS[org.area] : null;
   return (
-    <div className="mx-auto max-w-xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6">
       {joined && <Notice tone="ok">¡Listo! Ya eres parte de {org.name}.</Notice>}
       <Card>
         <span className="grid h-12 w-12 place-items-center rounded-2xl bg-field text-brand">
@@ -131,12 +153,61 @@ function MemberView({ user, joined }: { user: CurrentUser; joined: boolean }) {
           <Link href="/ruta" className="btn btn-primary px-5 py-3">
             Seguir con la ruta
           </Link>
+          <Link href="/bandeja" className="btn btn-ghost px-5 py-3">
+            <Inbox className="h-4 w-4" aria-hidden /> Bandeja de entrenamiento
+          </Link>
           <form action={leaveOrg}>
             <button type="submit" className="btn btn-ghost px-5 py-3">
               Salir de la empresa
             </button>
           </form>
         </div>
+      </Card>
+
+      {area && (
+        <Card>
+          <p className="eyebrow">Tu ruta de área</p>
+          <h2 className="mt-2 font-display text-2xl">{area.label}</h2>
+          <p className="mt-1 text-sm text-fog">
+            {area.focus} Tu encargado te asignó estas lecciones: ya están abiertas, sin seguir el orden de la ruta.
+          </p>
+          <ul className="mt-5 space-y-2">
+            {area.lessons.map((id) => {
+              const l = LESSON_BY_ID.get(id);
+              if (!l) return null;
+              const ok = done.has(id);
+              return (
+                <li key={id}>
+                  <Link
+                    href={`/ruta/${id}`}
+                    className="flex items-center justify-between gap-3 rounded-2xl border border-desk-line bg-desk-3 px-4 py-3 transition-colors hover:border-brand"
+                  >
+                    <span className="font-medium">{l.title}</span>
+                    {ok ? (
+                      <span className="flex items-center gap-1 text-sm text-ok">
+                        <Check className="h-4 w-4" aria-hidden /> Completada
+                      </span>
+                    ) : (
+                      <span className="text-sm text-brand">Empezar →</span>
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+      )}
+
+      <Card>
+        <div className="flex items-center gap-2">
+          <Flag className="h-5 w-5 text-[#f97316]" aria-hidden />
+          <h2 className="font-display text-xl">¿Te llegó un correo sospechoso?</h2>
+        </div>
+        <p className="mb-4 mt-1 text-sm text-fog">
+          Repórtalo aquí sin abrir sus enlaces. Si era un simulacro de tu empresa, cuenta a tu favor; si no, tu encargado lo
+          revisará.
+        </p>
+        <ReportSuspiciousForm />
       </Card>
     </div>
   );
@@ -169,10 +240,9 @@ async function OwnerView({ user, error, joined }: { user: CurrentUser; error?: s
   }
 
   const report = await teamReport(org._id);
+  const history = await recordReadiness(org._id, report.readiness);
   const members = report.rows.filter((r) => r.role === "member").length;
-  const avgLessons = report.rows.length
-    ? Math.round(report.rows.reduce((a, r) => a + pct(r.lessonsDone, report.totalLessons), 0) / report.rows.length)
-    : 0;
+  const avgLessons = report.pathPct;
   const inviteUrl = `${env.appUrl}/empresa/unirse/${org.inviteCode}`;
   const left = daysLeft(org.paidUntil);
   const templates = PHISH_TEMPLATES.map((t) => ({
@@ -190,13 +260,36 @@ async function OwnerView({ user, error, joined }: { user: CurrentUser; error?: s
           <span className="eyebrow">Panel de tu empresa</span>
           <h1 className="mt-2 font-display text-4xl">{org.name}</h1>
         </div>
-        <a href="/empresa/informe" className="btn btn-ghost h-10 px-4 text-sm">
-          <Download className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-          Descargar informe (CSV)
-        </a>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/empresa/informe/imprimir" className="btn btn-primary h-10 px-4 text-sm">
+            <FileText className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+            Informe para gerencia (PDF)
+          </Link>
+          <a href="/empresa/informe" className="btn btn-ghost h-10 px-4 text-sm">
+            <Download className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+            Datos (CSV)
+          </a>
+        </div>
       </div>
       {error && <Notice tone="bad">{error}</Notice>}
       {joined && <Notice tone="ok">Tu plan Empresa está activo.</Notice>}
+
+      <Card>
+        <div className="grid items-center gap-8 md:grid-cols-[auto_1fr_1fr]">
+          <div className="text-center">
+            <p className="mb-2 text-sm text-fog">Índice de preparación</p>
+            <ReadinessGauge score={report.readiness} />
+          </div>
+          <div>
+            <p className="mb-3 text-sm font-semibold">De qué depende</p>
+            <ReadinessParts input={report.readinessInput} />
+          </div>
+          <div>
+            <p className="mb-3 text-sm font-semibold">Evolución mensual</p>
+            <ReadinessHistory history={history} />
+          </div>
+        </div>
+      </Card>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
@@ -206,7 +299,9 @@ async function OwnerView({ user, error, joined }: { user: CurrentUser; error?: s
           {
             label: "Cayeron en simulacros",
             value: report.sims.sent ? `${report.sims.rate}%` : "—",
-            detail: report.sims.sent ? `${report.sims.clicked} de ${report.sims.sent} correos` : "Aún no envías simulacros",
+            detail: report.sims.sent
+              ? `${report.sims.clicked} clics · ${report.sims.reported} reportados de ${report.sims.sent}`
+              : "Aún no envías simulacros",
           },
         ].map((s) => (
           <Card key={s.label}>
@@ -268,13 +363,14 @@ async function OwnerView({ user, error, joined }: { user: CurrentUser; error?: s
           <h2 className="font-display text-xl">Equipo</h2>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[860px] text-left text-sm">
+          <table className="w-full min-w-[1080px] text-left text-sm">
             <thead className="border-y border-desk-line bg-desk-3 text-xs text-fog">
               <tr>
                 <th className="px-6 py-2.5 font-medium">Persona</th>
+                <th className="px-3 py-2.5 font-medium">Área</th>
                 <th className="px-3 py-2.5 font-medium">Ruta</th>
                 <th className="px-3 py-2.5 font-medium">XP</th>
-                <th className="px-3 py-2.5 font-medium">Simulador</th>
+                <th className="px-3 py-2.5 font-medium">Bandeja</th>
                 <th className="px-3 py-2.5 font-medium">Punto débil</th>
                 <th className="px-3 py-2.5 font-medium">Simulacros</th>
                 <th className="px-3 py-2.5 font-medium">Última entrada</th>
@@ -294,6 +390,14 @@ async function OwnerView({ user, error, joined }: { user: CurrentUser; error?: s
                       <p className="max-w-[240px] truncate text-xs text-fog">{m.email}</p>
                     </td>
                     <td className="px-3 py-3">
+                      <AreaSelect userId={m.id} value={m.area} name={m.name} />
+                      {m.area && (
+                        <p className="mt-1 text-xs text-fog">
+                          {m.areaDone}/{AREAS[m.area].lessons.length} lecciones clave
+                        </p>
+                      )}
+                    </td>
+                    <td className="px-3 py-3">
                       <div className="flex items-center gap-2">
                         <div className="h-2 w-20 overflow-hidden rounded-full bg-desk-3">
                           <div className="h-full rounded-full bg-brand" style={{ width: `${p}%` }} />
@@ -304,12 +408,13 @@ async function OwnerView({ user, error, joined }: { user: CurrentUser; error?: s
                       </div>
                     </td>
                     <td className="px-3 py-3 tabular-nums">{m.xp}</td>
-                    <td className="px-3 py-3 text-fog">{m.runs ? `${m.runs} rondas · ${m.avgScore} pts` : "—"}</td>
+                    <td className="px-3 py-3 text-fog">{m.inboxAvg !== null ? `${m.inboxAvg}/100 · ${m.inboxCount}` : "—"}</td>
                     <td className="px-3 py-3 text-fog">{m.weakest ?? "—"}</td>
                     <td className="px-3 py-3">
                       {m.simsSent ? (
                         <span className={m.simsClicked ? "text-bad-text" : "text-ok"}>
                           {m.simsClicked ? `Cayó ${m.simsClicked} de ${m.simsSent}` : `0 de ${m.simsSent}`}
+                          {m.simsReported > 0 && <span className="block text-xs text-ok">Reportó {m.simsReported}</span>}
                         </span>
                       ) : (
                         <span className="text-fog">—</span>
@@ -346,6 +451,7 @@ async function OwnerView({ user, error, joined }: { user: CurrentUser; error?: s
                   <th className="px-3 py-2 font-medium">Plantilla</th>
                   <th className="px-3 py-2 font-medium">Enviados</th>
                   <th className="px-3 py-2 font-medium">Hicieron clic</th>
+                  <th className="px-3 py-2 font-medium">Lo reportaron</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-desk-line">
@@ -357,11 +463,45 @@ async function OwnerView({ user, error, joined }: { user: CurrentUser; error?: s
                     <td className={`px-3 py-2.5 tabular-nums ${c.clicked ? "text-bad-text" : "text-ok"}`}>
                       {c.clicked} ({pct(c.clicked, c.sent)}%)
                     </td>
+                    <td className="px-3 py-2.5 tabular-nums text-ok">
+                      {c.reported} ({pct(c.reported, c.sent)}%)
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+        )}
+      </Card>
+
+      <Card>
+        <div className="flex items-center gap-2">
+          <Flag className="h-5 w-5 text-[#f97316]" strokeWidth={1.75} aria-hidden />
+          <h2 className="font-display text-xl">Correos reportados por tu equipo</h2>
+        </div>
+        <p className="mt-1 text-sm text-fog">
+          Lo que tus empleados marcaron como sospechoso y no era un simulacro. Revísalos: pueden ser ataques reales.
+        </p>
+        {report.reports.length === 0 ? (
+          <p className="mt-5 text-sm text-fog">Nadie ha reportado correos todavía.</p>
+        ) : (
+          <ul className="mt-5 divide-y divide-desk-line rounded-2xl border border-desk-line">
+            {report.reports.map((r) => (
+              <li key={r.id} className="p-4 text-sm">
+                <p className="font-semibold">{r.subject}</p>
+                <p className="mt-0.5 text-fog">
+                  {r.by} · {fmt(r.createdAt)}
+                  {r.sender && (
+                    <>
+                      {" · "}
+                      <span className="font-mono text-xs">{defang(r.sender)}</span>
+                    </>
+                  )}
+                </p>
+                {r.notes && <p className="mt-1 text-graphite">{r.notes}</p>}
+              </li>
+            ))}
+          </ul>
         )}
       </Card>
 

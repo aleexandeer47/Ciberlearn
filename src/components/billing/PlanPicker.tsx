@@ -11,6 +11,7 @@ import { PLANS, type PlanId } from "@/lib/plans";
 
 const PRO_PERKS = [
   "Vidas infinitas en la ruta guiada",
+  "Bandeja de entrenamiento: un día de correo simulado",
   "Chats con la IA estafadora (próximamente)",
   "6 mensajes avanzados, contrarreloj y entrenamiento",
   "Historial completo y evolución",
