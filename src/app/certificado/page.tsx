@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -5,6 +6,7 @@ import { Suspense } from "react";
 import { PrintButton } from "@/components/progress/PrintButton";
 import { Logo, PageShell } from "@/components/SiteHeader";
 import { collections } from "@/lib/server/db";
+import { env } from "@/lib/server/env";
 import { getCurrentUser } from "@/lib/server/session";
 import { SITE } from "@/lib/site";
 import { computeStats } from "@/lib/stats";
@@ -21,7 +23,22 @@ async function Certificate() {
   const stats = computeStats(docs);
   if (stats.bestScore < 70) redirect("/progreso");
   const best = docs.reduce((a, b) => (b.score > a.score ? b : a));
-  const code = best._id.toHexString().slice(-8).toUpperCase();
+
+  // Código público para verificar el certificado en /verificar/…; se conserva y se actualizan las cifras si mejoran.
+  const { users } = await collections();
+  const doc = await users.findOne({ _id: user._id }, { projection: { certificate: 1 } });
+  const snapshot = { bestScore: stats.bestScore, level: stats.level.name, messages: stats.messages };
+  let cert = doc?.certificate;
+  if (!cert) {
+    cert = { code: randomBytes(5).toString("hex").toUpperCase(), issuedAt: best.createdAt, ...snapshot };
+    await users.updateOne({ _id: user._id, certificate: { $exists: false } }, { $set: { certificate: cert } });
+    cert = (await users.findOne({ _id: user._id }, { projection: { certificate: 1 } }))?.certificate ?? cert;
+  } else if (cert.bestScore < snapshot.bestScore || cert.messages !== snapshot.messages) {
+    cert = { ...cert, ...snapshot, issuedAt: best.createdAt };
+    await users.updateOne({ _id: user._id }, { $set: { certificate: cert } });
+  }
+  const code = cert.code;
+  const verifyUrl = `${env.appUrl.replace(/^https?:\/\//, "")}/verificar/${code}`;
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -48,7 +65,7 @@ async function Certificate() {
           <dl className="grid grid-cols-3 gap-8 text-sm">
             <div>
               <dt className="text-ink-3">Fecha</dt>
-              <dd className="font-semibold">{best.createdAt.toLocaleDateString("es-SV", { day: "numeric", month: "long", year: "numeric" })}</dd>
+              <dd className="font-semibold">{cert.issuedAt.toLocaleDateString("es-SV", { day: "numeric", month: "long", year: "numeric" })}</dd>
             </div>
             <div>
               <dt className="text-ink-3">Precisión</dt>
@@ -64,7 +81,8 @@ async function Certificate() {
           </div>
         </div>
         <p className="mt-12 border-t border-line pt-4 text-xs text-ink-3">
-          Certificado interno de finalización. No es una certificación profesional acreditada.
+          Certificado interno de finalización. No es una certificación profesional acreditada. Verifícalo en{" "}
+          <span className="font-mono">{verifyUrl}</span>
         </p>
       </article>
     </div>

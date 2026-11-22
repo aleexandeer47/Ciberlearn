@@ -385,6 +385,11 @@ export const UNITS: Unit[] = [
 export const LESSONS = UNITS.flatMap((u) => u.lessons);
 export const LESSON_BY_ID = new Map(LESSONS.map((l) => [l.id, l]));
 export const LESSON_ORDER = LESSONS.map((l) => l.id);
+export const EXERCISE_BY_ID = new Map(LESSONS.flatMap((l) => l.exercises).map((x) => [x.id, x]));
+/** Mensajes de “¿trampa o real?” de toda la ruta: los usan los retos entre amigos. */
+export const VERDICT_POOL = LESSONS.flatMap((l) => l.exercises).filter(
+  (x): x is Extract<Exercise, { kind: "veredicto" }> => x.kind === "veredicto",
+);
 
 /** Una lección está disponible si es la primera o la anterior ya se completó. */
 export function isUnlocked(lessonId: string, completed: ReadonlySet<string>) {

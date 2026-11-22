@@ -18,6 +18,26 @@ const specs = {
     [{ xp: -1 }, {}],
     [{ nicknameLower: 1 }, { unique: true, partialFilterExpression: { nicknameLower: { $type: "string" } } }],
     [{ orgId: 1 }, { partialFilterExpression: { orgId: { $exists: true } } }],
+    [{ shareId: 1 }, { unique: true, partialFilterExpression: { shareId: { $type: "string" } } }],
+    [{ "certificate.code": 1 }, { unique: true, partialFilterExpression: { "certificate.code": { $type: "string" } } }],
+  ],
+  challenges: [
+    [{ code: 1 }, { unique: true }],
+    [{ creatorId: 1, createdAt: -1 }, {}],
+    [{ createdAt: 1 }, { expireAfterSeconds: 90 * 86400 }],
+  ],
+  challenge_plays: [
+    [{ challengeId: 1, score: -1 }, {}],
+    [{ createdAt: 1 }, { expireAfterSeconds: 90 * 86400 }],
+  ],
+  daily_answers: [
+    [{ userId: 1, day: 1 }, { unique: true }],
+    [{ createdAt: 1 }, { expireAfterSeconds: 180 * 86400 }],
+  ],
+  scam_reports: [
+    [{ status: 1, createdAt: -1 }, {}],
+    [{ userId: 1, createdAt: -1 }, {}],
+    [{ reviewedAt: 1 }, { expireAfterSeconds: 90 * 86400, partialFilterExpression: { status: "rejected" } }],
   ],
   lesson_attempts: [
     [{ userId: 1, lessonId: 1 }, { unique: true }],

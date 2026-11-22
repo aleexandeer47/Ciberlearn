@@ -20,6 +20,7 @@ const SECTIONS = [
   { id: "empresa", title: "Plan Empresa" },
   { id: "retracto", title: "Retracto y reembolsos" },
   { id: "ia", title: "Chats con IA" },
+  { id: "comunidad", title: "Retos y alertas de la comunidad" },
   { id: "propiedad", title: "Propiedad intelectual" },
   { id: "disponibilidad", title: "Disponibilidad y cambios" },
   { id: "responsabilidad", title: "Responsabilidad" },
@@ -171,6 +172,25 @@ export default function TerminosPage() {
           <li>Las respuestas las genera una máquina y pueden contener errores; no son consejos profesionales.</li>
           <li>No escribas datos reales (contraseñas, números de tarjeta, DUI, direcciones) en esos chats.</li>
           <li>Habrá un límite de uso justo de {AI_LIMITS.proPerDay} conversaciones por día.</li>
+        </ul>
+      </Section>
+
+      <Section id="comunidad" title="Retos y alertas de la comunidad">
+        <ul className="list-disc space-y-2 pl-5">
+          <li>
+            Los nombres que escribas en un reto y los reportes de estafas que envíes deben ser respetuosos y no pueden
+            contener datos personales de otras personas (nombres, números de cuenta, DUI, direcciones).
+          </li>
+          <li>
+            Al enviar un reporte nos autorizas a publicarlo sin tu nombre para alertar a otras personas, después de
+            revisarlo. Podemos corregirlo para quitar datos personales, rechazarlo o retirarlo.
+          </li>
+          <li>
+            Las alertas son aportes de la comunidad con fines de prevención: no son denuncias oficiales ni afirmamos quién
+            está detrás de cada mensaje. Si fuiste víctima de una estafa, llama a tu banco y denuncia ante la Policía
+            Nacional Civil.
+          </li>
+          <li>No uses los retos ni las alertas para enviar enlaces peligrosos, publicidad o mensajes ofensivos.</li>
         </ul>
       </Section>
 

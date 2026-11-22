@@ -1,4 +1,4 @@
-import { Check, Flame, Lock, Play, Trophy, Zap } from "lucide-react";
+import { CalendarDays, Check, Flame, Lock, Play, Trophy, Zap } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
@@ -169,6 +169,16 @@ async function PathMap() {
             </Link>
           </div>
         )}
+        <Link
+          href="/diaria"
+          className="flex items-center gap-3 rounded-3xl border border-desk-line bg-desk-2 p-5 transition-colors hover:border-brand"
+        >
+          <CalendarDays className="h-6 w-6 text-[#f97316]" strokeWidth={1.75} aria-hidden />
+          <span>
+            <span className="block font-semibold">La estafa del día</span>
+            <span className="text-sm text-fog">Un caso nuevo hoy · 30 segundos</span>
+          </span>
+        </Link>
         <Link
           href="/ranking"
           className="flex items-center gap-3 rounded-3xl border border-desk-line bg-desk-2 p-5 transition-colors hover:border-brand"

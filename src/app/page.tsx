@@ -1,4 +1,4 @@
-import { ArrowRight, Mail, MessageSquare, Smartphone } from "lucide-react";
+import { ArrowRight, CalendarDays, Mail, Megaphone, MessageSquare, Smartphone, Swords } from "lucide-react";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import { HeroPreview } from "@/components/landing/HeroPreview";
@@ -9,15 +9,38 @@ import { UrlDissector } from "@/components/landing/UrlDissector";
 import { Mark } from "@/components/Mark";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 import { SCENARIOS } from "@/lib/scenarios/data";
-import { SITE } from "@/lib/site";
 
 const i = (n: number) => ({ "--i": n }) as CSSProperties;
 
 const B2B = [
-  "Panel para ver el avance de cada equipo",
-  "Informes de capacitación descargables",
-  "Escenarios adaptados a tu empresa o colegio",
-  "Simulaciones internas, solo con autorización por escrito",
+  "Plan Pro para cada persona de tu equipo",
+  "Panel con el avance de cada empleado y sus puntos débiles",
+  "Informe de capacitación descargable",
+  "Simulacros de phishing, solo con autorización de cada empleado",
+];
+
+const DAILY = [
+  {
+    href: "/diaria",
+    icon: CalendarDays,
+    title: "La estafa del día",
+    text: "Un caso nuevo cada día: ¿trampa o real? 30 segundos para mantener tu racha.",
+    cta: "Ver el caso de hoy",
+  },
+  {
+    href: "/reto",
+    icon: Swords,
+    title: "Reta a un amigo",
+    text: "Manda 5 mensajes por WhatsApp y descubre quién de tu familia detecta más estafas.",
+    cta: "Crear un reto",
+  },
+  {
+    href: "/alertas",
+    icon: Megaphone,
+    title: "Alertas de la comunidad",
+    text: "Estafas que están llegando ahora en El Salvador, reportadas por la gente y revisadas.",
+    cta: "Ver alertas",
+  },
 ];
 
 const Arrow = () => (
@@ -131,19 +154,47 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Hábito diario y comunidad */}
+        <section className="bg-desk-3">
+          <div className="mx-auto max-w-[1200px] px-4 py-20 sm:px-6">
+            <div className="mx-auto mb-12 max-w-[720px] text-center">
+              <span className="eyebrow">Todos los días</span>
+              <h2 className="mt-4 font-display text-4xl leading-[1.1] sm:text-5xl">Un minuto al día te cuida todo el año</h2>
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              {DAILY.map((d) => (
+                <Link
+                  key={d.href}
+                  href={d.href}
+                  className="group flex flex-col rounded-3xl border border-desk-line bg-desk-2 p-6 transition-colors hover:border-brand"
+                >
+                  <span className="grid h-11 w-11 place-items-center rounded-xl bg-field text-brand">
+                    <d.icon className="h-5 w-5" strokeWidth={1.75} aria-hidden />
+                  </span>
+                  <p className="mt-4 font-display text-xl">{d.title}</p>
+                  <p className="mt-1 flex-1 text-fog">{d.text}</p>
+                  <span className="mt-5 inline-flex items-center gap-1.5 font-semibold text-brand">
+                    {d.cta} <Arrow />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Empresas: banda de color con botón oscuro */}
         <section id="empresas" className="band-field scroll-mt-20">
           <div className="mx-auto grid max-w-[1200px] items-center gap-10 px-4 py-20 sm:px-6 lg:grid-cols-2">
             <div>
-              <span className="eyebrow">Empresas y colegios</span>
+              <span className="eyebrow">Plan Empresa</span>
               <h2 className="mt-4 font-display text-4xl leading-[1.1] sm:text-5xl">
                 Basta con que una persona de tu equipo haga clic
               </h2>
             </div>
             <div>
               <p className="text-lg leading-relaxed text-graphite">
-                Estamos preparando una versión para capacitar equipos completos: en español, con ejemplos locales y pensada
-                para pymes, instituciones educativas y cooperativas.
+                Capacita a tu equipo completo en español, con ejemplos locales. Pensado para pymes, instituciones educativas
+                y cooperativas.
               </p>
               <ul className="mt-6 space-y-3">
                 {B2B.map((b) => (
@@ -153,17 +204,10 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
-              {SITE.contactEmail ? (
-                <a
-                  href={`mailto:${SITE.contactEmail}?subject=${encodeURIComponent(`${SITE.name} para mi organización`)}`}
-                  className="btn btn-dark group mt-8 h-12 px-6"
-                >
-                  Pedir una demo
-                  <Arrow />
-                </a>
-              ) : (
-                <span className="btn btn-dark mt-8 h-12 cursor-default px-6 opacity-80">Próximamente</span>
-              )}
+              <Link href="/empresa" className="btn btn-dark group mt-8 h-12 px-6">
+                Ver plan Empresa
+                <Arrow />
+              </Link>
             </div>
           </div>
         </section>

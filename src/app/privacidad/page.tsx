@@ -11,7 +11,8 @@ export const metadata: Metadata = {
 /*
  * Cada dato, cookie y proveedor que se menciona aquí corresponde a lo que hace el código:
  *  - users / sessions / runs / orders / consents / login_attempts / password_resets / daily_stats /
- *    lesson_attempts / xp_events / ai_chats / orgs / phish_campaigns / phish_targets (MongoDB)
+ *    lesson_attempts / xp_events / ai_chats / orgs / phish_campaigns / phish_targets /
+ *    challenges / challenge_plays / daily_answers / scam_reports (MongoDB)
  *  - cookie "ciberlearn_session" y claves de localStorage/sessionStorage del navegador (ver /cookies)
  *  - proveedores: MongoDB Atlas, Wompi, Mailjet, Anthropic y Vercel
  * Si cambia el sistema (nuevos datos, analítica, proveedores), actualiza esta página y su versión en src/lib/legal.ts.
@@ -80,6 +81,21 @@ export default function PrivacidadPage() {
             Las rondas del simulador que completas (qué partes de cada mensaje marcaste, tu respuesta, el puntaje y el
             tiempo), las lecciones de la ruta, tus vidas y tu XP. Con esto calculamos tu nivel, tus habilidades y tus
             insignias.
+          </Item>
+          <Item label="Estafa del día y retos">
+            Tu respuesta diaria y tu racha de días seguidos. Si creas un reto, guardamos los mensajes que te tocaron, tu
+            puntaje y tu apodo, que verá quien reciba el enlace. Si juegas un reto ajeno, guardamos tu puntaje y el nombre que
+            escribas para la tabla del reto (puedes usar un apodo o dejarlo vacío); lo verá cualquiera con el enlace.
+          </Item>
+          <Item label="Tarjeta de logro y certificado (opcionales)">
+            Si decides compartir tu tarjeta de logro, creamos un enlace público que muestra tu apodo, nivel, XP, lecciones y
+            racha; nunca tu nombre ni tu correo, y puedes dejar de compartirla cuando quieras. Si tienes el certificado Pro,
+            quien tenga su código puede verificarlo y verá tu nombre, tu puntaje y la fecha.
+          </Item>
+          <Item label="Reportes de estafas">
+            Si reportas una estafa, guardamos el canal, el remitente y el texto que pegues. Lo revisamos antes de publicarlo,
+            podemos corregirlo para quitar datos personales y nunca mostramos quién lo envió. Guardamos tu cuenta junto al
+            reporte para limitar abusos y para contar los “a mí también me llegó”.
           </Item>
           <Item label="Ranking (opcional)">
             Un apodo y un país, si decides ponerlos. En el ranking público solo se muestran tu apodo, tu país y tu XP;
@@ -211,6 +227,9 @@ export default function PrivacidadPage() {
           <li>
             Resultados de simulacros de tu empresa: mientras la empresa tenga su cuenta, o hasta que pidas borrarlos.
           </li>
+          <li>Retos y sus partidas: se borran de forma automática a los 90 días.</li>
+          <li>Respuestas de la estafa del día: 180 días (la racha se queda en tu cuenta).</li>
+          <li>Reportes de estafas: los publicados, mientras sigan siendo útiles para alertar; los rechazados, hasta 90 días.</li>
           <li>Sesiones: hasta 30 días, o antes si cierras sesión.</li>
           <li>Conversaciones de los chats con IA: se borran de forma automática a los 30 días.</li>
           <li>Registro detallado de XP para el ranking semanal: 60 días (tu XP total se queda en tu cuenta).</li>

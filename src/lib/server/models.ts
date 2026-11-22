@@ -27,6 +27,62 @@ export interface UserDoc {
   orgId?: ObjectId;
   orgRole?: "owner" | "member";
   orgJoinedAt?: Date;
+  /** Estafa del día: racha de días seguidos respondiendo */
+  daily?: { lastDay: string; streak: number; best: number };
+  /** Identificador público de la tarjeta de logro (/logro/…); solo se crea si la persona la comparte */
+  shareId?: string;
+  /** Certificado emitido (Pro): código público para verificarlo en /verificar/… */
+  certificate?: { code: string; issuedAt: Date; bestScore: number; level: string; messages: number };
+}
+
+/** Reto entre amigos: 5 mensajes fijos que juega quien lo crea y quien reciba el enlace. */
+export interface ChallengeDoc {
+  _id: ObjectId;
+  code: string;
+  creatorId: ObjectId;
+  /** Apodo público de quien lo creó (nunca su nombre real) */
+  creatorName: string;
+  exerciseIds: string[];
+  /** null hasta que quien lo creó lo juegue */
+  creatorScore: number | null;
+  plays: number;
+  createdAt: Date;
+}
+
+export interface ChallengePlayDoc {
+  _id: ObjectId;
+  challengeId: ObjectId;
+  /** Nombre que la persona escribió para la tabla del reto */
+  name: string;
+  userId?: ObjectId;
+  score: number;
+  createdAt: Date;
+}
+
+/** Respuesta a la estafa del día (una por persona y día). */
+export interface DailyAnswerDoc {
+  _id: ObjectId;
+  userId: ObjectId;
+  day: string;
+  caseId: string;
+  correct: boolean;
+  createdAt: Date;
+}
+
+/** Estafa reportada por un usuario. Solo se publica después de que un administrador la aprueba. */
+export interface ScamReportDoc {
+  _id: ObjectId;
+  userId: ObjectId;
+  channel: "SMS" | "WhatsApp" | "Correo" | "Llamada" | "Redes sociales" | "Otro";
+  /** Número, correo, perfil o enlace desde donde llegó */
+  sender: string;
+  text: string;
+  status: "pending" | "approved" | "rejected";
+  createdAt: Date;
+  reviewedAt?: Date;
+  reviewedBy?: string;
+  /** Personas que dicen que también les llegó */
+  meToo: ObjectId[];
 }
 
 /** Empresa con plan Empresa. El encargado (owner) también ocupa un puesto. */
@@ -111,7 +167,7 @@ export interface XpEventDoc {
   _id: ObjectId;
   userId: ObjectId;
   amount: number;
-  source: "simulador" | "ruta" | "ia";
+  source: "simulador" | "ruta" | "ia" | "diaria";
   createdAt: Date;
 }
 

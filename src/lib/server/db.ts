@@ -4,7 +4,11 @@ import { MongoClient, type Db } from "mongodb";
 import { env } from "./env";
 import type {
   AiChatDoc,
+  ChallengeDoc,
+  ChallengePlayDoc,
   ConsentDoc,
+  DailyAnswerDoc,
+  ScamReportDoc,
   DailyStatDoc,
   LessonAttemptDoc,
   LoginAttemptDoc,
@@ -78,6 +82,10 @@ export async function collections() {
     orgs: d.collection<OrgDoc>("orgs"),
     phishCampaigns: d.collection<PhishCampaignDoc>("phish_campaigns"),
     phishTargets: d.collection<PhishTargetDoc>("phish_targets"),
+    challenges: d.collection<ChallengeDoc>("challenges"),
+    challengePlays: d.collection<ChallengePlayDoc>("challenge_plays"),
+    dailyAnswers: d.collection<DailyAnswerDoc>("daily_answers"),
+    scamReports: d.collection<ScamReportDoc>("scam_reports"),
   };
 }
 
@@ -128,5 +136,26 @@ export async function ensureIndexes(d: Db) {
     d.collection("phish_targets").createIndex({ tokenHash: 1 }, { unique: true }),
     d.collection("phish_targets").createIndex({ orgId: 1, userId: 1 }),
     d.collection("phish_targets").createIndex({ campaignId: 1 }),
+    // Fase 1: retos, estafa del día, alertas y tarjetas
+    d.collection("challenges").createIndex({ code: 1 }, { unique: true }),
+    d.collection("challenges").createIndex({ creatorId: 1, createdAt: -1 }),
+    // Los retos y sus partidas se borran solos a los 90 días
+    d.collection("challenges").createIndex({ createdAt: 1 }, { expireAfterSeconds: 90 * 86400 }),
+    d.collection("challenge_plays").createIndex({ challengeId: 1, score: -1 }),
+    d.collection("challenge_plays").createIndex({ createdAt: 1 }, { expireAfterSeconds: 90 * 86400 }),
+    d.collection("daily_answers").createIndex({ userId: 1, day: 1 }, { unique: true }),
+    d.collection("daily_answers").createIndex({ createdAt: 1 }, { expireAfterSeconds: 180 * 86400 }),
+    d.collection("scam_reports").createIndex({ status: 1, createdAt: -1 }),
+    d.collection("scam_reports").createIndex({ userId: 1, createdAt: -1 }),
+    // Los reportes rechazados se borran solos a los 90 días de revisarlos
+    d.collection("scam_reports").createIndex(
+      { reviewedAt: 1 },
+      { expireAfterSeconds: 90 * 86400, partialFilterExpression: { status: "rejected" } },
+    ),
+    d.collection("users").createIndex({ shareId: 1 }, { unique: true, partialFilterExpression: { shareId: { $type: "string" } } }),
+    d.collection("users").createIndex(
+      { "certificate.code": 1 },
+      { unique: true, partialFilterExpression: { "certificate.code": { $type: "string" } } },
+    ),
   ]);
 }

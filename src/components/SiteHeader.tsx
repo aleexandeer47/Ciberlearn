@@ -5,6 +5,17 @@ import { LEGAL } from "@/lib/legal";
 import { SITE } from "@/lib/site";
 import { getCurrentUser } from "@/lib/server/session";
 
+const NAV = [
+  ["/ruta", "Ruta"],
+  ["/diaria", "Hoy"],
+  ["/simulador", "Simulador"],
+  ["/reto", "Retos"],
+  ["/alertas", "Alertas"],
+  ["/ia", "Chats IA"],
+  ["/ranking", "Ranking"],
+  ["/planes", "Planes"],
+] as const;
+
 export function Logo() {
   return (
     // Escudo con una marca de revisión: un solo color, sin recuadro.
@@ -54,20 +65,14 @@ async function UserNav() {
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-30 border-b border-desk-line/70 bg-desk/85 backdrop-blur-md">
-      <div className="mx-auto grid h-16 max-w-[1200px] grid-cols-[1fr_auto] items-center px-4 sm:px-6 md:grid-cols-[1fr_auto_1fr]">
+      <div className="mx-auto grid h-16 max-w-[1200px] grid-cols-[1fr_auto] items-center px-4 sm:px-6 lg:grid-cols-[1fr_auto_1fr]">
         <Link href="/" className="flex items-center gap-2 text-[17px] font-semibold tracking-tight">
           <Logo />
           {SITE.name}
         </Link>
         {/* Enlaces al centro (escritorio) */}
-        <nav className="hidden items-center gap-1 text-[15px] font-medium md:flex" aria-label="Principal">
-          {[
-            ["/ruta", "Ruta"],
-            ["/simulador", "Simulador"],
-            ["/ia", "Chats IA"],
-            ["/ranking", "Ranking"],
-            ["/planes", "Planes"],
-          ].map(([href, label]) => (
+        <nav className="hidden items-center gap-0.5 text-[15px] font-medium lg:flex" aria-label="Principal">
+          {NAV.map(([href, label]) => (
             <Link key={href} href={href} className="rounded-lg px-2.5 py-2 text-chalk transition-colors hover:text-brand">
               {label}
             </Link>
@@ -80,6 +85,17 @@ export function SiteHeader() {
           </Suspense>
         </div>
       </div>
+      {/* Celular y tableta: fila de accesos que se desliza de lado */}
+      <nav
+        aria-label="Principal"
+        className="flex gap-1 overflow-x-auto border-t border-desk-line/50 px-3 py-1.5 text-sm font-medium [scrollbar-width:none] lg:hidden"
+      >
+        {NAV.map(([href, label]) => (
+          <Link key={href} href={href} className="shrink-0 rounded-full px-3 py-1.5 text-chalk transition-colors hover:bg-desk-3">
+            {label}
+          </Link>
+        ))}
+      </nav>
     </header>
   );
 }

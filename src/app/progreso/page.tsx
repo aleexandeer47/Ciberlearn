@@ -1,4 +1,4 @@
-import { Award, Crosshair, Flame, Inbox, Layers, Lock, Timer } from "lucide-react";
+import { Award, Crosshair, Flame, Inbox, Layers, Lock, Swords, Timer } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -8,6 +8,9 @@ import { HistoryChart } from "@/components/progress/HistoryChart";
 import { PasswordNotice } from "@/components/progress/PasswordNotice";
 import { PendingRunSaver } from "@/components/progress/PendingRunSaver";
 import { PageShell } from "@/components/SiteHeader";
+import { ShareAchievement } from "@/components/share/ShareAchievement";
+import { currentStreak } from "@/lib/daily";
+import { dayKey } from "@/lib/dayKey";
 import { CATEGORY_LABELS } from "@/lib/scenarios/categories";
 import { collections } from "@/lib/server/db";
 import { getCurrentUser } from "@/lib/server/session";
@@ -48,8 +51,14 @@ async function Dashboard() {
   const user = await getCurrentUser();
   if (!user) redirect("/entrar?next=/progreso");
 
-  const { runs } = await collections();
-  const docs = await runs.find({ userId: user._id }).sort({ createdAt: -1 }).limit(300).toArray();
+  const { runs, users, dailyAnswers } = await collections();
+  const today = dayKey();
+  const [docs, profile, answeredToday] = await Promise.all([
+    runs.find({ userId: user._id }).sort({ createdAt: -1 }).limit(300).toArray(),
+    users.findOne({ _id: user._id }, { projection: { daily: 1, shareId: 1 } }),
+    dailyAnswers.countDocuments({ userId: user._id, day: today }, { limit: 1 }),
+  ]);
+  const streak = currentStreak(profile?.daily, today);
   const stats = computeStats(docs);
   const recent = docs.slice(0, user.isPro ? 10 : FREE_HISTORY);
   const sortedSkills = [...stats.skills].sort((a, b) => b.pct - a.pct || b.total - a.total);
@@ -90,6 +99,31 @@ async function Dashboard() {
             Plan gratis · Mejorar a Pro
           </Link>
         )}
+      </div>
+
+      {/* Hábito y compartir */}
+      <div className="grid gap-5 md:grid-cols-3">
+        <Link href="/diaria" className="group rounded-3xl border border-desk-line bg-desk-2 p-5 transition-colors hover:border-brand">
+          <p className="flex items-center gap-2 text-sm text-fog">
+            <Flame className="h-4 w-4 text-[#f97316]" aria-hidden /> Estafa del día
+          </p>
+          <p className="mt-2 font-display text-2xl">
+            {streak > 0 ? `${streak} ${streak === 1 ? "día" : "días"} de racha` : "Empieza tu racha"}
+          </p>
+          <p className="mt-1 text-sm text-fog">{answeredToday ? "Ya respondiste hoy. Vuelve mañana." : "Un caso nuevo hoy · 30 segundos →"}</p>
+        </Link>
+        <Link href="/reto" className="group rounded-3xl border border-desk-line bg-desk-2 p-5 transition-colors hover:border-brand">
+          <p className="flex items-center gap-2 text-sm text-fog">
+            <Swords className="h-4 w-4 text-brand" aria-hidden /> Reto entre amigos
+          </p>
+          <p className="mt-2 font-display text-2xl">Reta a alguien</p>
+          <p className="mt-1 text-sm text-fog">5 mensajes por WhatsApp: ¿quién detecta más? →</p>
+        </Link>
+        <Card>
+          <p className="text-sm text-fog">Tu tarjeta de logro</p>
+          <p className="mb-3 mt-2 font-display text-2xl">Presume tu nivel</p>
+          <ShareAchievement initialPath={profile?.shareId ? `/logro/${profile.shareId}` : null} />
+        </Card>
       </div>
 
       {stats.runs === 0 ? (

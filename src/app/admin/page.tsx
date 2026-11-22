@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
+import { moderateReport } from "@/app/actions/alerts";
 import { logout } from "@/app/actions/auth";
 import { RefundButton } from "@/components/admin/RefundButton";
 import { TrafficChart } from "@/components/admin/TrafficChart";
@@ -12,6 +13,7 @@ import { money, shortUserAgent, withinRetract } from "@/lib/adminStats";
 import { RETRACT_DAYS } from "@/lib/legal";
 import { PLANS, isPlanId } from "@/lib/plans";
 import { getAdminStats, searchAdmin } from "@/lib/server/admin";
+import { collections } from "@/lib/server/db";
 import { getCurrentUser } from "@/lib/server/session";
 import { SITE } from "@/lib/site";
 
@@ -60,7 +62,12 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/admin">["
   if (!user.isAdmin) notFound();
 
   const raw = (await searchParams).q;
-  const [s, q] = await Promise.all([getAdminStats(), searchAdmin(typeof raw === "string" ? raw : "")]);
+  const { scamReports } = await collections();
+  const [s, q, pendingReports] = await Promise.all([
+    getAdminStats(),
+    searchAdmin(typeof raw === "string" ? raw : ""),
+    scamReports.find({ status: "pending" }).sort({ createdAt: 1 }).limit(20).toArray(),
+  ]);
   const proPct = s.users.total ? Math.round((s.users.pro / s.users.total) * 100) : 0;
   const icon = "h-4 w-4";
 
@@ -265,6 +272,46 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/admin">["
             </div>
           </Card>
         </div>
+
+        {/* Alertas de la comunidad pendientes de revisión */}
+        <Card>
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="font-display text-xl">Alertas por revisar</h2>
+            <Link href="/alertas" className="text-sm text-brand hover:underline">
+              Ver alertas publicadas
+            </Link>
+          </div>
+          <p className="mt-1 text-sm text-fog">
+            Corrige el texto si trae datos personales (nombres, cuentas, códigos) y apruébalo. Los enlaces se muestran
+            desactivados al publicarse.
+          </p>
+          {pendingReports.length === 0 ? (
+            <p className="mt-5 text-sm text-fog">No hay reportes pendientes.</p>
+          ) : (
+            <ul className="mt-5 space-y-4">
+              {pendingReports.map((r) => (
+                <li key={r._id.toHexString()} className="rounded-2xl border border-desk-line bg-desk-3 p-4">
+                  <form action={moderateReport} className="space-y-3">
+                    <input type="hidden" name="id" value={r._id.toHexString()} />
+                    <p className="text-xs text-fog">
+                      {r.channel} · {fmtDateTime(r.createdAt)}
+                    </p>
+                    <input name="sender" defaultValue={r.sender} maxLength={120} className="field font-mono text-sm" aria-label="Remitente" />
+                    <textarea name="text" defaultValue={r.text} rows={4} maxLength={1000} className="field resize-y py-2 text-sm" aria-label="Mensaje" />
+                    <div className="flex gap-2">
+                      <button type="submit" name="decision" value="approve" className="btn btn-ok h-9 px-4 text-sm">
+                        Aprobar y publicar
+                      </button>
+                      <button type="submit" name="decision" value="reject" className="btn btn-ghost h-9 px-4 text-sm">
+                        Rechazar
+                      </button>
+                    </div>
+                  </form>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
 
         {/* Búsqueda, pagos y aceptaciones */}
         <div id="buscar" className="scroll-mt-24 pt-4">
