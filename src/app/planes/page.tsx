@@ -5,8 +5,6 @@ import { PlanPicker } from "@/components/billing/PlanPicker";
 import { PageShell } from "@/components/SiteHeader";
 import { FEATURES } from "@/lib/plans";
 import { getCurrentUser } from "@/lib/server/session";
-import Link from "next/link";
-import { BUSINESS } from "@/lib/business";
 
 export const metadata: Metadata = {
   title: "Planes",
@@ -44,7 +42,7 @@ async function CurrentPlan() {
 export default function PlanesPage() {
   return (
     <PageShell>
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-6xl">
         <div className="mx-auto mb-10 max-w-2xl text-center">
           <p className="eyebrow">Planes</p>
           <h1 className="mt-3 font-display text-4xl font-semibold leading-tight sm:text-5xl">Una estafa cuesta más que esto</h1>
@@ -98,19 +96,6 @@ export default function PlanesPage() {
           ))}
         </section>
 
-        <section className="mt-16 flex flex-col items-start justify-between gap-5 rounded-3xl bg-field p-7 sm:flex-row sm:items-center">
-          <div>
-            <p className="eyebrow">Plan Empresa</p>
-            <h2 className="mt-2 font-display text-2xl font-semibold">Entrena a todo tu equipo</h2>
-            <p className="mt-1 max-w-xl text-graphite">
-              Pro para cada empleado, panel de avance, informe descargable y simulacros de phishing. US${BUSINESS.seatPrice}{" "}
-              por persona al año, desde {BUSINESS.minSeats} personas.
-            </p>
-          </div>
-          <Link href="/empresa" className="btn btn-primary shrink-0 px-6 py-3">
-            Ver plan Empresa
-          </Link>
-        </section>
       </div>
     </PageShell>
   );

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { checkout } from "@/app/actions/billing";
 import { ConsentChecks } from "@/components/legal/ConsentChecks";
+import { BUSINESS } from "@/lib/business";
 import { LEGAL, RETRACT_DAYS } from "@/lib/legal";
 import { PLANS, type PlanId } from "@/lib/plans";
 
@@ -16,6 +17,13 @@ const PRO_PERKS = [
   "6 mensajes avanzados, contrarreloj y entrenamiento",
   "Historial completo y evolución",
   "Certificado de finalización",
+];
+const BUSINESS_PERKS = [
+  "Todo lo de Pro para cada persona",
+  "Panel del encargado e índice de preparación",
+  "Simulacros de phishing y botón para reportar",
+  "Rutas por área (finanzas, atención, gerencia…)",
+  "Informe para gerencia en PDF",
 ];
 const FREE_PERKS = ["Ruta guiada con 5 vidas", "Ranking mundial, XP e insignias", "Simulador clásico"];
 
@@ -59,7 +67,7 @@ export function PlanPicker({ proUntil }: { proUntil: string | null }) {
         ))}
       </div>
 
-      <div className="mx-auto grid max-w-4xl gap-5 md:grid-cols-2">
+      <div className="mx-auto grid max-w-4xl gap-5 md:grid-cols-2 lg:max-w-6xl lg:grid-cols-3">
         <div className="flex flex-col rounded-3xl border border-desk-line bg-desk-2 p-7">
           <h2 className="font-display text-xl font-semibold">Gratis</h2>
           <p className="mt-1 text-sm text-fog">Para empezar a entrenar el ojo.</p>
@@ -110,6 +118,27 @@ export function PlanPicker({ proUntil }: { proUntil: string | null }) {
             </a>
             .
           </p>
+        </div>
+
+        <div className="flex flex-col rounded-3xl border border-desk-line bg-desk-2 p-7 md:col-span-2 lg:col-span-1">
+          <h2 className="font-display text-xl font-semibold">Empresa</h2>
+          <p className="mt-1 text-sm text-fog">Para entrenar a todo tu equipo.</p>
+          <p className="mt-6 flex items-end gap-1">
+            <span className="font-display text-5xl font-semibold">${BUSINESS.seatPrice}</span>
+            <span className="pb-1.5 text-fog">/persona al año</span>
+          </p>
+          <p className="mt-1 h-5 text-sm text-fog">Desde {BUSINESS.minSeats} personas</p>
+          <ul className="mt-5 flex-1 space-y-2.5 text-sm">
+            {BUSINESS_PERKS.map((p) => (
+              <li key={p} className="flex gap-2.5">
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand" strokeWidth={2} aria-hidden />
+                {p}
+              </li>
+            ))}
+          </ul>
+          <a href="/empresa" className="btn btn-dark mt-8 w-full px-6 py-3.5">
+            Ver plan Empresa
+          </a>
         </div>
       </div>
     </div>
