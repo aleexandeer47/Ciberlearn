@@ -4,7 +4,7 @@ import { ObjectId } from "mongodb";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { cache } from "react";
-import { AREAS, orgActive, type AreaId } from "@/lib/business";
+import { AREAS, orgActive, type AreaId, type OrgKind } from "@/lib/business";
 import { isProActive } from "@/lib/plans";
 import { collections } from "./db";
 import { env } from "./env";
@@ -57,6 +57,7 @@ export interface CurrentUser {
   isAdmin: boolean;
   org: {
     _id: ObjectId;
+    kind: OrgKind;
     name: string;
     role: "owner" | "member";
     active: boolean;
@@ -86,10 +87,11 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   let org: CurrentUser["org"] = null;
   if (user.orgId) {
     const { orgs } = await collections();
-    const o = await orgs.findOne({ _id: user.orgId }, { projection: { name: 1, paidUntil: 1 } });
+    const o = await orgs.findOne({ _id: user.orgId }, { projection: { name: 1, paidUntil: 1, kind: 1 } });
     if (o)
       org = {
         _id: o._id,
+        kind: o.kind ?? "empresa",
         name: o.name,
         role: user.orgRole ?? "member",
         active: orgActive(o.paidUntil),

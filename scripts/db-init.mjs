@@ -49,6 +49,14 @@ const specs = {
   ],
   org_reports: [[{ orgId: 1, createdAt: -1 }, {}]],
   org_scores: [[{ orgId: 1, month: 1 }, {}]],
+  classes: [
+    [{ code: 1 }, { unique: true }],
+    [{ teacherId: 1, createdAt: -1 }, {}],
+  ],
+  class_members: [
+    [{ classId: 1, userId: 1 }, { unique: true }],
+    [{ userId: 1 }, {}],
+  ],
   lesson_attempts: [
     [{ userId: 1, lessonId: 1 }, { unique: true }],
     [{ startedAt: 1 }, { expireAfterSeconds: 2 * 86400 }],

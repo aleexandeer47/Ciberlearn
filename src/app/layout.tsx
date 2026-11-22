@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Geist_Mono, Inter } from "next/font/google";
 import { Suspense } from "react";
 import { THEME_SCRIPT } from "@/components/theme/theme";
+import { RegisterSW } from "@/components/pwa/Pwa";
 import { VisitBeacon } from "@/components/VisitBeacon";
 import { SITE } from "@/lib/site";
 import "./globals.css";
@@ -22,6 +23,7 @@ export const metadata: Metadata = {
   title: { default: `${SITE.name}: ${SITE.tagline}`, template: `%s · ${SITE.name}` },
   description: SITE.description,
   applicationName: SITE.name,
+  appleWebApp: { capable: true, title: SITE.name, statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {
@@ -47,6 +49,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Suspense>
           <VisitBeacon />
         </Suspense>
+        <RegisterSW />
       </body>
     </html>
   );

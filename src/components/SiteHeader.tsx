@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { InstallApp } from "@/components/pwa/Pwa";
+import { SimpleModeToggle } from "@/components/theme/SimpleMode";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { LEGAL } from "@/lib/legal";
 import { SITE } from "@/lib/site";
@@ -79,7 +81,11 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="flex items-center justify-end gap-1 text-[15px] sm:gap-2">
-          <ThemeToggle />
+          <SimpleModeToggle />
+          {/* En celular no cabe todo: el tema sigue al del sistema y el botón aparece desde tableta */}
+          <span className="hidden sm:block">
+            <ThemeToggle />
+          </span>
           <Suspense fallback={<GuestNav />}>
             <UserNav />
           </Suspense>
@@ -105,9 +111,16 @@ export function SiteFooter() {
     <footer className="mt-auto border-t border-desk-line/70">
       <div className="mx-auto flex max-w-[1200px] flex-col gap-4 px-4 py-8 text-sm text-fog sm:px-6">
         <nav aria-label="Legal" className="flex flex-wrap gap-x-5 gap-y-2">
-          <Link href="/empresa" className="font-medium text-chalk hover:text-brand">
-            Para empresas
-          </Link>
+          {[
+            ["/empresa", "Para empresas"],
+            ["/familia", "Pro Familiar"],
+            ["/clase", "Para colegios"],
+            ["/mayores", "Para mayores"],
+          ].map(([href, label]) => (
+            <Link key={href} href={href} className="font-medium text-chalk hover:text-brand">
+              {label}
+            </Link>
+          ))}
           {Object.values(LEGAL).map((d) => (
             <Link key={d.path} href={d.path} className="font-medium text-chalk hover:text-brand">
               {d.title}
@@ -116,6 +129,7 @@ export function SiteFooter() {
           <a href={`mailto:${SITE.privacyEmail}`} className="font-medium text-chalk hover:text-brand">
             Contacto
           </a>
+          <InstallApp />
         </nav>
         <div className="flex flex-col gap-1 sm:flex-row sm:justify-between">
           <p>

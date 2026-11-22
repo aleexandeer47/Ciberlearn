@@ -1,7 +1,8 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { ObjectId } from "mongodb";
-import { AREAS, orgActive, pct, readinessScore, type AreaId } from "@/lib/business";
+import { AREAS, orgActive, pct, readinessScore, type AreaId, type OrgKind } from "@/lib/business";
+import { currentStreak } from "@/lib/daily";
 import { dayKey } from "@/lib/dayKey";
 import { LESSONS } from "@/lib/path/content";
 import { CATEGORY_LABELS } from "@/lib/scenarios/categories";
@@ -15,7 +16,10 @@ export const newSimToken = () => randomBytes(24).toString("base64url");
 export type JoinResult = "joined" | "invalid" | "inactive" | "full" | "already" | "other-org";
 
 /** Une a una persona a la empresa del código. Respeta los puestos de forma atómica. */
-export async function joinOrg(userId: ObjectId, code: string): Promise<{ result: JoinResult; orgId?: ObjectId; orgName?: string }> {
+export async function joinOrg(
+  userId: ObjectId,
+  code: string,
+): Promise<{ result: JoinResult; orgId?: ObjectId; orgName?: string; orgKind?: OrgKind }> {
   const { orgs, users } = await collections();
   const org = await orgs.findOne({ inviteCode: code });
   if (!org) return { result: "invalid" };
@@ -40,7 +44,7 @@ export async function joinOrg(userId: ObjectId, code: string): Promise<{ result:
     await orgs.updateOne({ _id: org._id }, { $inc: { memberCount: -1 } });
     return { result: "other-org" };
   }
-  return { result: "joined", orgId: org._id, orgName: org.name };
+  return { result: "joined", orgId: org._id, orgName: org.name, orgKind: org.kind ?? "empresa" };
 }
 
 /** Saca a un empleado (no al encargado) y libera su puesto. */
@@ -65,6 +69,8 @@ export interface MemberRow {
   inboxAvg: number | null;
   inboxCount: number;
   simsReported: number;
+  /** Racha de días seguidos en la estafa del día */
+  streak: number;
   joinedAt: Date | null;
   lastLoginAt: Date | null;
   xp: number;
@@ -83,7 +89,7 @@ export async function teamReport(orgId: ObjectId) {
   const members = await users
     .find(
       { orgId },
-      { projection: { name: 1, email: 1, orgRole: 1, orgJoinedAt: 1, lastLoginAt: 1, xp: 1, path: 1, orgArea: 1 } },
+      { projection: { name: 1, email: 1, orgRole: 1, orgJoinedAt: 1, lastLoginAt: 1, xp: 1, path: 1, orgArea: 1, daily: 1 } },
     )
     .sort({ orgRole: -1, name: 1 })
     .toArray();
@@ -145,6 +151,7 @@ export async function teamReport(orgId: ObjectId) {
     orgReports.find({ orgId }).sort({ createdAt: -1 }).limit(20).toArray(),
   ]);
 
+  const today = dayKey();
   const runBy = new Map(runAgg.map((r) => [r._id.toHexString(), r]));
   const simBy = new Map(simAgg.map((r) => [r._id.toHexString(), r]));
   const campBy = new Map(campaignAgg.map((r) => [r._id.toHexString(), r]));
@@ -184,6 +191,7 @@ export async function teamReport(orgId: ObjectId) {
       inboxAvg: ib ? Math.round(ib.avg) : null,
       inboxCount: ib?.n ?? 0,
       simsReported: s?.reported ?? 0,
+      streak: currentStreak(m.daily, today),
       joinedAt: m.orgJoinedAt ?? null,
       lastLoginAt: m.lastLoginAt ?? null,
       xp: m.xp ?? 0,

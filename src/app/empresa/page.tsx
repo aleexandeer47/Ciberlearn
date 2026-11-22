@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
 import { leaveOrg, rotateInvite } from "@/app/actions/org";
@@ -322,7 +323,11 @@ async function OwnerView({ user, error, joined }: { user: CurrentUser; error?: s
               </p>
             </div>
             <form action={rotateInvite}>
-              <button type="submit" className="btn h-9 px-3 text-xs text-fog hover:text-chalk" title="El enlace anterior dejará de funcionar">
+              <button
+                type="submit"
+                className="btn h-9 shrink-0 whitespace-nowrap px-3 text-xs text-fog hover:text-chalk"
+                title="El enlace anterior dejará de funcionar"
+              >
                 <RefreshCw className="h-3.5 w-3.5" aria-hidden />
                 Nuevo enlace
               </button>
@@ -529,6 +534,8 @@ async function Empresa({ searchParams }: { searchParams: PageProps<"/empresa">["
   const sp = await searchParams;
   const error = typeof sp.error === "string" ? sp.error.slice(0, 200) : undefined;
   const user = await getCurrentUser();
+  // El plan familiar tiene su propia página
+  if (user?.org?.kind === "familia") redirect(`/familia${sp.unido === "1" ? "?unido=1" : ""}`);
   if (user?.org?.role === "owner") return <OwnerView user={user} error={error} joined={sp.unido === "1"} />;
   if (user?.org) return <MemberView user={user} joined={sp.unido === "1"} />;
   return (

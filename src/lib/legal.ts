@@ -4,16 +4,26 @@
 
 // Formato de versión: AAAA-MM-DD, con ".2", ".3"… si cambia más de una vez el mismo día.
 export const LEGAL = {
-  terminos: { path: "/terminos", title: "Términos y condiciones", version: "2026-11-22", updated: "22 de noviembre de 2026" },
-  privacidad: { path: "/privacidad", title: "Política de privacidad", version: "2026-11-22", updated: "22 de noviembre de 2026" },
-  cookies: { path: "/cookies", title: "Política de cookies", version: "2026-11-21", updated: "21 de noviembre de 2026" },
-  reembolsos: { path: "/reembolsos", title: "Política de reembolso", version: "2026-11-21.2", updated: "21 de noviembre de 2026" },
+  terminos: { path: "/terminos", title: "Términos y condiciones", version: "2026-11-22.2", updated: "22 de noviembre de 2026" },
+  privacidad: { path: "/privacidad", title: "Política de privacidad", version: "2026-11-22.2", updated: "22 de noviembre de 2026" },
+  cookies: { path: "/cookies", title: "Política de cookies", version: "2026-11-22", updated: "22 de noviembre de 2026" },
+  reembolsos: { path: "/reembolsos", title: "Política de reembolso", version: "2026-11-22", updated: "22 de noviembre de 2026" },
 } as const;
 
 /** Casilla que marca un empleado al unirse a una empresa. Se guarda con la versión de la privacidad. */
 export const ORG_CONSENT_FIELD = "acepta_empresa";
-export const orgConsentText = (org: string) =>
-  `Autorizo a ${org} a ver mi avance en Ciberlearn (nombre, correo, lecciones, puntajes y resultados de simulacros) y a enviarme simulacros de phishing con fines de capacitación.`;
+export const orgConsentText = (org: string, kind: "empresa" | "familia" = "empresa") =>
+  kind === "familia"
+    ? `Autorizo a quien administra el plan de ${org} a ver mi avance en Ciberlearn (nombre, correo, lecciones, XP y racha).`
+    : `Autorizo a ${org} a ver mi avance en Ciberlearn (nombre, correo, lecciones, puntajes y resultados de simulacros) y a enviarme simulacros de phishing con fines de capacitación.`;
+
+export const CLASS_CONSENT_FIELD = "acepta_clase";
+
+/** Casilla que marca un estudiante al unirse a una clase (texto exacto que ve). */
+export const CLASS_CONSENT_LABEL =
+  "Autorizo a mi docente de esta clase a ver mi avance (nombre, lecciones, XP y racha). Puedo salir cuando quiera.";
+/** Lo que se guarda: el texto de la casilla y a qué clase se refiere. */
+export const classConsentText = (clase: string) => `${CLASS_CONSENT_LABEL} Clase: “${clase}”.`;
 
 /** Documentos que la persona acepta de forma expresa, cada uno con su propia casilla. */
 export type ConsentDocument = "terminos" | "privacidad";

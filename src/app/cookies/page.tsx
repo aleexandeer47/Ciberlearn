@@ -12,6 +12,8 @@ export const metadata: Metadata = {
  * Debe coincidir con el código:
  *  - cookie ciberlearn_session          src/lib/server/session.ts
  *  - localStorage ciberlearn-theme      src/components/theme/theme.ts
+ *  - localStorage ciberlearn-simple     src/components/theme/SimpleMode.tsx
+ *  - Cache Storage ciberlearn-*         public/sw.js
  *  - localStorage ciberlearn-visit-day  src/components/VisitBeacon.tsx
  *  - sessionStorage ciberlearn:pendingRun src/components/simulator/Summary.tsx
  * Si agregas analítica, publicidad o cualquier herramienta de terceros que guarde datos en el navegador,
@@ -40,6 +42,21 @@ const ROWS = [
     purpose: "Recuerda si elegiste el modo claro u oscuro.",
     duration: "Hasta que la borres",
     type: "Preferencia",
+  },
+  {
+    name: "ciberlearn-simple",
+    kind: "Almacenamiento local",
+    purpose: "Recuerda si activaste la letra grande (modo sencillo).",
+    duration: "Hasta que la borres",
+    type: "Preferencia",
+  },
+  {
+    name: "ciberlearn-static / ciberlearn-pages",
+    kind: "Caché de la app",
+    purpose:
+      "Si instalas la app, guarda los archivos del sitio para que cargue más rápido y una página de “sin conexión”. No guarda páginas con tus datos.",
+    duration: "Hasta que se actualice o desinstales la app",
+    type: "Funcional",
   },
   {
     name: "ciberlearn-visit-day",

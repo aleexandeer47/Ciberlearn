@@ -4,6 +4,7 @@ import { ArrowRight, Check, HeartCrack, Mail, MessageSquare, Phone, Smartphone, 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { answerExercise, completeLesson, startLesson, type AnswerResult, type CompleteResult } from "@/app/actions/path";
+import { ListenButton } from "@/components/theme/SimpleMode";
 import type { PublicExercise } from "@/lib/path/content";
 import { fmtWait, type LivesView } from "@/lib/lives";
 import { useCountUp } from "@/lib/useCountUp";
@@ -180,12 +181,15 @@ export function LessonPlayer({ lesson, initialLives }: Props) {
               <p className="eyebrow">¿Trampa o real?</p>
               <h1 className="mt-2 font-display text-2xl">Revisa este mensaje</h1>
               <div className="preview-card mt-6 p-5">
-                <div className="flex items-center gap-2 text-xs font-semibold text-ink-3">
-                  {(() => {
-                    const I = CHANNEL_ICON[ex.channel];
-                    return <I className="h-4 w-4" strokeWidth={1.75} aria-hidden />;
-                  })()}
-                  {ex.channel}
+                <div className="flex items-center justify-between gap-2 text-xs font-semibold text-ink-3">
+                  <span className="flex items-center gap-2">
+                    {(() => {
+                      const I = CHANNEL_ICON[ex.channel];
+                      return <I className="h-4 w-4" strokeWidth={1.75} aria-hidden />;
+                    })()}
+                    {ex.channel}
+                  </span>
+                  <ListenButton key={ex.id} text={`${ex.channel}. De: ${ex.from}. ${ex.text}`} className="text-ink-2" />
                 </div>
                 <p className="mt-2 break-words font-mono text-[13px] text-ink-2">{ex.from}</p>
                 <p className="mt-3 leading-relaxed text-ink">{ex.text}</p>
@@ -207,6 +211,11 @@ export function LessonPlayer({ lesson, initialLives }: Props) {
             <>
               <p className="eyebrow">{ex.kind === "enlace" ? "Lee el enlace" : "Elige la respuesta"}</p>
               <h1 className="mt-2 font-display text-2xl leading-snug">{ex.prompt}</h1>
+              <ListenButton
+                key={ex.id}
+                text={`${ex.prompt} ${ex.context ? `Enlace: ${ex.context}. ` : ""}Opciones: ${ex.options.map((o, n) => `${n + 1}: ${o}`).join(". ")}`}
+                className="mt-3 text-fog"
+              />
               {ex.context && (
                 <p className="mt-4 break-all rounded-xl bg-desk-3 px-4 py-3 font-mono text-sm">{ex.context}</p>
               )}

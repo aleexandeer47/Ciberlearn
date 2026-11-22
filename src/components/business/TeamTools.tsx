@@ -99,7 +99,7 @@ export function CopyLink({ url }: { url: string }) {
   );
 }
 
-export function InviteForm() {
+export function InviteForm({ placeholder = "ana@tuempresa.com, luis@tuempresa.com" }: { placeholder?: string }) {
   const [state, action, pending] = useActionState<InviteState, FormData>(inviteByEmail, {});
   return (
     <form action={action} className="space-y-3">
@@ -108,7 +108,7 @@ export function InviteForm() {
         <textarea
           name="emails"
           rows={3}
-          placeholder="ana@tuempresa.com, luis@tuempresa.com"
+          placeholder={placeholder}
           className="field min-h-24 resize-y py-3"
         />
       </label>

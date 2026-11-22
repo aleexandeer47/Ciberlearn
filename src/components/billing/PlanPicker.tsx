@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { checkout } from "@/app/actions/billing";
 import { ConsentChecks } from "@/components/legal/ConsentChecks";
-import { BUSINESS } from "@/lib/business";
+import { BUSINESS, FAMILY } from "@/lib/business";
 import { LEGAL, RETRACT_DAYS } from "@/lib/legal";
 import { PLANS, type PlanId } from "@/lib/plans";
 
@@ -111,6 +111,9 @@ export function PlanPicker({ proUntil }: { proUntil: string | null }) {
             <ConsentChecks tone="paper" />
             <PayButton label={active ? `Extender Pro (${plan.days} días más)` : `Obtener Pro ${period === "pro-anual" ? "anual" : "mensual"}`} />
           </form>
+          <a href="/familia" className="mt-4 block rounded-xl bg-paper-2 px-4 py-2.5 text-center text-sm font-medium text-ink-2 hover:text-ink">
+            ¿Para tu familia? <strong className="text-brand">Pro Familiar: {FAMILY.seats} personas por ${FAMILY.price}/año →</strong>
+          </a>
           <p className="mt-3 text-center text-xs text-ink-3">
             Pago único con tarjeta por medio de Wompi. Sin cobros automáticos. Tienes {RETRACT_DAYS} días para{" "}
             <a href={LEGAL.reembolsos.path} className="underline underline-offset-2">

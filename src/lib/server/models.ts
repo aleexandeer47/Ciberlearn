@@ -1,5 +1,5 @@
 import type { ObjectId } from "mongodb";
-import type { AreaId } from "@/lib/business";
+import type { AreaId, OrgKind } from "@/lib/business";
 import type { PlanId } from "@/lib/plans";
 import type { SignalCategory, Verdict } from "@/lib/scenarios/types";
 
@@ -91,6 +91,8 @@ export interface ScamReportDoc {
 /** Empresa con plan Empresa. El encargado (owner) también ocupa un puesto. */
 export interface OrgDoc {
   _id: ObjectId;
+  /** "familia" = Pro Familiar (sin simulacros ni áreas). Sin valor = empresa. */
+  kind?: OrgKind;
   name: string;
   ownerId: ObjectId;
   /** Puestos pagados */
@@ -131,6 +133,23 @@ export interface PhishTargetDoc {
   clickedAt?: Date;
   /** Lo reportó como sospechoso desde la página de su empresa */
   reportedAt?: Date;
+}
+
+/** Clase de un docente (modo colegio, gratis). */
+export interface ClassDoc {
+  _id: ObjectId;
+  name: string;
+  teacherId: ObjectId;
+  /** Código de 6 caracteres para unirse (src/lib/school.ts) */
+  code: string;
+  createdAt: Date;
+}
+
+export interface ClassMemberDoc {
+  _id: ObjectId;
+  classId: ObjectId;
+  userId: ObjectId;
+  joinedAt: Date;
 }
 
 /** Correo sospechoso que un empleado reportó y que no era un simulacro: le llega al encargado. */
@@ -182,18 +201,20 @@ export interface ConsentDoc {
   userId: ObjectId;
   /** Correo de la cuenta en el momento de aceptar */
   email: string;
-  /** "empresa": autorización para que una empresa vea su avance y le envíe simulacros */
-  document: "terminos" | "privacidad" | "empresa";
+  /** "empresa": autorización a una empresa o familia; "clase": autorización al docente de una clase */
+  document: "terminos" | "privacidad" | "empresa" | "clase";
   /** Versión del documento aceptado (src/lib/legal.ts) */
   version: string;
   /** Texto exacto de la casilla que se marcó */
   text: string;
   /** Formulario donde se aceptó */
-  source: "registro" | "compra" | "unirse-empresa";
+  source: "registro" | "compra" | "unirse-empresa" | "unirse-clase";
   /** Referencia de la orden si se aceptó al comprar */
   orderRef?: string;
   /** Empresa a la que se unió (document "empresa") */
   orgId?: ObjectId;
+  /** Clase a la que se unió (document "clase") */
+  classId?: ObjectId;
   acceptedAt: Date;
   ip: string | null;
   userAgent: string | null;
@@ -276,8 +297,8 @@ export interface OrderDoc {
   /** identificadorEnlaceComercio enviado a Wompi */
   reference: string;
   userId: ObjectId;
-  /** "empresa" = compra del plan Empresa (ver `business`) */
-  planId: PlanId | "empresa";
+  /** "empresa" / "familia" = compra del plan Empresa o Pro Familiar (ver `business`) */
+  planId: PlanId | "empresa" | "familia";
   amount: number;
   days: number;
   /** Nombre del producto para mostrar */

@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import {
   addSeatsPrice,
   BUSINESS,
+  FAMILY,
   isAreaId,
   isValidSeats,
   orgActive,
@@ -13,11 +14,12 @@ import {
   PHISH_BY_ID,
   subjectMatches,
   yearPrice,
+  type OrgKind,
 } from "@/lib/business";
 import { dayKey } from "@/lib/dayKey";
 import { inviteEmail, simulationEmail } from "@/lib/emails/business";
 import { ORG_CONSENT_FIELD } from "@/lib/legal";
-import { CheckoutError, startBusinessCheckout } from "@/lib/server/billing";
+import { CheckoutError, startBusinessCheckout, startFamilyCheckout } from "@/lib/server/billing";
 import { consentError, readConsent, recordConsents, recordOrgConsent } from "@/lib/server/consent";
 import { collections } from "@/lib/server/db";
 import { emailConfigured, sendEmail } from "@/lib/server/email";
@@ -27,14 +29,17 @@ import { getCurrentUser } from "@/lib/server/session";
 
 const back = (msg: string, path = "/empresa"): never => redirect(`${path}?error=${encodeURIComponent(msg)}#comprar`);
 
-/** El encargado de la empresa de la sesión, o null. */
-async function currentOwner() {
+/** El encargado de la empresa (o familia) de la sesión, o null. Con `kind`, solo si es de ese tipo. */
+async function currentOwner(kind?: OrgKind) {
   const user = await getCurrentUser();
   if (!user?.org || user.org.role !== "owner") return null;
   const { orgs } = await collections();
   const org = await orgs.findOne({ _id: user.org._id, ownerId: user._id });
-  return org ? { user, org } : null;
+  if (!org || (kind && (org.kind ?? "empresa") !== kind)) return null;
+  return { user, org };
 }
+
+const homeOf = (kind: OrgKind | undefined) => (kind === "familia" ? "/familia" : "/empresa");
 
 /** Envía en grupos pequeños para no saturar el servicio de correo. */
 async function inBatches<T>(items: T[], size: number, fn: (x: T) => Promise<void>) {
@@ -47,7 +52,8 @@ async function inBatches<T>(items: T[], size: number, fn: (x: T) => Promise<void
 export async function orgCheckout(form: FormData) {
   const user = await getCurrentUser();
   if (!user) redirect(`/registro?next=${encodeURIComponent("/empresa")}`);
-  if (user.org && user.org.role !== "owner") back(`Ya eres parte de ${user.org.name}. Sal de esa empresa para crear la tuya.`);
+  if (user.org && user.org.role !== "owner") back(`Ya eres parte de ${user.org.name}. Sal de ahí para crear tu empresa.`);
+  if (user.org?.kind === "familia") back("Ya administras un plan familiar. Para crear una empresa usa otra cuenta.");
 
   const seats = Number(form.get("seats"));
   if (!isValidSeats(seats)) back(`Elige entre ${BUSINESS.minSeats} y ${BUSINESS.maxSeats} empleados.`);
@@ -62,6 +68,7 @@ export async function orgCheckout(form: FormData) {
     if (name.length < 2) back("Escribe el nombre de tu empresa.");
     const doc = {
       _id: new ObjectId(),
+      kind: "empresa" as const,
       name,
       ownerId: user._id,
       seats,
@@ -108,7 +115,7 @@ export async function orgCheckout(form: FormData) {
 
 /** Agrega puestos a un plan vigente, pagando la parte proporcional hasta el vencimiento. */
 export async function addSeatsCheckout(form: FormData) {
-  const owner = await currentOwner();
+  const owner = await currentOwner("empresa");
   if (!owner) redirect("/empresa");
   const { user, org } = owner;
   if (!orgActive(org.paidUntil)) back("Tu plan venció: renuévalo para agregar puestos.");
@@ -161,7 +168,7 @@ export async function inviteByEmail(_prev: InviteState, form: FormData): Promise
     return { error: `Hoy puedes enviar ${Math.max(0, BUSINESS.invitesPerDay - used)} invitaciones más.` };
   await orgs.updateOne({ _id: org._id }, { $set: { invites: { day: today, count: used + valid.length } } });
 
-  const link = `${env.appUrl}/empresa/unirse/${org.inviteCode}`;
+  const link = `${env.appUrl}${homeOf(org.kind)}/unirse/${org.inviteCode}`;
   let sent = 0;
   await inBatches(valid, 10, async (to) => {
     const r = await sendEmail({ to, ...inviteEmail({ org: org.name, inviter: user.name, link }) });
@@ -198,28 +205,83 @@ export async function leaveOrg() {
   const user = await getCurrentUser();
   if (!user?.org || user.org.role !== "member") redirect("/empresa");
   await removeFromOrg(user.org._id, user._id);
-  redirect("/empresa?salida=1");
+  redirect(`${homeOf(user.org.kind)}?salida=1`);
 }
 
 export async function joinOrgAction(form: FormData) {
   const code = String(form.get("code") ?? "").slice(0, 40);
-  const path = `/empresa/unirse/${encodeURIComponent(code)}`;
+  const kind: OrgKind = form.get("kind") === "familia" ? "familia" : "empresa";
+  const path = `${homeOf(kind)}/unirse/${encodeURIComponent(code)}`;
   const user = await getCurrentUser();
   if (!user) redirect(`/registro?next=${encodeURIComponent(path)}`);
   if (form.get(ORG_CONSENT_FIELD) !== "si") redirect(`${path}?error=consentimiento`);
 
-  const { result, orgId, orgName } = await joinOrg(user._id, code);
+  const { result, orgId, orgName, orgKind } = await joinOrg(user._id, code);
   if (result === "joined") {
     try {
-      await recordOrgConsent({ userId: user._id, email: user.email, orgId: orgId!, orgName: orgName! });
+      await recordOrgConsent({ userId: user._id, email: user.email, orgId: orgId!, orgName: orgName!, kind: orgKind });
     } catch (e) {
       // Sin prueba de la autorización no se queda dentro
       await removeFromOrg(orgId!, user._id);
       throw e;
     }
-    redirect("/empresa?unido=1");
+    redirect(`${homeOf(orgKind)}?unido=1`);
   }
   redirect(`${path}?error=${result}`);
+}
+
+/** Compra (o renueva) Pro Familiar. Crea la familia si aún no existe. */
+export async function familyCheckout(form: FormData) {
+  const user = await getCurrentUser();
+  if (!user) redirect(`/registro?next=${encodeURIComponent("/familia")}`);
+  const fail = (msg: string): never => redirect(`/familia?error=${encodeURIComponent(msg)}#comprar`);
+  if (user.org && (user.org.role !== "owner" || user.org.kind !== "familia"))
+    fail(`Ya eres parte de ${user.org.name}. Sal de ahí para crear tu plan familiar.`);
+  const missing = consentError(readConsent(form));
+  if (missing) fail(missing);
+
+  const { orgs, users } = await collections();
+  let org = user.org ? await orgs.findOne({ _id: user.org._id, ownerId: user._id, kind: "familia" }) : null;
+  if (!org) {
+    const name = String(form.get("name") ?? "").trim().replace(/\s+/g, " ").slice(0, 60) || `Familia de ${user.name.split(" ")[0]}`;
+    const doc = {
+      _id: new ObjectId(),
+      kind: "familia" as const,
+      name,
+      ownerId: user._id,
+      seats: FAMILY.seats,
+      memberCount: 1,
+      paidUntil: null,
+      inviteCode: newInviteCode(),
+      createdAt: new Date(),
+    };
+    try {
+      await orgs.insertOne(doc);
+    } catch (e) {
+      if (e instanceof MongoServerError && e.code === 11000) fail("Ya tienes un plan creado.");
+      throw e;
+    }
+    const r = await users.updateOne(
+      { _id: user._id, orgId: { $exists: false } },
+      { $set: { orgId: doc._id, orgRole: "owner", orgJoinedAt: new Date() } },
+    );
+    if (r.modifiedCount === 0) {
+      await orgs.deleteOne({ _id: doc._id });
+      fail("Ya perteneces a otro plan.");
+    }
+    org = doc;
+  }
+
+  let url: string;
+  try {
+    url = await startFamilyCheckout(user._id, { orgId: org._id, orgName: org.name }, (orderRef) =>
+      recordConsents({ userId: user._id, email: user.email, source: "compra", orderRef }),
+    );
+  } catch (e) {
+    if (!(e instanceof CheckoutError)) console.error("[familia] checkout", e);
+    fail(e instanceof CheckoutError ? e.message : "No pudimos iniciar el pago. Intenta de nuevo.");
+  }
+  redirect(url!);
 }
 
 // ---------------------------------------------------------------- simulacros
@@ -232,7 +294,7 @@ export interface SimState {
 }
 
 export async function launchSimulation(_prev: SimState, form: FormData): Promise<SimState> {
-  const owner = await currentOwner();
+  const owner = await currentOwner("empresa");
   if (!owner) return { error: "No autorizado." };
   const { user, org } = owner;
   if (!orgActive(org.paidUntil)) return { error: "Activa tu plan para enviar simulacros." };
@@ -345,7 +407,7 @@ export async function reportSuspicious(_prev: SuspiciousState, form: FormData): 
 
 /** El encargado asigna (o quita) el área de una persona de su equipo. */
 export async function setMemberArea(form: FormData) {
-  const owner = await currentOwner();
+  const owner = await currentOwner("empresa");
   if (!owner) return;
   const id = String(form.get("userId") ?? "");
   const area = form.get("area");

@@ -1,7 +1,7 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
 import { MongoServerError, ObjectId } from "mongodb";
-import { BUSINESS } from "@/lib/business";
+import { BUSINESS, FAMILY } from "@/lib/business";
 import { PLANS, type PlanId } from "@/lib/plans";
 import { SITE } from "@/lib/site";
 import { collections } from "./db";
@@ -83,6 +83,22 @@ export function startBusinessCheckout(
       description: renew
         ? `Plan Empresa para ${b.orgName}: ${b.seats} empleados por ${BUSINESS.days} días`
         : `${b.seats} puestos adicionales para ${b.orgName} hasta el vencimiento del plan`,
+    },
+    onOrder,
+  );
+}
+
+/** Compra (o renovación) de Pro Familiar: un año para la familia, con puestos fijos. */
+export function startFamilyCheckout(userId: ObjectId, f: { orgId: ObjectId; orgName: string }, onOrder?: OnOrder): Promise<string> {
+  return openOrder(
+    {
+      userId,
+      planId: "familia",
+      amount: FAMILY.price,
+      days: FAMILY.days,
+      title: `Pro Familiar · ${FAMILY.seats} personas por 1 año`,
+      business: { orgId: f.orgId, action: "renovar", seats: FAMILY.seats },
+      description: `Pro Familiar para ${f.orgName}: hasta ${FAMILY.seats} personas por ${FAMILY.days} días`,
     },
     onOrder,
   );

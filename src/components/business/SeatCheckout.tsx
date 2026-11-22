@@ -3,9 +3,9 @@
 import { Minus, Plus } from "lucide-react";
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
-import { addSeatsCheckout, orgCheckout } from "@/app/actions/org";
+import { addSeatsCheckout, familyCheckout, orgCheckout } from "@/app/actions/org";
 import { ConsentChecks } from "@/components/legal/ConsentChecks";
-import { addSeatsPrice, BUSINESS, yearPrice } from "@/lib/business";
+import { addSeatsPrice, BUSINESS, FAMILY, yearPrice } from "@/lib/business";
 
 const usd = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
@@ -80,6 +80,23 @@ export function SeatCheckout({
       </div>
       <ConsentChecks />
       <PayButton label={mode === "nueva" ? "Pagar y activar mi empresa" : `Renovar por 1 año (${usd(yearPrice(seats))})`} />
+      <p className="text-center text-xs text-fog">Pago único con tarjeta por medio de Wompi. Sin cobros automáticos.</p>
+    </form>
+  );
+}
+
+/** Comprar o renovar Pro Familiar (precio y puestos fijos). */
+export function FamilyCheckout({ mode }: { mode: "nueva" | "renovar" }) {
+  return (
+    <form action={familyCheckout} className="space-y-5">
+      {mode === "nueva" && (
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-medium">Nombre de tu familia (opcional)</span>
+          <input name="name" maxLength={60} placeholder="Ej.: Familia Martínez" className="field" />
+        </label>
+      )}
+      <ConsentChecks />
+      <PayButton label={mode === "nueva" ? `Pagar ${usd(FAMILY.price)} y activar` : `Renovar por 1 año (${usd(FAMILY.price)})`} />
       <p className="text-center text-xs text-fog">Pago único con tarjeta por medio de Wompi. Sin cobros automáticos.</p>
     </form>
   );

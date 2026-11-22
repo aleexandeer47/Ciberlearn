@@ -571,6 +571,25 @@ kbd {
   }
 }
 
+/* ---- Modo sencillo (personas mayores): letra más grande, más contraste y botones más altos.
+   Se activa con data-simple="1" en <html> (botón “Aa”, src/components/theme/SimpleMode.tsx) ---- */
+html[data-simple="1"] {
+  font-size: 118.75%; /* 19px */
+}
+html[data-simple="1"] body {
+  line-height: 1.65;
+  letter-spacing: 0.005em;
+}
+html[data-simple="1"] .text-fog {
+  color: var(--graphite);
+}
+html[data-simple="1"] .btn {
+  min-height: 3rem;
+}
+html[data-simple="1"] .text-xs {
+  font-size: 0.875rem;
+}
+
 /* ---- Ruta: inmersión en el mar ---- */
 .dive-sea {
   background: linear-gradient(

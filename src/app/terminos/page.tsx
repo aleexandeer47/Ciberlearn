@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { A, LegalPage, MailLink, ProviderInfo, Section } from "@/components/legal/LegalPage";
 import { LEGAL, RETRACT_DAYS } from "@/lib/legal";
 import { AI_LIMITS } from "@/lib/ai/personas";
-import { BUSINESS } from "@/lib/business";
+import { BUSINESS, FAMILY } from "@/lib/business";
 import { PLANS } from "@/lib/plans";
 import { SITE } from "@/lib/site";
 
@@ -18,6 +18,7 @@ const SECTIONS = [
   { id: "uso", title: "Uso permitido" },
   { id: "planes", title: "Plan gratis y plan Pro" },
   { id: "empresa", title: "Plan Empresa" },
+  { id: "familia", title: "Pro Familiar y clases" },
   { id: "retracto", title: "Retracto y reembolsos" },
   { id: "ia", title: "Chats con IA" },
   { id: "comunidad", title: "Retos y alertas de la comunidad" },
@@ -156,6 +157,20 @@ export default function TerminosPage() {
           <li>
             El encargado debe tratar el avance de su equipo y los correos que le reporten como información confidencial y
             usarla solo para capacitación y seguridad.
+          </li>
+        </ul>
+      </Section>
+
+      <Section id="familia" title="Pro Familiar y clases">
+        <ul className="list-disc space-y-2 pl-5">
+          <li>
+            Pro Familiar cuesta US${FAMILY.price} al año y cubre hasta {FAMILY.seats} personas, incluida quien lo compra. Es un
+            pago único sin renovación automática. Cada persona se une con su propia cuenta desde el enlace de invitación y
+            autoriza que quien administra el plan vea su avance.
+          </li>
+          <li>
+            El modo colegio es gratis. El docente es responsable de usar el avance de sus estudiantes solo con fines
+            educativos. Los estudiantes menores de edad deben unirse con permiso de su madre, padre o tutor.
           </li>
         </ul>
       </Section>

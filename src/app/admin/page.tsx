@@ -250,12 +250,12 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/admin">["
             <h2 className="font-display text-xl">Ventas por plan</h2>
             <p className="mt-1 text-sm text-fog">Solo pagos reales cobrados por Wompi.</p>
             <ul className="mt-5 space-y-3">
-              {(["pro-mensual", "pro-anual", "empresa"] as const).map((id) => {
+              {(["pro-mensual", "pro-anual", "familia", "empresa"] as const).map((id) => {
                 const p = s.revenue.byPlan.find((x) => x.planId === id);
                 return (
                   <li key={id} className="flex items-baseline justify-between gap-3">
                     <span className="text-sm">
-                      {id === "empresa" ? "Empresa" : PLANS[id].name}
+                      {id === "empresa" ? "Empresa" : id === "familia" ? "Pro Familiar" : PLANS[id].name}
                       <span className="ml-1 text-fog">· {n(p?.count ?? 0)}</span>
                     </span>
                     <span className="font-semibold tabular-nums">{money(p?.total ?? 0)}</span>
@@ -416,7 +416,7 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/admin">["
                                 o.business?.action === "agregar"
                                   ? `Quitar los ${o.business.seats} puestos de esta compra`
                                   : o.business
-                                    ? `Quitar los ${o.days} días del plan Empresa`
+                                    ? `Quitar los ${o.days} días del plan ${o.planId === "familia" ? "familiar" : "Empresa"}`
                                     : `Quitar los ${o.days} días de Pro de este pago`
                               }
                               email={o.email ?? "—"}
@@ -475,11 +475,23 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/admin">["
                     <td className="whitespace-nowrap px-6 py-3 tabular-nums text-fog">{fmtDateTime(c.acceptedAt)}</td>
                     <td className="max-w-[220px] truncate px-3 py-3">{c.email}</td>
                     <td className="px-3 py-3">
-                      {c.document === "terminos" ? "Términos" : c.document === "privacidad" ? "Privacidad" : "Autorización a empresa"}
+                      {c.document === "terminos"
+                        ? "Términos"
+                        : c.document === "privacidad"
+                          ? "Privacidad"
+                          : c.document === "clase"
+                            ? "Autorización a docente"
+                            : "Autorización a empresa/familia"}
                       <span className="ml-1.5 font-mono text-[11px] text-fog">v{c.version}</span>
                     </td>
                     <td className="px-3 py-3">
-                      {c.source === "registro" ? "Registro" : c.source === "compra" ? "Compra" : "Unirse a empresa"}
+                      {c.source === "registro"
+                        ? "Registro"
+                        : c.source === "compra"
+                          ? "Compra"
+                          : c.source === "unirse-clase"
+                            ? "Unirse a clase"
+                            : "Unirse a empresa/familia"}
                       {c.orderRef && <p className="font-mono text-[11px] text-fog">{c.orderRef}</p>}
                     </td>
                     <td className="px-3 py-3 font-mono text-xs text-fog">{c.ip ?? "—"}</td>

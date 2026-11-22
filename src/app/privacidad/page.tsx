@@ -12,7 +12,7 @@ export const metadata: Metadata = {
  * Cada dato, cookie y proveedor que se menciona aquí corresponde a lo que hace el código:
  *  - users / sessions / runs / orders / consents / login_attempts / password_resets / daily_stats /
  *    lesson_attempts / xp_events / ai_chats / orgs / phish_campaigns / phish_targets /
- *    challenges / challenge_plays / daily_answers / scam_reports (MongoDB)
+ *    challenges / challenge_plays / daily_answers / scam_reports / inbox_* / org_* / classes / class_members (MongoDB)
  *  - cookie "ciberlearn_session" y claves de localStorage/sessionStorage del navegador (ver /cookies)
  *  - proveedores: MongoDB Atlas, Wompi, Mailjet, Anthropic y Vercel
  * Si cambia el sistema (nuevos datos, analítica, proveedores), actualiza esta página y su versión en src/lib/legal.ts.
@@ -24,6 +24,7 @@ const SECTIONS = [
   { id: "usos", title: "Para qué los usamos" },
   { id: "base", title: "Tu consentimiento" },
   { id: "empresa", title: "Si te unes a una empresa" },
+  { id: "familia", title: "Plan familiar y clases" },
   { id: "navegador", title: "Cookies" },
   { id: "terceros", title: "Con quién los compartimos" },
   { id: "conservacion", title: "Cuánto tiempo los guardamos" },
@@ -186,6 +187,22 @@ export default function PrivacidadPage() {
           aceptaciones. Puedes salir de la empresa cuando quieras desde la página Empresa; desde ese momento deja de ver tu
           avance. Si quieres que también se borren los resultados de simulacros anteriores, escríbenos a <MailLink />.
         </p>
+      </Section>
+
+      <Section id="familia" title="Plan familiar y clases">
+        <ul className="list-disc space-y-2 pl-5">
+          <li>
+            <strong className="text-chalk">Pro Familiar:</strong> si te unes al plan de tu familia, autorizas que quien lo
+            administra vea tu nombre, tu correo, tus lecciones, tu XP, tu racha y cuándo entraste por última vez. No ve tus
+            respuestas ni tus pagos. Puedes salir cuando quieras.
+          </li>
+          <li>
+            <strong className="text-chalk">Clases (modo colegio):</strong> si te unes a una clase con su código, autorizas que
+            tu docente vea tu nombre, tus lecciones, tu XP, tu racha y cuándo entraste por última vez. Si eres menor de edad,
+            hazlo con permiso de tu madre, padre o tutor. Puedes salir de la clase cuando quieras.
+          </li>
+          <li>Ambas autorizaciones quedan registradas con la fecha, como las demás aceptaciones.</li>
+        </ul>
       </Section>
 
       <Section id="navegador" title="Cookies">

@@ -6,6 +6,8 @@ import type {
   AiChatDoc,
   ChallengeDoc,
   ChallengePlayDoc,
+  ClassDoc,
+  ClassMemberDoc,
   ConsentDoc,
   DailyAnswerDoc,
   InboxResultDoc,
@@ -94,6 +96,8 @@ export async function collections() {
     orgScores: d.collection<OrgScoreDoc>("org_scores"),
     inboxSessions: d.collection<InboxSessionDoc>("inbox_sessions"),
     inboxResults: d.collection<InboxResultDoc>("inbox_results"),
+    classes: d.collection<ClassDoc>("classes"),
+    classMembers: d.collection<ClassMemberDoc>("class_members"),
   };
 }
 
@@ -167,6 +171,11 @@ export async function ensureIndexes(d: Db) {
     d.collection("inbox_results").createIndex({ orgId: 1, createdAt: -1 }),
     d.collection("org_reports").createIndex({ orgId: 1, createdAt: -1 }),
     d.collection("org_scores").createIndex({ orgId: 1, month: 1 }),
+    // Fase 3: modo colegio
+    d.collection("classes").createIndex({ code: 1 }, { unique: true }),
+    d.collection("classes").createIndex({ teacherId: 1, createdAt: -1 }),
+    d.collection("class_members").createIndex({ classId: 1, userId: 1 }, { unique: true }),
+    d.collection("class_members").createIndex({ userId: 1 }),
     d.collection("users").createIndex({ shareId: 1 }, { unique: true, partialFilterExpression: { shareId: { $type: "string" } } }),
     d.collection("users").createIndex(
       { "certificate.code": 1 },

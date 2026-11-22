@@ -18,6 +18,8 @@ const csp = [
   "img-src 'self' blob: data:",
   "font-src 'self'",
   "connect-src 'self'",
+  "worker-src 'self'",
+  "manifest-src 'self'",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self' https://*.wompi.sv",
@@ -52,8 +54,17 @@ const nextConfig: NextConfig = {
       { source: "/(.*)", headers: securityHeaders },
       // El panel y las páginas de cuenta no deben guardarse en cachés intermedias
       {
-        source: "/(admin|progreso|certificado|pago|restablecer|empresa|simulacro)(.*)",
+        source: "/(admin|progreso|certificado|pago|restablecer|empresa|simulacro|familia|clase)(.*)",
         headers: [{ key: "Cache-Control", value: "private, no-store" }],
+      },
+      // Service worker: siempre la versión más nueva y solo scripts propios
+      {
+        source: "/sw.js",
+        headers: [
+          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+          { key: "Content-Security-Policy", value: "default-src 'self'; script-src 'self'" },
+        ],
       },
     ];
   },

@@ -12,6 +12,15 @@ export const BUSINESS = {
   invitesPerDay: 300,
 } as const;
 
+/** Pro Familiar: un pago cubre a varias personas; quien paga ve el avance de su familia. */
+export const FAMILY = {
+  price: 49.99,
+  seats: 5,
+  days: 365,
+} as const;
+
+export type OrgKind = "empresa" | "familia";
+
 const cents = (n: number) => Math.round(n * 100) / 100;
 
 export function isValidSeats(n: number) {
