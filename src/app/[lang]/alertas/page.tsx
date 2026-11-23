@@ -17,10 +17,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
     alternates: await alternatesFor("/alertas"),
-    title: t("Alertas de estafas", "Scam alerts"),
+    title: t("Alertas de estafas por WhatsApp, SMS y correo", "WhatsApp, text and email scam alerts"),
     description: t(
-      "Estafas que están circulando ahora, reportadas por la comunidad y revisadas antes de publicarse.",
-      "Scams going around right now, reported by the community and reviewed before publishing.",
+      "Estafas y casos de suplantación de identidad que están circulando ahora, reportados por la comunidad y revisados antes de publicarse.",
+      "Scams and impersonation attempts going around right now, reported by the community and reviewed before publishing.",
     ),
   };
 }

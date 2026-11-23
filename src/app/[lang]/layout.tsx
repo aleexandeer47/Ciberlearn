@@ -31,7 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const lang = await getLang();
   return {
     metadataBase: new URL(siteUrl),
-    title: { default: `${SITE.name}: ${SITE.tagline[lang]}`, template: `%s · ${SITE.name}` },
+    title: { default: `${SITE.name} | ${SITE.tagline[lang]}`, template: `%s | ${SITE.name}` },
     description: SITE.description[lang],
     applicationName: SITE.name,
     appleWebApp: { capable: true, title: SITE.name, statusBarStyle: "black-translucent" },

@@ -9,10 +9,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
     alternates: await alternatesFor("/simulador"),
-    title: t("Simulador de phishing", "Phishing simulator"),
+    title: t("Simulador de phishing: identifica correos falsos", "Phishing simulator: spot fake emails"),
     description: t(
-      "10 mensajes ficticios. Encuentra las señales de estafa y descubre qué tan buen ojo tienes.",
-      "10 fictional messages. Find the signs of a scam and see how sharp your eye is.",
+      "Practica gratis con 10 mensajes ficticios: correos falsos, SMS y estafas por WhatsApp. Encuentra las señales de phishing y descubre qué tan buen ojo tienes.",
+      "Practice for free with 10 fictional messages: fake emails, texts and WhatsApp scams. Find the signs of phishing and see how sharp your eye is.",
     ),
   };
 }

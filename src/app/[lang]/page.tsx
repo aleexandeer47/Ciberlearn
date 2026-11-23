@@ -111,8 +111,8 @@ export default async function Home() {
               </h1>
               <p style={i(2)} className="mx-auto mt-6 max-w-[600px] text-lg leading-relaxed text-fog">
                 {t(
-                  `El “banco” que te bloquea la cuenta, el paquete retenido, tu hijo con número nuevo. Entrena el ojo con ${SCENARIOS.length} mensajes ficticios antes de que te pase de verdad.`,
-                  `The “bank” locking your account, the parcel on hold, your kid with a new number. Train your eye with ${SCENARIOS.length} fictional messages before it happens for real.`,
+                  `El “banco” que te bloquea la cuenta, el paquete retenido, tu hijo con número nuevo por WhatsApp. Aprende a detectar phishing e identificar correos falsos con ${SCENARIOS.length} mensajes ficticios, antes de que te pase de verdad.`,
+                  `The “bank” locking your account, the parcel on hold, your kid texting from a new number on WhatsApp. Learn to spot phishing and fake emails with ${SCENARIOS.length} fictional messages before it happens for real.`,
                 )}
               </p>
               <div style={i(3)} className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">

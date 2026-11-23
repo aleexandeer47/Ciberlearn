@@ -11,10 +11,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
     alternates: await alternatesFor("/revisar"),
-    title: t("¿Es estafa? Revisa un mensaje", "Is it a scam? Check a message"),
+    title: t("¿Es estafa? Cómo reconocer mensajes fraudulentos", "Is it a scam? How to recognize fraudulent messages"),
     description: t(
-      "Pega un correo, SMS o chat sospechoso y descubre al instante qué señales de estafa tiene. Gratis y sin enviar tus datos.",
-      "Paste a suspicious email, text or chat and instantly see which scam signs it has. Free, and your data stays with you.",
+      "Pega un correo, SMS o mensaje de WhatsApp sospechoso y descubre al instante si es fraudulento y qué señales de estafa tiene. Gratis y sin enviar tus datos.",
+      "Paste a suspicious email, text or WhatsApp message and instantly see whether it’s fraudulent and which scam signs it has. Free, and your data stays with you.",
     ),
   };
 }

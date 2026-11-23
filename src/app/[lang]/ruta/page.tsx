@@ -18,10 +18,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
     alternates: await alternatesFor("/ruta"),
-    title: t("Ruta guiada", "Guided path"),
+    title: t("Ruta guiada: cómo evitar estafas digitales", "Guided path: how to avoid online scams"),
     description: t(
-      "Una inmersión para aprender a reconocer los anzuelos: lecciones cortas, vidas y XP.",
-      "A deep dive to learn to recognize the hooks: short lessons, lives and XP.",
+      "Lecciones cortas y gratis para aprender a detectar phishing, identificar correos falsos y evitar estafas digitales y la suplantación de identidad.",
+      "Short, free lessons to learn to spot phishing, identify fake emails and avoid online scams and impersonation.",
     ),
   };
 }

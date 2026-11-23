@@ -10,10 +10,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
     alternates: await alternatesFor("/mayores"),
-    title: t("Para personas mayores", "For older adults"),
+    title: t("Seguridad digital para personas mayores", "Online safety for older adults"),
     description: t(
-      "Aprende a reconocer estafas con letra grande, mensajes que se pueden escuchar y consejos simples.",
-      "Learn to recognize scams with large text, messages you can listen to and simple tips.",
+      "Aprende a reconocer estafas por teléfono, SMS y WhatsApp con letra grande, mensajes que se pueden escuchar y consejos simples.",
+      "Learn to recognize phone, text and WhatsApp scams with large text, messages you can listen to and simple tips.",
     ),
   };
 }
