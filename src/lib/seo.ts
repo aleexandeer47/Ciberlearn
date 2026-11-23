@@ -2,7 +2,7 @@
 // Lo usan el generateMetadata de cada página pública, src/app/sitemap.ts y src/app/robots.ts.
 
 import type { Metadata } from "next";
-import { LANGS } from "@/lib/i18n";
+import { LANGS, type Lang } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
 import { SITE } from "@/lib/site";
 
@@ -56,6 +56,21 @@ export const languageUrls = (path: string) => ({
   ...Object.fromEntries(LANGS.map((l) => [l, `/${l}${path}`])),
   "x-default": path || "/",
 });
+
+/** Entradas del sitemap: todas, o solo las de un idioma (para /es/sitemap.xml y /en/sitemap.xml). */
+export function sitemapEntries(only?: Lang) {
+  return PUBLIC_PAGES.flatMap(({ path, priority }) => {
+    const languages = Object.fromEntries(Object.entries(languageUrls(path)).map(([k, v]) => [k, absolute(v)]));
+    return LANGS.filter((l) => !only || l === only).map((lang) => ({
+      url: absolute(`/${lang}${path}`),
+      changeFrequency: (path === "/diaria" || path === "/alertas" || path === "/ranking" ? "daily" : "weekly") as
+        | "daily"
+        | "weekly",
+      priority,
+      alternates: { languages },
+    }));
+  });
+}
 
 /** canonical + hreflang para el generateMetadata de una página pública. */
 export async function alternatesFor(path: string): Promise<Metadata["alternates"]> {

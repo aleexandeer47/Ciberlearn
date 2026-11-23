@@ -10,7 +10,7 @@ export default function robots(): MetadataRoute.Robots {
   ];
   return {
     rules: [{ userAgent: "*", allow: "/", disallow }],
-    sitemap: absolute("/sitemap.xml"),
+    sitemap: [absolute("/sitemap.xml"), ...LANGS.map((l) => absolute(`/${l}/sitemap.xml`))],
     host: absolute(""),
   };
 }
