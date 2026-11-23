@@ -50,6 +50,13 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  // /es/sitemap.xml y /en/sitemap.xml se sirven desde archivos fijos (src/app/sitemap-es.xml, sitemap-en.xml).
+  async rewrites() {
+    return [
+      { source: "/es/sitemap.xml", destination: "/sitemap-es.xml" },
+      { source: "/en/sitemap.xml", destination: "/sitemap-en.xml" },
+    ];
+  },
   async headers() {
     return [
       { source: "/(.*)", headers: securityHeaders },

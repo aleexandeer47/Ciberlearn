@@ -72,6 +72,32 @@ export function sitemapEntries(only?: Lang) {
   });
 }
 
+const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+
+/** Respuesta XML del sitemap de un idioma (src/app/sitemap-es.xml y sitemap-en.xml). */
+export function langSitemapResponse(lang: Lang) {
+  const urls = sitemapEntries(lang)
+    .map((e) =>
+      [
+        "<url>",
+        `<loc>${esc(e.url)}</loc>`,
+        ...Object.entries(e.alternates.languages).map(
+          ([hl, href]) => `<xhtml:link rel="alternate" hreflang="${hl}" href="${esc(href)}" />`,
+        ),
+        `<changefreq>${e.changeFrequency}</changefreq>`,
+        `<priority>${e.priority}</priority>`,
+        "</url>",
+      ].join("\n"),
+    )
+    .join("\n");
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+${urls}
+</urlset>
+`;
+  return new Response(xml, { headers: { "Content-Type": "application/xml; charset=utf-8" } });
+}
+
 /** canonical + hreflang para el generateMetadata de una página pública. */
 export async function alternatesFor(path: string): Promise<Metadata["alternates"]> {
   const lang = await getLang();
