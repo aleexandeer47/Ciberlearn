@@ -7,10 +7,12 @@ import { PLANS } from "@/lib/plans";
 import { getLang } from "@/lib/i18n-server";
 import { SITE } from "@/lib/site";
 import { TermsEn } from "./en";
+import { alternatesFor } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const en = (await getLang()) === "en";
   return {
+    alternates: await alternatesFor("/terminos"),
     title: LEGAL.terminos.title[en ? "en" : "es"],
     description: en
       ? `The rules for using ${SITE.name}: accounts, Pro plan, payments, refunds and responsibilities.`

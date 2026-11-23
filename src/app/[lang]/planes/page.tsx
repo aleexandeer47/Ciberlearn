@@ -7,10 +7,12 @@ import { LOCALE, type Lang } from "@/lib/i18n";
 import { getT } from "@/lib/i18n-server";
 import { FEATURES } from "@/lib/plans";
 import { getCurrentUser } from "@/lib/server/session";
+import { alternatesFor } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
+    alternates: await alternatesFor("/planes"),
     title: t("Planes", "Pricing"),
     description: t(
       "Gratis para empezar, Pro para entrenar en serio. Precios en dólares, pago con tarjeta.",

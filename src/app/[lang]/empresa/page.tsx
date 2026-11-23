@@ -31,10 +31,12 @@ import { collections } from "@/lib/server/db";
 import { env } from "@/lib/server/env";
 import { recordReadiness, teamReport } from "@/lib/server/org";
 import { getCurrentUser, type CurrentUser } from "@/lib/server/session";
+import { alternatesFor } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
+    alternates: await alternatesFor("/empresa"),
     title: t("Plan Empresa", "Business plan"),
     description: t(
       "Entrena a tu equipo contra el phishing: plan Pro para cada empleado, panel de avance, informes y simulacros.",

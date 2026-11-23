@@ -11,10 +11,12 @@ import { getT } from "@/lib/i18n-server";
 import { SCHOOL } from "@/lib/school";
 import { collections } from "@/lib/server/db";
 import { getCurrentUser } from "@/lib/server/session";
+import { alternatesFor } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
+    alternates: await alternatesFor("/clase"),
     title: t("Modo colegio", "Class mode"),
     description: t(
       "Gratis para docentes: crea tu clase, comparte un código y mira el avance de tus estudiantes.",

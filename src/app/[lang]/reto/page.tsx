@@ -9,10 +9,12 @@ import { LOCALE } from "@/lib/i18n";
 import { getT } from "@/lib/i18n-server";
 import { collections } from "@/lib/server/db";
 import { getCurrentUser } from "@/lib/server/session";
+import { alternatesFor } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
+    alternates: await alternatesFor("/reto"),
     title: t("Reta a un amigo", "Challenge a friend"),
     description: t(
       `Crea un reto de ${CHALLENGE_SIZE} mensajes, mándalo por WhatsApp y mira quién detecta más estafas.`,

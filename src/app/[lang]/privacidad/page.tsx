@@ -4,10 +4,12 @@ import { getLang } from "@/lib/i18n-server";
 import { LEGAL } from "@/lib/legal";
 import { SITE } from "@/lib/site";
 import { PrivacyEn } from "./en";
+import { alternatesFor } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const en = (await getLang()) === "en";
   return {
+    alternates: await alternatesFor("/privacidad"),
     title: LEGAL.privacidad.title[en ? "en" : "es"],
     description: en
       ? `What data ${SITE.name} collects, what it uses it for, who it shares it with and how to exercise your rights.`

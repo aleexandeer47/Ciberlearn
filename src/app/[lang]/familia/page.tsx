@@ -15,10 +15,12 @@ import { collections } from "@/lib/server/db";
 import { env } from "@/lib/server/env";
 import { teamReport } from "@/lib/server/org";
 import { getCurrentUser, type CurrentUser } from "@/lib/server/session";
+import { alternatesFor } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
+    alternates: await alternatesFor("/familia"),
     title: t("Pro Familiar", "Family plan"),
     description: t(
       `Protege a tu familia de las estafas: Pro para ${FAMILY.seats} personas por US$${FAMILY.price} al año, y ve su avance.`,

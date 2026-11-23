@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { AuthPage } from "@/components/auth/AuthPage";
 import { getT } from "@/lib/i18n-server";
+import { alternatesFor } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
-  return { title: t("Crear cuenta", "Sign up") };
+  return { alternates: await alternatesFor("/registro"), title: t("Crear cuenta", "Sign up") };
 }
 
 export default function RegistroPage() {

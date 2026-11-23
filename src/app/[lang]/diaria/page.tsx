@@ -11,10 +11,12 @@ import { LOCALE } from "@/lib/i18n";
 import { getT } from "@/lib/i18n-server";
 import { collections } from "@/lib/server/db";
 import { getCurrentUser } from "@/lib/server/session";
+import { alternatesFor } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
+    alternates: await alternatesFor("/diaria"),
     title: t("La estafa del día", "Scam of the day"),
     description: t(
       "Un mensaje nuevo cada día: ¿es trampa o es real? Responde en 30 segundos y mantén tu racha.",

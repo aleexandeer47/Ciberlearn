@@ -4,10 +4,12 @@ import type { Lang } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
 import { LEGAL } from "@/lib/legal";
 import { SITE } from "@/lib/site";
+import { alternatesFor } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const lang = await getLang();
   return {
+    alternates: await alternatesFor("/cookies"),
     title: LEGAL.cookies.title[lang],
     description:
       lang === "en"

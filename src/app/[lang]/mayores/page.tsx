@@ -4,10 +4,12 @@ import Link from "next/link";
 import { PageShell } from "@/components/SiteHeader";
 import { ListenButton, SimpleModeButton } from "@/components/theme/SimpleMode";
 import { getT } from "@/lib/i18n-server";
+import { alternatesFor } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
+    alternates: await alternatesFor("/mayores"),
     title: t("Para personas mayores", "For older adults"),
     description: t(
       "Aprende a reconocer estafas con letra grande, mensajes que se pueden escuchar y consejos simples.",

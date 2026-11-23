@@ -7,10 +7,12 @@ import { CALLS, callOfDay } from "@/lib/calls";
 import { dayKey } from "@/lib/dayKey";
 import { getT } from "@/lib/i18n-server";
 import { getCurrentUser } from "@/lib/server/session";
+import { alternatesFor } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
+    alternates: await alternatesFor("/llamadas"),
     title: t("Llamadas simuladas", "Simulated calls"),
     description: t(
       "Recibe una llamada de un estafador (de mentira) y practica qué decir. Con voz, sin riesgo.",

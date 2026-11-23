@@ -3,10 +3,12 @@ import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 import { Simulator } from "@/components/simulator/Simulator";
 import { getT } from "@/lib/i18n-server";
 import { getScenarios } from "@/lib/scenarios/data";
+import { alternatesFor } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
+    alternates: await alternatesFor("/simulador"),
     title: t("Simulador de phishing", "Phishing simulator"),
     description: t(
       "10 mensajes ficticios. Encuentra las señales de estafa y descubre qué tan buen ojo tienes.",

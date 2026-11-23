@@ -12,10 +12,12 @@ import { getT } from "@/lib/i18n-server";
 import { isUnlocked, LESSON_ORDER, unitsFor } from "@/lib/path/content";
 import { collections } from "@/lib/server/db";
 import { extraUnlocked, getCurrentUser } from "@/lib/server/session";
+import { alternatesFor } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
+    alternates: await alternatesFor("/ruta"),
     title: t("Ruta guiada", "Guided path"),
     description: t(
       "Una inmersión para aprender a reconocer los anzuelos: lecciones cortas, vidas y XP.",

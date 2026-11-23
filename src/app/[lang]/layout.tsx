@@ -17,10 +17,10 @@ const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 const display = Bricolage_Grotesque({ variable: "--font-display", subsets: ["latin"], weight: ["400", "500", "600"] });
 const mono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
-// Dominio público: hace absolutas las URLs de las imágenes para compartir (WhatsApp las necesita completas).
-const siteUrl =
-  process.env.APP_URL ??
-  (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000");
+// Dominio oficial: hace absolutas las canónicas, los hreflang y las imágenes para compartir
+// (WhatsApp y Google las necesitan completas). Siempre el dominio real, también en vistas previas,
+// para que Google no indexe direcciones de Vercel.
+const siteUrl = SITE.url;
 
 // Una versión de cada página por idioma (ver src/proxy.ts).
 export async function generateStaticParams() {

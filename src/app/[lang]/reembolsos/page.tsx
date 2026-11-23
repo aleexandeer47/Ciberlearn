@@ -4,10 +4,12 @@ import { LEGAL, REFUND_DAYS, RETRACT_DAYS } from "@/lib/legal";
 import { getLang } from "@/lib/i18n-server";
 import { SITE } from "@/lib/site";
 import { RefundsEn } from "./en";
+import { alternatesFor } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const en = (await getLang()) === "en";
   return {
+    alternates: await alternatesFor("/reembolsos"),
     title: LEGAL.reembolsos.title[en ? "en" : "es"],
     description: en ? `When and how to get a refund for your ${SITE.name} plan.` : `Cuándo y cómo pedir la devolución de tu pago de un plan de ${SITE.name}.`,
   };

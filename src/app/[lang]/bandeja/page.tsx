@@ -8,10 +8,12 @@ import { LOCALE } from "@/lib/i18n";
 import { getT } from "@/lib/i18n-server";
 import { collections } from "@/lib/server/db";
 import { getCurrentUser } from "@/lib/server/session";
+import { alternatesFor } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
+    alternates: await alternatesFor("/bandeja"),
     title: t("Bandeja de entrenamiento", "Training inbox"),
     description: t(
       "Un correo simulado con mensajes reales y trampas: reporta, elimina o confía, como en tu trabajo.",

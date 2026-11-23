@@ -1,6 +1,8 @@
 // Nombre del producto: cambiarlo aquí lo cambia en todo el sitio.
 export const SITE = {
   name: "Unhooked",
+  /** Dominio oficial (sin "/" final). Es la dirección que ve Google: canónicas, sitemap y robots.txt. */
+  url: "https://www.unhooked.website",
   tagline: {
     es: "Entrena el ojo para detectar estafas digitales",
     en: "Train your eye to spot online scams",

@@ -5,10 +5,12 @@ import { PageShell } from "@/components/SiteHeader";
 import { getT } from "@/lib/i18n-server";
 import { aiEnabled } from "@/lib/server/ai";
 import { getCurrentUser } from "@/lib/server/session";
+import { alternatesFor } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
+    alternates: await alternatesFor("/revisar"),
     title: t("¿Es estafa? Revisa un mensaje", "Is it a scam? Check a message"),
     description: t(
       "Pega un correo, SMS o chat sospechoso y descubre al instante qué señales de estafa tiene. Gratis y sin enviar tus datos.",

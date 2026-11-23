@@ -10,10 +10,12 @@ import { getT } from "@/lib/i18n-server";
 import { countryName, countryOptions, publicName, weekStart } from "@/lib/ranking";
 import { collections } from "@/lib/server/db";
 import { getCurrentUser } from "@/lib/server/session";
+import { alternatesFor } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
+    alternates: await alternatesFor("/ranking"),
     title: t("Ranking mundial", "Global leaderboard"),
     description: t("Quiénes detectan más estafas: XP de la semana y de todos los tiempos.", "Who spots the most scams: XP this week and of all time."),
   };

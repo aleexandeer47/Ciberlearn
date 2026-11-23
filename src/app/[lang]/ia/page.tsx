@@ -5,10 +5,12 @@ import { ChatArena } from "@/components/ai/ChatArena";
 import { PageShell } from "@/components/SiteHeader";
 import { personasFor } from "@/lib/ai/personas";
 import { getT } from "@/lib/i18n-server";
+import { alternatesFor } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
+    alternates: await alternatesFor("/ia"),
     title: t("Chats con IA", "AI chats"),
     description: t(
       "Una IA intenta estafarte en un chat. Practica a no caer, sin riesgo. Exclusivo de Pro.",

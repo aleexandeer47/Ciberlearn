@@ -11,11 +11,12 @@ import { Mark } from "@/components/Mark";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 import { getT } from "@/lib/i18n-server";
 import { getScenarios } from "@/lib/scenarios/data";
+import { alternatesFor } from "@/lib/seo";
 
 const i = (n: number) => ({ "--i": n }) as CSSProperties;
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { alternates: { languages: { es: "/es", en: "/en" } } };
+  return { alternates: await alternatesFor("") };
 }
 
 const Arrow = () => (

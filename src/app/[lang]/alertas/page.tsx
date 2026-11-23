@@ -11,10 +11,12 @@ import { LOCALE } from "@/lib/i18n";
 import { getT } from "@/lib/i18n-server";
 import { collections } from "@/lib/server/db";
 import { getCurrentUser } from "@/lib/server/session";
+import { alternatesFor } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
+    alternates: await alternatesFor("/alertas"),
     title: t("Alertas de estafas", "Scam alerts"),
     description: t(
       "Estafas que están circulando ahora, reportadas por la comunidad y revisadas antes de publicarse.",

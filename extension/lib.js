@@ -1,7 +1,7 @@
 // Lectura de enlaces para la extensión. Es una copia mínima de src/lib/url.ts y src/lib/checker.ts
 // (la extensión no comparte código con el sitio): si cambian allá, actualiza aquí también.
 
-export const SITE_URL = "https://ciberlearn.vercel.app";
+export const SITE_URL = "https://www.unhooked.website";
 
 const TWO_LEVEL = new Set([
   "com.sv", "gob.sv", "com.gt", "com.hn", "com.ni", "co.cr", "com.pa", "com.mx", "gob.mx", "com.co", "gov.co", "com.ar", "gob.ar",
