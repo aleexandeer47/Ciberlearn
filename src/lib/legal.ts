@@ -18,13 +18,13 @@ export const LEGAL = {
   privacidad: {
     path: "/privacidad",
     title: { es: "Política de privacidad", en: "Privacy policy" } as L,
-    version: "2026-11-22.3",
+    version: "2026-11-22.4",
     updated: { es: "22 de noviembre de 2026", en: "November 22, 2026" } as L,
   },
   cookies: {
     path: "/cookies",
     title: { es: "Política de cookies", en: "Cookie policy" } as L,
-    version: "2026-11-22.2",
+    version: "2026-11-22.3",
     updated: { es: "22 de noviembre de 2026", en: "November 22, 2026" } as L,
   },
   reembolsos: {

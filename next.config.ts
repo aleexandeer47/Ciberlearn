@@ -9,15 +9,16 @@ const isDev = process.env.NODE_ENV === "development";
  * - Solo se cargan scripts, estilos, fuentes e imágenes del propio sitio.
  * - frame-ancestors 'none': nadie puede meter el sitio en un iframe (clickjacking).
  * - form-action permite Wompi, adonde redirige el pago.
+ * - Google Tag Manager / Analytics: solo se cargan si la persona acepta en el aviso de cookies.
  * - 'unsafe-eval' solo en desarrollo (lo usa React para mostrar errores).
  */
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline' https://www.googletagmanager.com${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' blob: data:",
+  "img-src 'self' blob: data: https://www.googletagmanager.com https://*.google-analytics.com",
   "font-src 'self'",
-  "connect-src 'self'",
+  "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com",
   "worker-src 'self'",
   "manifest-src 'self'",
   "object-src 'none'",

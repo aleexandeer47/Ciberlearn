@@ -14,6 +14,8 @@ export const SITE = {
   // Contacto público para privacidad y datos personales (aparece en /privacidad).
   privacyEmail: "ciberlearnsv@gmail.com",
   year: 2026,
+  /** Google Tag Manager (Google Analytics). Solo se carga en producción y con permiso del aviso de cookies. Vacío = sin analítica. */
+  gtmId: "GTM-MPHPC842",
   /**
    * Identificación del proveedor que exige la Ley de Protección al Consumidor de El Salvador
    * (art. 4 letra q) para vender en línea. Se muestra en /terminos; los campos vacíos no aparecen.

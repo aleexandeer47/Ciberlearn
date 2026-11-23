@@ -108,7 +108,9 @@ export function PrivacyEn() {
           </Item>
           <Item label="Usage statistics">
             We count how many visits and logins there are each day, as a total number. That count doesn’t store your IP
-            address, your email or anything that identifies you.
+            address, your email or anything that identifies you. In addition, only if you accept it in the cookie notice, we
+            use Google Analytics to measure in aggregate which pages are visited, from what type of device and approximate
+            country. We don’t send it your name or email.
           </Item>
         </ul>
         <p>
@@ -192,8 +194,8 @@ export function PrivacyEn() {
 
       <Section id="navegador" title="Cookies">
         <p>
-          We only use necessary cookies (your session and the language you chose) and some data that stays in your own
-          browser. We don’t use advertising, tracking or third-party analytics cookies. The details are in the{" "}
+          We use necessary cookies (your session and the language you chose), some data that stays in your own browser
+          and, only if you accept, Google Analytics cookies. We don’t use advertising cookies. The details are in the{" "}
           <A href={LEGAL.cookies.path}>Cookie policy</A>.
         </p>
       </Section>
@@ -212,6 +214,11 @@ export function PrivacyEn() {
             and privacy policy.
           </Item>
           <Item label="Mailjet">Sends the service’s emails, such as password recovery.</Item>
+          <Item label="Google Analytics (Google)">
+            Only if you accept: measures site usage in aggregate. It receives technical data about your visit (pages, device
+            and browser type, approximate country and its cookie identifiers). You can withdraw your permission in “Cookie
+            preferences”.
+          </Item>
           <Item label="Your browser’s notification service">
             If you turn on the reminder, the notice travels through your browser’s push service (for example, Google, Apple or
             Mozilla). It only receives the text of the notice.

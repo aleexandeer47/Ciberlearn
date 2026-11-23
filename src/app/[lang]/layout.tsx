@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Geist_Mono, Inter } from "next/font/google";
 import { Suspense } from "react";
+import { Analytics } from "@/components/analytics/Analytics";
 import { LangProvider } from "@/components/i18n/LangProvider";
 import { THEME_SCRIPT } from "@/components/theme/theme";
 import { RegisterSW } from "@/components/pwa/Pwa";
@@ -64,6 +65,7 @@ export default async function RootLayout({ children }: LayoutProps<"/[lang]">) {
             <VisitBeacon />
           </Suspense>
           <RegisterSW />
+          <Analytics />
         </LangProvider>
       </body>
     </html>

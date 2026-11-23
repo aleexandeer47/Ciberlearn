@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { CookiePrefsLink } from "@/components/analytics/Analytics";
 import { LangSwitch } from "@/components/i18n/LangProvider";
 import { InstallApp } from "@/components/pwa/Pwa";
 import { SimpleModeToggle } from "@/components/theme/SimpleMode";
@@ -141,6 +142,7 @@ export async function SiteFooter() {
           <a href={`mailto:${SITE.privacyEmail}`} className="font-medium text-chalk hover:text-brand">
             {t("Contacto", "Contact")}
           </a>
+          <CookiePrefsLink />
           <InstallApp />
         </nav>
         <div className="flex flex-col gap-1 sm:flex-row sm:justify-between">

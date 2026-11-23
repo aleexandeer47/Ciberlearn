@@ -133,7 +133,9 @@ export default async function PrivacidadPage() {
           </Item>
           <Item label="Estadísticas de uso">
             Contamos cuántas visitas y cuántos inicios de sesión hay cada día, como un número total. Ese conteo no guarda
-            tu dirección IP, tu correo ni ningún dato que te identifique.
+            tu dirección IP, tu correo ni ningún dato que te identifique. Además, solo si lo aceptas en el aviso de cookies,
+            usamos Google Analytics para medir de forma agregada qué páginas se visitan, desde qué tipo de dispositivo y
+            país aproximado. No le enviamos tu nombre ni tu correo.
           </Item>
         </ul>
         <p>
@@ -221,8 +223,8 @@ export default async function PrivacidadPage() {
 
       <Section id="navegador" title="Cookies">
         <p>
-          Solo usamos cookies necesarias (tu sesión y el idioma que elegiste) y algunos datos que se quedan en tu propio
-          navegador. No usamos cookies de publicidad, de rastreo ni analítica de terceros. El detalle está en la{" "}
+          Usamos cookies necesarias (tu sesión y el idioma que elegiste), algunos datos que se quedan en tu propio navegador
+          y, solo si lo aceptas, las cookies de Google Analytics. No usamos cookies de publicidad. El detalle está en la{" "}
           <A href={LEGAL.cookies.path}>Política de cookies</A>.
         </p>
       </Section>
@@ -241,6 +243,11 @@ export default async function PrivacidadPage() {
             Wompi, bajo sus propias condiciones y política de privacidad.
           </Item>
           <Item label="Mailjet">Envía los correos del servicio, como la recuperación de contraseña.</Item>
+          <Item label="Google Analytics (Google)">
+            Solo si lo aceptas: mide de forma agregada el uso del sitio. Recibe datos técnicos de tu visita (páginas, tipo de
+            dispositivo y navegador, país aproximado e identificadores de sus cookies). Puedes retirar tu permiso en
+            “Preferencias de cookies”.
+          </Item>
           <Item label="Servicio de notificaciones de tu navegador">
             Si activas el recordatorio, el aviso viaja por el servicio de notificaciones de tu navegador (por ejemplo, Google,
             Apple o Mozilla). Solo recibe el texto del aviso.
