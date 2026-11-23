@@ -3,6 +3,7 @@
 import { Paperclip } from "lucide-react";
 import { useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import type { Scenario, Segment, SegmentedScenario, Verdict } from "@/lib/scenarios/types";
+import { useT } from "@/components/i18n/LangProvider";
 import { dissectUrl } from "@/lib/url";
 
 export type SegState = "idle" | "marked" | "found" | "missed" | "false-positive";
@@ -36,6 +37,7 @@ export function MessageView(props: Props) {
   const { scenario, segmented, stamped, revealed } = props;
   const frameRef = useRef<HTMLDivElement>(null);
   const [tip, setTip] = useState<Tip | null>(null);
+  const t = useT();
 
   const showTip = (href: string, el: HTMLElement) => {
     const frame = frameRef.current;
@@ -74,7 +76,7 @@ export function MessageView(props: Props) {
   const tipNode = tip && <LinkTip tip={tip} revealed={revealed} />;
   const stamp = stamped && (
     <div className="stamp" data-kind={stamped === "timeout" ? "phishing" : stamped}>
-      {stamped === "phishing" ? "Phishing" : stamped === "legit" ? "Legítimo" : "Sin tiempo"}
+      {stamped === "phishing" ? "Phishing" : stamped === "legit" ? t("Legítimo", "Legit") : t("Sin tiempo", "Time's up")}
     </div>
   );
 
@@ -98,7 +100,7 @@ export function MessageView(props: Props) {
           <span className="h-2.5 w-2.5 rounded-full bg-ink/15" />
           <span className="h-2.5 w-2.5 rounded-full bg-ink/15" />
           <span className="h-2.5 w-2.5 rounded-full bg-ink/15" />
-          <span className="ml-3 font-mono text-[11px] text-ink-3">Bandeja de entrada</span>
+          <span className="ml-3 font-mono text-[11px] text-ink-3">{t("Bandeja de entrada", "Inbox")}</span>
         </div>
         <div className="space-y-2 border-b border-line px-5 py-5 sm:px-7">
           <div className="flex items-start gap-3">
@@ -147,7 +149,7 @@ export function MessageView(props: Props) {
         </span>
       </div>
       <div className="min-h-[300px] space-y-2.5 px-3 py-6 [background:repeating-linear-gradient(0deg,transparent_0_23px,rgb(0_0_0/0.025)_23px_24px)]">
-        <p className="pb-2 text-center font-mono text-[10px] text-ink-3">Hoy {scenario.time}</p>
+        <p className="pb-2 text-center font-mono text-[10px] text-ink-3">{t("Hoy", "Today")} {scenario.time}</p>
         {segmented.body.map((bubble, i) => (
           <div
             key={i}
@@ -187,6 +189,7 @@ function Avatar({ name, round = true }: { name: string; round?: boolean }) {
 }
 
 function LinkTip({ tip, revealed }: { tip: Tip; revealed: boolean }) {
+  const t = useT();
   const a = revealed ? dissectUrl(tip.href) : null;
   return (
     <div
@@ -194,7 +197,7 @@ function LinkTip({ tip, revealed }: { tip: Tip; revealed: boolean }) {
       className="link-tip pointer-events-none absolute z-20 w-max max-w-[min(92vw,420px)] -translate-x-1/2 -translate-y-full rounded-xl bg-desk px-3.5 py-2.5 font-mono text-xs text-chalk shadow-2xl ring-1 ring-desk-line"
       style={{ left: tip.x, top: tip.y - 10 }}
     >
-      <span className="mb-1 block text-[10px] text-fog">Este enlace lleva a</span>
+      <span className="mb-1 block text-[10px] text-fog">{t("Este enlace lleva a", "This link goes to")}</span>
       {a ? (
         <span className="break-all">
           <span className="text-fog">{a.protocol}{a.subdomain && `${a.subdomain}.`}</span>

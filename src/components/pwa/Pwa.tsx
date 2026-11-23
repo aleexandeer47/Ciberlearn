@@ -2,6 +2,7 @@
 
 import { Download, Share, X } from "lucide-react";
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { useT } from "@/components/i18n/LangProvider";
 
 /** Registra el service worker (solo en producción: en desarrollo estorbaría a la recarga en caliente). */
 export function RegisterSW() {
@@ -24,6 +25,7 @@ const isStandalone = () =>
 const isIos = () => /iPad|iPhone|iPod/.test(navigator.userAgent);
 
 export function InstallApp({ className = "" }: { className?: string }) {
+  const t = useT();
   const [evt, setEvt] = useState<InstallEvent | null>(null);
   const [justInstalled, setJustInstalled] = useState(false);
   const [help, setHelp] = useState(false);
@@ -63,15 +65,17 @@ export function InstallApp({ className = "" }: { className?: string }) {
         className={className || "font-medium text-chalk hover:text-brand"}
       >
         <Download className="mr-1 inline h-4 w-4 align-[-3px]" aria-hidden />
-        Instalar app
+        {t("Instalar app", "Install app")}
       </button>
       {help && (
         <span role="dialog" className="absolute bottom-full left-0 z-40 mb-2 block w-72 rounded-2xl border border-desk-line bg-desk-2 p-4 text-left text-sm text-graphite shadow-xl">
-          <button type="button" onClick={() => setHelp(false)} className="absolute right-2 top-2 p-1 text-fog" aria-label="Cerrar">
+          <button type="button" onClick={() => setHelp(false)} className="absolute right-2 top-2 p-1 text-fog" aria-label={t("Cerrar", "Close")}>
             <X className="h-4 w-4" aria-hidden />
           </button>
-          En tu iPhone, toca <Share className="inline h-4 w-4 align-[-3px]" aria-label="Compartir" /> <strong>Compartir</strong> en
-          Safari y luego <strong>“Agregar a inicio”</strong>.
+          {t("En tu iPhone, toca ", "On your iPhone, tap ")}
+          <Share className="inline h-4 w-4 align-[-3px]" aria-hidden /> <strong>{t("Compartir", "Share")}</strong>{" "}
+          {t("en Safari y luego ", "in Safari and then ")}
+          <strong>{t("“Agregar a inicio”", "“Add to Home Screen”")}</strong>.
         </span>
       )}
     </span>

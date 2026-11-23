@@ -53,3 +53,17 @@ describe("invitaciones y simulacros", () => {
     expect(pct(0, 0)).toBe(0);
   });
 });
+
+import { phishTemplate as tpl, PHISH_TEMPLATES as ES_T } from "./business";
+
+describe("simulacros en inglés", () => {
+  it("cada plantilla tiene su versión en inglés con la misma forma", () => {
+    for (const es of ES_T) {
+      const en = tpl(es.id, "en");
+      expect(en, es.id).toBeDefined();
+      expect(en!.difficulty).toBe(es.difficulty);
+      expect(en!.signals.length).toBe(es.signals.length);
+      expect(en!.subject("Acme")).not.toBe(es.subject("Acme"));
+    }
+  });
+});

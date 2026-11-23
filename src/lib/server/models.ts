@@ -86,6 +86,8 @@ export interface ScamReportDoc {
   reviewedBy?: string;
   /** Personas que dicen que también les llegó */
   meToo: ObjectId[];
+  /** Idioma en que se reportó (los antiguos no lo tienen: español) */
+  lang?: "es" | "en";
 }
 
 /** Empresa con plan Empresa. El encargado (owner) también ocupa un puesto. */
@@ -110,6 +112,8 @@ export interface OrgDoc {
 
 /** Un simulacro de phishing enviado a los empleados de una empresa. */
 export interface PhishCampaignDoc {
+  /** Idioma en que se envió (los antiguos: español) */
+  lang?: "es" | "en";
   _id: ObjectId;
   orgId: ObjectId;
   templateId: string;
@@ -233,11 +237,32 @@ export interface XpEventDoc {
   _id: ObjectId;
   userId: ObjectId;
   amount: number;
-  source: "simulador" | "ruta" | "ia" | "diaria" | "bandeja";
+  source: "simulador" | "ruta" | "ia" | "diaria" | "bandeja" | "llamada";
   createdAt: Date;
 }
 
+/** Uso de “¿Es estafa?” con IA: solo para el límite diario. No se guarda el texto revisado. */
+export interface AiCheckDoc {
+  _id: ObjectId;
+  userId: ObjectId;
+  day: string;
+  createdAt: Date;
+}
+
+/** Suscripción a notificaciones (recordatorio diario). Sin cuenta también se puede. */
+export interface PushSubDoc {
+  _id: ObjectId;
+  endpoint: string;
+  keys: { p256dh: string; auth: string };
+  lang: "es" | "en";
+  userId?: ObjectId;
+  createdAt: Date;
+  lastSentAt?: Date;
+}
+
 export interface AiChatDoc {
+  /** Idioma en que se juega (los antiguos: español) */
+  lang?: "es" | "en";
   _id: ObjectId;
   userId: ObjectId;
   personaId: string;

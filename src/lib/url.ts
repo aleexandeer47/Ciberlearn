@@ -1,10 +1,13 @@
-// Sufijos de dos niveles más comunes en la región. No es la Public Suffix List
-// completa, pero cubre los casos que enseña el producto.
+// Sufijos de dos niveles más comunes en América, Europa y otros países de habla
+// inglesa. No es la Public Suffix List completa, pero cubre los casos que enseña el producto.
 const TWO_LEVEL_SUFFIXES = new Set([
   "com.sv", "gob.sv", "edu.sv", "org.sv", "net.sv",
-  "com.gt", "gob.gt", "com.hn", "gob.hn", "com.ni", "gob.ni", "co.cr", "go.cr",
-  "com.mx", "gob.mx", "com.co", "gov.co", "com.ar", "gob.ar",
-  "co.uk", "gov.uk", "com.br", "com.es",
+  "com.gt", "gob.gt", "com.hn", "gob.hn", "com.ni", "gob.ni", "co.cr", "go.cr", "com.pa", "gob.pa",
+  "com.mx", "gob.mx", "com.co", "gov.co", "com.ar", "gob.ar", "com.pe", "gob.pe", "com.ec", "gob.ec",
+  "com.bo", "gob.bo", "com.py", "gov.py", "com.uy", "gub.uy", "com.ve", "gob.ve", "gob.cl", "com.do", "gob.do",
+  "com.br", "gov.br", "com.es", "gob.es", "org.es",
+  "co.uk", "gov.uk", "org.uk", "ac.uk", "com.au", "gov.au", "co.nz", "govt.nz", "co.za", "gov.za",
+  "co.in", "gov.in", "com.ph", "gov.ph", "com.sg", "gov.sg", "co.jp", "com.cn", "com.tr",
 ]);
 
 export interface UrlAnatomy {

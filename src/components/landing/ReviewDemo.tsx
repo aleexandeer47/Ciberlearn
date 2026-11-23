@@ -2,6 +2,8 @@
 
 import { Check, RotateCcw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useLang } from "@/components/i18n/LangProvider";
+import type { Lang } from "@/lib/i18n";
 import { useCountUp } from "@/lib/useCountUp";
 
 /*
@@ -10,17 +12,58 @@ import { useCountUp } from "@/lib/useCountUp";
  * Se reproduce una vez al entrar en pantalla; "Ver de nuevo" lo repite.
  */
 
-const STEPS = [
-  { title: "Lee el mensaje", text: "Correos, SMS y chats ficticios basados en estafas que circulan en El Salvador." },
-  { title: "Resalta lo sospechoso", text: "Toca el remitente, las frases o los enlaces que te hagan dudar." },
-  { title: "Pon el sello", text: "Decide si es phishing o legítimo y mira cada señal explicada." },
-];
+const COPY = {
+  es: {
+    steps: [
+      { title: "Lee el mensaje", text: "Correos, SMS y chats ficticios basados en estafas reales que circulan hoy." },
+      { title: "Resalta lo sospechoso", text: "Toca el remitente, las frases o los enlaces que te hagan dudar." },
+      { title: "Pon el sello", text: "Decide si es phishing o legítimo y mira cada señal explicada." },
+    ],
+    notes: ["no es el dominio del banco", "te quieren apurar", "lleva a otro sitio"],
+    eyebrow: "Cómo funciona",
+    title: "Así se revisa un mensaje",
+    lead: "Tres pasos, unos cinco minutos para toda la prueba.",
+    again: "Ver de nuevo",
+    aria: "Ejemplo de un correo revisado paso a paso",
+    inbox: "Bandeja de entrada",
+    bank: "Banco Izalco",
+    from: "alertas@bancoizalco-seguro.com",
+    subject: "Su cuenta será suspendida hoy",
+    greeting: "Estimado cliente:",
+    body: "Detectamos un acceso no reconocido. Confirme sus datos para evitar el bloqueo:",
+    link: "bancoizalco.com/confirmar",
+    sign: "Departamento de Seguridad",
+    score: "Puntaje",
+  },
+  en: {
+    steps: [
+      { title: "Read the message", text: "Fictional emails, texts and chats based on real scams going around today." },
+      { title: "Highlight what's suspicious", text: "Tap the sender, phrases or links that make you doubt." },
+      { title: "Stamp it", text: "Decide whether it's phishing or legit and see every sign explained." },
+    ],
+    notes: ["not the bank's domain", "trying to rush you", "goes somewhere else"],
+    eyebrow: "How it works",
+    title: "How to review a message",
+    lead: "Three steps, about five minutes for the whole test.",
+    again: "Watch again",
+    aria: "Example of an email reviewed step by step",
+    inbox: "Inbox",
+    bank: "Izalco Bank",
+    from: "alerts@izalcobank-secure.com",
+    subject: "Your account will be suspended today",
+    greeting: "Dear customer,",
+    body: "We detected an unrecognized sign-in. Confirm your details to avoid the lock:",
+    link: "izalcobank.com/confirm",
+    sign: "Security Department",
+    score: "Score",
+  },
+} satisfies Record<Lang, unknown>;
 
 // Momento (ms) en que ocurre cada cosa
 const T = { read: 0, mark1: 1500, mark2: 2300, mark3: 3100, stamp: 4100, done: 4700 };
-const NOTES = ["no es el dominio del banco", "te quieren apurar", "lleva a otro sitio"];
 
 export function ReviewDemo() {
+  const c = COPY[useLang()];
   const root = useRef<HTMLDivElement>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const [run, setRun] = useState(0); // cada reproducción remonta la tarjeta
@@ -72,18 +115,18 @@ export function ReviewDemo() {
   const note = (n: number) =>
     marks >= n && (
       <span key={`${run}-${n}`} className="pencil-note pop-in ml-2 inline-block">
-        ← {NOTES[n - 1]}
+        ← {c.notes[n - 1]}
       </span>
     );
 
   return (
     <div className="grid items-center gap-12 lg:grid-cols-[0.85fr_1.15fr]">
       <div>
-        <span className="eyebrow mb-4">Cómo funciona</span>
-        <h2 className="font-display text-4xl leading-[1.1] sm:text-5xl">Así se revisa un mensaje</h2>
-        <p className="mt-4 max-w-md text-lg leading-relaxed text-graphite">Tres pasos, unos cinco minutos para toda la prueba.</p>
+        <span className="eyebrow mb-4">{c.eyebrow}</span>
+        <h2 className="font-display text-4xl leading-[1.1] sm:text-5xl">{c.title}</h2>
+        <p className="mt-4 max-w-md text-lg leading-relaxed text-graphite">{c.lead}</p>
         <ol className="mt-10 space-y-2">
-          {STEPS.map((s, i) => {
+          {c.steps.map((s, i) => {
             const active = phase !== "idle" && i === stepIndex && phase !== "done";
             const done = phase === "done" || i < stepIndex;
             return (
@@ -119,12 +162,12 @@ export function ReviewDemo() {
           tabIndex={phase === "done" ? 0 : -1}
         >
           <RotateCcw className="h-4 w-4" strokeWidth={1.5} aria-hidden />
-          Ver de nuevo
+          {c.again}
         </button>
       </div>
 
       {/* Se observa el correo (no la sección) para que en celular arranque cuando de verdad se ve */}
-      <div ref={root} className="relative" aria-label="Ejemplo de un correo revisado paso a paso" role="img">
+      <div ref={root} className="relative" aria-label={c.aria} role="img">
         <div className="orb orb-1 -right-10 -top-16 h-[340px] w-[340px]" aria-hidden />
         <div className="orb orb-2 -bottom-16 -left-10 h-[280px] w-[340px]" aria-hidden />
         <div
@@ -135,34 +178,34 @@ export function ReviewDemo() {
             <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
             <span className="h-2.5 w-2.5 rounded-full bg-[#febc20]" />
             <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
-            <span className="ml-3 font-mono text-[11px] text-ink-3">Bandeja de entrada</span>
+            <span className="ml-3 font-mono text-[11px] text-ink-3">{c.inbox}</span>
           </div>
           <div className="border-b border-line px-6 py-5">
             <div className="flex items-center gap-3">
               <span className="grid h-10 w-10 place-items-center rounded-full bg-[#0f4c81] text-xs font-semibold text-white">BI</span>
               <div className="min-w-0">
-                <p className="font-semibold">Banco Izalco</p>
+                <p className="font-semibold">{c.bank}</p>
                 <p className="font-mono text-[13px] text-ink-2">
-                  &lt;<span className="seg" data-state={seg(1)}>alertas@bancoizalco-seguro.com</span>&gt;
+                  &lt;<span className="seg" data-state={seg(1)}>{c.from}</span>&gt;
                   {note(1)}
                 </p>
               </div>
             </div>
             <p className="mt-4 text-lg font-semibold">
-              <span className="seg" data-state={seg(2)}>Su cuenta será suspendida hoy</span>
+              <span className="seg" data-state={seg(2)}>{c.subject}</span>
               {note(2)}
             </p>
           </div>
           <div className="space-y-3 px-6 py-5 text-[15px] leading-relaxed">
-            <p>Estimado cliente:</p>
-            <p>Detectamos un acceso no reconocido. Confirme sus datos para evitar el bloqueo:</p>
+            <p>{c.greeting}</p>
+            <p>{c.body}</p>
             <p>
               <span className="seg seg-link" data-state={seg(3)}>
-                bancoizalco.com.sv/confirmar
+                {c.link}
               </span>
               {note(3)}
             </p>
-            <p className="text-ink-2">Departamento de Seguridad</p>
+            <p className="text-ink-2">{c.sign}</p>
           </div>
           {(phase === "stamp" || phase === "done") && (
             // Más abajo que en el simulador para no tapar las notas del revisor
@@ -176,7 +219,7 @@ export function ReviewDemo() {
             phase === "stamp" || phase === "done" ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
           }`}
         >
-          <p className="text-xs text-fog">Puntaje</p>
+          <p className="text-xs text-fog">{c.score}</p>
           <p className="font-display text-3xl tabular-nums">
             {score}
             <span className="ml-1 font-sans text-sm text-fog">/ 100</span>

@@ -1,9 +1,10 @@
-// Service worker de Ciberlearn.
+// Service worker de Unhooked (los nombres de caché conservan el prefijo anterior a propósito).
 // - Sin conexión: muestra la página /offline en lugar del error del navegador.
 // - Archivos estáticos de Next (/_next/static, nombres con hash): se guardan para cargar más rápido.
 // - Nunca guarda páginas con datos de la persona, ni respuestas de la API o de formularios.
+// - Notificaciones: muestra el recordatorio diario y al tocarlo abre la estafa del día.
 
-const VERSION = "v1";
+const VERSION = "v2";
 const STATIC = `ciberlearn-static-${VERSION}`;
 const PAGES = `ciberlearn-pages-${VERSION}`;
 const OFFLINE = "/offline";
@@ -46,4 +47,33 @@ self.addEventListener("fetch", (event) => {
       }),
     );
   }
+});
+
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {}
+  const title = data.title || "Unhooked";
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: data.body || "",
+      icon: "/app-icon?size=192",
+      badge: "/app-icon?size=192",
+      tag: "diaria",
+      data: { url: data.url || "/diaria" },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || "/diaria";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+      const open = list.find((c) => new URL(c.url).origin === self.location.origin);
+      if (open) return open.navigate(url).then((c) => c && c.focus());
+      return self.clients.openWindow(url);
+    }),
+  );
 });

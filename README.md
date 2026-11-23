@@ -1,6 +1,16 @@
-# Ciberlearn
+# Unhooked
 
-Simulador en español para aprender a reconocer phishing en correos, SMS y chats, con escenarios pensados para El Salvador. Tiene cuentas, estadísticas por persona y un plan Pro de pago.
+Simulador en español e inglés para aprender a reconocer phishing en correos, SMS, chats y llamadas, con casos reales de todo el mundo. Tiene cuentas, estadísticas por persona, planes Pro, Familiar y Empresa, y modo colegio.
+
+## Idiomas
+
+Todas las páginas viven en `src/app/[lang]/` (`es` o `en`). `src/proxy.ts` elige el idioma (prefijo `/en` o `/es` en la URL, cookie `lang` o idioma del navegador) y reescribe la ruta por dentro, así las direcciones de siempre (`/ruta`, `/planes`…) sirven en los dos idiomas.
+
+- Componentes de servidor: `const { lang, t } = await getT()` (`src/lib/i18n-server.ts`).
+- Componentes de cliente: `const t = useT()` (`src/components/i18n/LangProvider.tsx`).
+- Server Actions y Route Handlers: `await requestT()`.
+- Uso: `t("texto en español", "English text")`.
+- El contenido de los ejercicios tiene su versión en inglés en archivos `*.en.ts` con los mismos ids; las pruebas verifican que coincidan.
 
 ## Puesta en marcha
 
@@ -53,7 +63,7 @@ Para enviar correos de verdad, en `.env.local`:
 
 ```
 RESEND_API_KEY=re_xxxxxxxx
-EMAIL_FROM="Ciberlearn <no-responder@tudominio.com>"   # dominio verificado en Resend
+EMAIL_FROM="Unhooked <no-responder@tudominio.com>"   # dominio verificado en Resend
 ```
 
 Sin esa clave no se envía nada: en desarrollo el enlace aparece en la pantalla y en la consola del servidor. Para usar otro servicio, cambia solo `sendEmail` en `src/lib/server/email.ts`. La plantilla del correo está en `src/lib/emails/resetPassword.ts`.

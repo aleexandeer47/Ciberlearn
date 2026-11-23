@@ -1,3 +1,5 @@
+import type { Lang } from "@/lib/i18n";
+import { SCENARIOS_EN } from "./data.en";
 import type { Scenario } from "./types";
 
 /*
@@ -6,10 +8,12 @@ import type { Scenario } from "./types";
  * el producto enseña a reconocer patrones, no a imitar marcas concretas.
  *
  * Marcas ficticias usadas:
- *  - Banco Izalco (dominio legítimo: bancoizalco.com.sv)
- *  - EnvíaYa Express (paquetería, dominio legítimo: enviaya.com.sv)
- *  - Grupo Atlacatl (empresa del usuario, dominio: grupoatlacatl.com.sv)
- *  - Dirección General de Tributos (gobierno, dominio: tributos.gob.sv)
+ *  - Banco Izalco (dominio legítimo: bancoizalco.com)
+ *  - EnvíaYa Express (paquetería, dominio legítimo: enviaya.com)
+ *  - Grupo Atlacatl (empresa del usuario, dominio: grupoatlacatl.com)
+ *  - Agencia Tributaria (gobierno, dominio: tributos.gob)
+ *
+ * Hay una versión en inglés con los mismos ids y señales en data.en.ts.
  */
 
 export const SCENARIOS: Scenario[] = [
@@ -18,7 +22,7 @@ export const SCENARIOS: Scenario[] = [
     channel: "email",
     verdict: "phishing",
     difficulty: 1,
-    context: "Eres cliente de Banco Izalco. Su dominio oficial es bancoizalco.com.sv.",
+    context: "Eres cliente de Banco Izalco. Su dominio oficial es bancoizalco.com.",
     from: {
       name: "Banco Izalco",
       address: { t: "seguridad@bancoizalco-alertas.com", s: "dominio" },
@@ -33,7 +37,7 @@ export const SCENARIOS: Scenario[] = [
       ],
       [
         "Para evitarlo, ingrese al siguiente enlace: ",
-        { t: "www.bancoizalco.com.sv/verificar", s: "enlace", href: "http://bancoizalco.verificar-cuenta.co/login" },
+        { t: "www.bancoizalco.com/verificar", s: "enlace", href: "http://bancoizalco.verificar-cuenta.co/login" },
       ],
       [{ t: "Tenga a mano su usuario, contraseña y el código que le llegará por SMS.", s: "datos" }],
       ["Atentamente, Departamento de Seguridad."],
@@ -44,7 +48,7 @@ export const SCENARIOS: Scenario[] = [
         category: "remitente",
         title: "El dominio no es el del banco",
         explanation:
-          "El correo viene de bancoizalco-alertas.com, no de bancoizalco.com.sv. Cualquiera puede registrar un dominio que contenga el nombre de una marca.",
+          "El correo viene de bancoizalco-alertas.com, no de bancoizalco.com. Cualquiera puede registrar un dominio que contenga el nombre de una marca.",
       },
       {
         id: "urgencia",
@@ -65,7 +69,7 @@ export const SCENARIOS: Scenario[] = [
         category: "enlace",
         title: "El enlace lleva a otro sitio",
         explanation:
-          "El texto muestra bancoizalco.com.sv, pero la dirección real es bancoizalco.verificar-cuenta.co. Lo que importa es lo que va justo antes de la primera barra “/”: ahí termina en verificar-cuenta.co.",
+          "El texto muestra bancoizalco.com, pero la dirección real es bancoizalco.verificar-cuenta.co. Lo que importa es lo que va justo antes de la primera barra “/”: ahí termina en verificar-cuenta.co.",
       },
       {
         id: "datos",
@@ -91,7 +95,7 @@ export const SCENARIOS: Scenario[] = [
         { t: "EnvíaYa: Su paquete está retenido en aduana por un saldo pendiente de $1.95.", s: "inesperado" },
         { t: "Pague hoy o será devuelto al remitente:", s: "urgencia" },
         " ",
-        { t: "enviaya-sv.delivery-pago.top/p/8812", s: "enlace", href: "https://enviaya-sv.delivery-pago.top/p/8812" },
+        { t: "enviaya.delivery-pago.top/p/8812", s: "enlace", href: "https://enviaya.delivery-pago.top/p/8812" },
       ],
     ],
     signals: [
@@ -107,7 +111,7 @@ export const SCENARIOS: Scenario[] = [
         category: "remitente",
         title: "Número extranjero",
         explanation:
-          "Una paquetería salvadoreña no te escribiría desde un número de Estados Unidos (+1). Los estafadores usan números baratos o virtuales.",
+          "Una paquetería local no te escribiría desde un número de otro país (+1). Los estafadores usan números baratos o virtuales.",
       },
       {
         id: "urgencia",
@@ -120,7 +124,7 @@ export const SCENARIOS: Scenario[] = [
         category: "enlace",
         title: "Dominio raro",
         explanation:
-          "El dominio real es delivery-pago.top. Las terminaciones como .top, .xyz o .click son baratas y se usan mucho en estafas. La paquetería real usa enviaya.com.sv.",
+          "El dominio real es delivery-pago.top. Las terminaciones como .top, .xyz o .click son baratas y se usan mucho en estafas. La paquetería real usa enviaya.com.",
       },
     ],
     takeaway:
@@ -135,10 +139,10 @@ export const SCENARIOS: Scenario[] = [
     from: { name: { t: "+1 (832) 555-0198", s: "nuevo" }, address: "Número no guardado" },
     time: "21:17",
     body: [
-      [{ t: "Hola mami, soy yo, Kevin. Se me cayó el cel y este es mi número nuevo.", s: "nuevo" }, " Guardalo."],
-      ["Fijate que tengo un problema y me da pena contarte."],
+      [{ t: "Hola mami, soy yo, Kevin. Se me cayó el cel y este es mi número nuevo.", s: "nuevo" }, " Guárdalo."],
+      ["Fíjate que tengo un problema y me da pena contarte."],
       [
-        { t: "Necesito que me mandés $350 hoy mismo para pagar la renta, si no me sacan del apartamento.", s: "dinero" },
+        { t: "Necesito que me mandes $350 hoy mismo para pagar la renta, si no me sacan del apartamento.", s: "dinero" },
       ],
       [{ t: "No puedo hablar ahorita porque el micrófono del cel no sirve, por eso te escribo.", s: "nollamar" }],
       [{ t: "Te paso la cuenta de un amigo porque la mía está bloqueada.", s: "cuenta" }],
@@ -182,14 +186,14 @@ export const SCENARIOS: Scenario[] = [
     verdict: "legit",
     difficulty: 2,
     context: "Eres cliente de Banco Izalco y cada mes recibes tu estado de cuenta por correo.",
-    from: { name: "Banco Izalco", address: "notificaciones@bancoizalco.com.sv" },
+    from: { name: "Banco Izalco", address: "notificaciones@bancoizalco.com" },
     subject: ["Su estado de cuenta de octubre está disponible"],
     time: "6:00",
     body: [
       ["Hola, María Fernanda:"],
       ["Su estado de cuenta de octubre de la cuenta terminada en 4821 ya está disponible."],
       [
-        "Puede consultarlo en la app Banco Izalco o en banca en línea, escribiendo bancoizalco.com.sv en su navegador.",
+        "Puede consultarlo en la app Banco Izalco o en banca en línea, escribiendo bancoizalco.com en su navegador.",
       ],
       [
         "Recuerde: nunca le pediremos su contraseña, PIN ni códigos de verificación por correo, SMS ni llamada.",
@@ -198,7 +202,7 @@ export const SCENARIOS: Scenario[] = [
     ],
     signals: [],
     legitReasons: [
-      "Viene del dominio oficial bancoizalco.com.sv.",
+      "Viene del dominio oficial bancoizalco.com.",
       "Te llama por tu nombre y muestra solo los últimos 4 dígitos de la cuenta.",
       "No tiene enlaces ni adjuntos: te pide entrar por tu cuenta a la app o la web.",
       "No hay urgencia ni amenazas, y no pide ningún dato.",
@@ -212,7 +216,7 @@ export const SCENARIOS: Scenario[] = [
     verdict: "phishing",
     difficulty: 2,
     context:
-      "Trabajas en Grupo Atlacatl (dominio grupoatlacatl.com.sv). Tu gerente general es Ricardo Menjívar.",
+      "Trabajas en Grupo Atlacatl (dominio grupoatlacatl.com). Tu gerente general es Ricardo Menjívar.",
     from: { name: "Ricardo Menjívar", address: { t: "ricardo.menjivar.gerencia@gmail.com", s: "gmail" } },
     subject: ["Favor rápido"],
     time: "10:31",
@@ -222,7 +226,7 @@ export const SCENARIOS: Scenario[] = [
         "Estoy en una reunión con un cliente y no puedo atender llamadas.",
         { t: "Necesito que compres 5 tarjetas de regalo de $100 para un detalle a los clientes.", s: "tarjetas" },
       ],
-      [{ t: "Mandame los códigos por aquí apenas las tengas, es para antes de las 12.", s: "urgencia" }],
+      [{ t: "Mándame los códigos por aquí apenas las tengas, es para antes de las 12.", s: "urgencia" }],
       [{ t: "Por favor, que quede entre nosotros, es una sorpresa.", s: "secreto" }],
       ["Enviado desde mi teléfono"],
     ],
@@ -263,8 +267,8 @@ export const SCENARIOS: Scenario[] = [
     channel: "email",
     verdict: "phishing",
     difficulty: 2,
-    context: "Declaraste renta este año. El dominio oficial de la Dirección General de Tributos es tributos.gob.sv.",
-    from: { name: "Dirección General de Tributos", address: { t: "devoluciones@dgt-devoluciones.com", s: "dominio" } },
+    context: "Declaraste impuestos este año. El dominio oficial de la Agencia Tributaria es tributos.gob.",
+    from: { name: "Agencia Tributaria", address: { t: "devoluciones@dgt-devoluciones.com", s: "dominio" } },
     subject: [{ t: "Tiene una devolución de $487.30 pendiente de cobro", s: "premio" }],
     time: "16:48",
     body: [
@@ -273,7 +277,7 @@ export const SCENARIOS: Scenario[] = [
         { t: "Tras revisar su declaración, usted tiene derecho a una devolución de $487.30.", s: "premio" },
         "Para recibirla en su cuenta, complete el formulario adjunto.",
       ],
-      [{ t: "Ingrese su número de DUI, número de cuenta bancaria y el PIN de su tarjeta de débito.", s: "datos" }],
+      [{ t: "Ingrese su número de documento de identidad, número de cuenta bancaria y el PIN de su tarjeta de débito.", s: "datos" }],
       ["Si no lo envía antes del viernes, el monto será anulado."],
     ],
     attachments: [{ name: "Formulario_Devolucion_2026.zip", s: "adjunto" }],
@@ -283,7 +287,7 @@ export const SCENARIOS: Scenario[] = [
         category: "remitente",
         title: "El gobierno no usa .com",
         explanation:
-          "Las instituciones del gobierno salvadoreño usan dominios .gob.sv. Un dominio .com con la palabra “devoluciones” lo puede registrar cualquiera.",
+          "Las instituciones del gobierno usan dominios oficiales (.gob o .gov, según el país). Un dominio .com con la palabra “devoluciones” lo puede registrar cualquiera.",
       },
       {
         id: "premio",
@@ -297,7 +301,7 @@ export const SCENARIOS: Scenario[] = [
         category: "solicitud",
         title: "Pide el PIN",
         explanation:
-          "Para depositarte dinero nadie necesita tu PIN. Con el DUI, la cuenta y el PIN pueden suplantarte y vaciar la tarjeta.",
+          "Para depositarte dinero nadie necesita tu PIN. Con tu documento, la cuenta y el PIN pueden suplantarte y vaciar la tarjeta.",
       },
       {
         id: "adjunto",
@@ -308,7 +312,7 @@ export const SCENARIOS: Scenario[] = [
       },
     ],
     takeaway:
-      "Para cualquier trámite con el gobierno, entra tú mismo al portal oficial (.gob.sv). Nunca abras adjuntos comprimidos que no pediste.",
+      "Para cualquier trámite con el gobierno, entra tú mismo al portal oficial del gobierno. Nunca abras adjuntos comprimidos que no pediste.",
   },
   {
     id: "codigo-solicitado",
@@ -379,7 +383,7 @@ export const SCENARIOS: Scenario[] = [
     channel: "email",
     verdict: "phishing",
     difficulty: 3,
-    context: "Trabajas en Grupo Atlacatl (dominio grupoatlacatl.com.sv). Soporte de TI usa ese mismo dominio.",
+    context: "Trabajas en Grupo Atlacatl (dominio grupoatlacatl.com). Soporte de TI usa ese mismo dominio.",
     from: { name: "Soporte TI - Grupo Atlacatl", address: { t: "soporte@grupoatlacatl-com.net", s: "dominio" } },
     subject: ["Aviso: su contraseña de correo vence hoy"],
     time: "8:20",
@@ -401,7 +405,7 @@ export const SCENARIOS: Scenario[] = [
         category: "remitente",
         title: "Dominio casi igual",
         explanation:
-          "grupoatlacatl-com.net imita a grupoatlacatl.com.sv cambiando un punto por un guion. Es difícil de ver si no lees la dirección completa.",
+          "grupoatlacatl-com.net imita a grupoatlacatl.com cambiando un punto por un guion. Es difícil de ver si no lees la dirección completa.",
       },
       {
         id: "urgencia",
@@ -426,8 +430,8 @@ export const SCENARIOS: Scenario[] = [
     verdict: "legit",
     difficulty: 3,
     context:
-      "Trabajas en Grupo Atlacatl (dominio grupoatlacatl.com.sv). En la reunión del lunes, RR. HH. anunció que enviaría el calendario de vacaciones.",
-    from: { name: "Andrea López - Recursos Humanos", address: "andrea.lopez@grupoatlacatl.com.sv" },
+      "Trabajas en Grupo Atlacatl (dominio grupoatlacatl.com). En la reunión del lunes, RR. HH. anunció que enviaría el calendario de vacaciones.",
+    from: { name: "Andrea López - Recursos Humanos", address: "andrea.lopez@grupoatlacatl.com" },
     subject: ["Calendario de vacaciones de fin de año"],
     time: "14:10",
     body: [
@@ -435,19 +439,22 @@ export const SCENARIOS: Scenario[] = [
       ["Como comentamos en la reunión del lunes, ya está publicado el calendario de vacaciones de diciembre."],
       [
         "Pueden revisarlo en la intranet: ",
-        { t: "intranet.grupoatlacatl.com.sv/rrhh/vacaciones", href: "https://intranet.grupoatlacatl.com.sv/rrhh/vacaciones" },
+        { t: "intranet.grupoatlacatl.com/rrhh/vacaciones", href: "https://intranet.grupoatlacatl.com/rrhh/vacaciones" },
       ],
       ["Si tienen dudas, pueden escribirme o pasar por mi oficina en el segundo nivel."],
       ["Saludos, Andrea López. Recursos Humanos."],
     ],
     signals: [],
     legitReasons: [
-      "Viene del dominio correcto de la empresa, grupoatlacatl.com.sv.",
+      "Viene del dominio correcto de la empresa, grupoatlacatl.com.",
       "Lo anunciaron en una reunión: lo esperabas.",
-      "El enlace lleva a un subdominio de la empresa (intranet.grupoatlacatl.com.sv), y el texto coincide con la dirección real.",
+      "El enlace lleva a un subdominio de la empresa (intranet.grupoatlacatl.com), y el texto coincide con la dirección real.",
       "No hay urgencia, no pide datos y ofrece hablar en persona.",
     ],
     takeaway:
-      "Un enlace es confiable cuando el dominio real (lo que va antes de la primera “/”) es el de la organización, por ejemplo intranet.grupoatlacatl.com.sv. Si tienes duda, igual puedes entrar a la intranet por tu cuenta.",
+      "Un enlace es confiable cuando el dominio real (lo que va antes de la primera “/”) es el de la organización, por ejemplo intranet.grupoatlacatl.com. Si tienes duda, igual puedes entrar a la intranet por tu cuenta.",
   },
 ];
+
+/** Escenarios gratis en el idioma pedido (mismos ids y señales en los dos). */
+export const getScenarios = (lang: Lang) => (lang === "en" ? SCENARIOS_EN : SCENARIOS);

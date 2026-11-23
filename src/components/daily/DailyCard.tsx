@@ -4,13 +4,15 @@ import { Check, Flame, Lightbulb, X, Zap } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { answerDaily, type DailyResult } from "@/app/actions/daily";
+import { useT } from "@/components/i18n/LangProvider";
 import { MessageCard } from "@/components/MessageCard";
 import { ShareButtons } from "@/components/share/ShareButtons";
 import type { PublicDailyCase } from "@/lib/daily";
+import { SITE } from "@/lib/site";
 
 type Done = Extract<DailyResult, { ok: true }> & { choice?: string };
 
-/** Tiempo hasta la medianoche de El Salvador (UTC-6), cuando cambia el caso. */
+/** Tiempo hasta la medianoche UTC-6 (hora del servidor de casos), cuando cambia el caso. */
 function untilNext(now = Date.now()) {
   const sv = now - 6 * 3600_000;
   const next = Math.floor(sv / 864e5 + 1) * 864e5 + 6 * 3600_000;
@@ -34,6 +36,7 @@ export function DailyCard({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [left, setLeft] = useState("");
+  const t = useT();
 
   useEffect(() => {
     const tick = () => setLeft(untilNext());
@@ -68,7 +71,7 @@ export function DailyCard({
                 onClick={() => pick(c)}
                 className="flex min-h-14 items-center justify-center gap-2 rounded-2xl border-2 border-desk-line bg-desk-2 px-4 py-3 font-semibold transition-[border-color,background-color,transform] duration-150 hover:border-brand hover:bg-field active:scale-[0.98] disabled:opacity-60"
               >
-                {c === "phishing" ? "Es trampa" : "Es real"}
+                {c === "phishing" ? t("Es trampa", "It's a scam") : t("Es real", "It's real")}
               </button>
             ))}
           </div>
@@ -82,14 +85,19 @@ export function DailyCard({
         <div className={`reveal-item rounded-3xl p-6 text-ink ${done.correct ? "bg-ok-soft" : "bg-bad-soft"}`}>
           <p className={`flex items-center gap-2 text-lg font-semibold ${done.correct ? "text-ok" : "text-[#b91c1c]"}`}>
             {done.correct ? <Check className="h-5 w-5" strokeWidth={2.5} aria-hidden /> : <X className="h-5 w-5" strokeWidth={2.5} aria-hidden />}
-            {done.correct ? "¡Bien visto!" : "Esta vez no"} · era {done.answer === "phishing" ? "una trampa" : "un mensaje real"}
+            {done.correct ? t("¡Bien visto!", "Well spotted!") : t("Esta vez no", "Not this time")} ·{" "}
+            {done.answer === "phishing" ? t("era una trampa", "it was a scam") : t("era un mensaje real", "it was a real message")}
           </p>
           <p className="mt-2 leading-relaxed">{done.explain}</p>
           <p className="mt-4 flex gap-2 rounded-2xl bg-white/60 p-3 text-sm">
             <Lightbulb className="h-4 w-4 shrink-0 text-[#b45309]" strokeWidth={2} aria-hidden />
             {done.tip}
           </p>
-          {done.already && <p className="mt-3 text-sm text-ink-2">Ya habías respondido hoy: cuenta tu primera respuesta.</p>}
+          {done.already && (
+            <p className="mt-3 text-sm text-ink-2">
+              {t("Ya habías respondido hoy: cuenta tu primera respuesta.", "You already answered today: your first answer counts.")}
+            </p>
+          )}
         </div>
       )}
 
@@ -100,10 +108,11 @@ export function DailyCard({
               <>
                 <p className="flex items-center gap-2 font-display text-3xl tabular-nums">
                   <Flame className="h-7 w-7 text-[#f97316]" strokeWidth={2} aria-hidden />
-                  {shownStreak} {shownStreak === 1 ? "día" : "días"}
+                  {shownStreak} {shownStreak === 1 ? t("día", "day") : t("días", "days")}
                 </p>
                 <p className="mt-1 text-sm text-fog">
-                  Racha seguida{done.best ? ` · tu mejor: ${done.best}` : ""}
+                  {t("Racha seguida", "Streak")}
+                  {done.best ? ` · ${t("tu mejor", "your best")}: ${done.best}` : ""}
                   {done.xp > 0 && (
                     <span className="ml-2 inline-flex items-center gap-1 text-brand">
                       <Zap className="h-3.5 w-3.5" aria-hidden />+{done.xp} XP
@@ -113,18 +122,32 @@ export function DailyCard({
               </>
             ) : (
               <>
-                <p className="font-semibold">Guarda tu racha</p>
-                <p className="mt-1 text-sm text-fog">Con una cuenta gratis sumas XP y llevas la cuenta de tus días seguidos.</p>
+                <p className="font-semibold">{t("Guarda tu racha", "Save your streak")}</p>
+                <p className="mt-1 text-sm text-fog">
+                  {t(
+                    "Con una cuenta gratis sumas XP y llevas la cuenta de tus días seguidos.",
+                    "With a free account you earn XP and keep count of your days in a row.",
+                  )}
+                </p>
                 <Link href="/registro?next=/diaria" className="btn btn-primary mt-3 h-10 px-4 text-sm">
-                  Crear cuenta gratis
+                  {t("Crear cuenta gratis", "Sign up free")}
                 </Link>
               </>
             )}
           </div>
           <div className="rounded-3xl border border-desk-line bg-desk-2 p-5">
-            <p className="font-semibold">Nuevo caso en {left || "…"}</p>
-            <p className="mb-3 mt-1 text-sm text-fog">Reta a alguien con el caso de hoy:</p>
-            <ShareButtons compact path="/diaria" text={`¿Es trampa o es real? Hoy ${done.correct ? "acerté" : "fallé"} la estafa del día de Ciberlearn. ¿Y tú?`} />
+            <p className="font-semibold">
+              {t("Nuevo caso en", "New case in")} {left || "…"}
+            </p>
+            <p className="mb-3 mt-1 text-sm text-fog">{t("Reta a alguien con el caso de hoy:", "Challenge someone with today's case:")}</p>
+            <ShareButtons
+              compact
+              path="/diaria"
+              text={t(
+                `¿Es trampa o es real? Hoy ${done.correct ? "acerté" : "fallé"} la estafa del día de ${SITE.name}. ¿Y tú?`,
+                `Scam or real? Today I ${done.correct ? "got" : "missed"} the ${SITE.name} scam of the day. What about you?`,
+              )}
+            />
           </div>
         </div>
       )}

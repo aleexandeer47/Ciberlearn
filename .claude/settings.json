@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(cd c:\\\\Users\\\\jonat\\\\OneDrive\\\\Desktop\\\\Ciberlearn; node $env:TEMP\\\\claude\\\\a1ac2f5126e4c96b\\\\bec7847f-6bb8-4c55-8ecc-c26fd6e32799\\\\scratchpad\\\\t47.mjs; npm run lint 2>&1 | Select-Object -Last 15; npx tsc --noEmit 2>&1 | Select-Object -First 5)",
+      "PowerShell(cd c:\\\\Users\\\\jonat\\\\OneDrive\\\\Desktop\\\\Ciberlearn; node $env:TEMP\\\\claude\\\\a1ac2f5126e4c96b\\\\bec7847f-6bb8-4c55-8ecc-c26fd6e32799\\\\scratchpad\\\\crawl.mjs)"
+    ]
+  }
+}

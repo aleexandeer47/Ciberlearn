@@ -3,6 +3,7 @@
 import { MongoServerError, ObjectId } from "mongodb";
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
+import { requestT } from "@/lib/i18n-server";
 import { CLASS_CONSENT_FIELD } from "@/lib/legal";
 import { isValidClassName, newClassCode, normalizeClassCode, SCHOOL } from "@/lib/school";
 import { recordClassConsent } from "@/lib/server/consent";
@@ -38,20 +39,20 @@ export interface JoinClassState {
 
 /** El estudiante se une con el código y autoriza al docente a ver su avance. */
 export async function joinClass(_prev: JoinClassState, form: FormData): Promise<JoinClassState> {
-  const user = await getCurrentUser();
+  const [user, { t }] = await Promise.all([getCurrentUser(), requestT()]);
   const code = normalizeClassCode(form.get("code"));
   if (!user) redirect(`/registro?next=${encodeURIComponent(`/clase${code ? `?codigo=${code}` : ""}`)}`);
-  if (!code) return { error: "Revisa el código: son 6 letras y números." };
-  if (form.get(CLASS_CONSENT_FIELD) !== "si") return { error: "Para unirte, marca la casilla de autorización." };
+  if (!code) return { error: t("Revisa el código: son 6 letras y números.", "Check the code: it's 6 letters and numbers.") };
+  if (form.get(CLASS_CONSENT_FIELD) !== "si") return { error: t("Para unirte, marca la casilla de autorización.", "To join, tick the authorization box.") };
 
   const { classes, classMembers } = await collections();
   const cls = await classes.findOne({ code });
-  if (!cls) return { error: "No encontramos una clase con ese código." };
-  if (cls.teacherId.equals(user._id)) return { error: "Eres el docente de esta clase." };
+  if (!cls) return { error: t("No encontramos una clase con ese código.", "We couldn't find a class with that code.") };
+  if (cls.teacherId.equals(user._id)) return { error: t("Eres el docente de esta clase.", "You're the teacher of this class.") };
   if ((await classMembers.countDocuments({ classId: cls._id })) >= SCHOOL.studentsPerClass)
-    return { error: "La clase ya está llena. Avísale a tu docente." };
+    return { error: t("La clase ya está llena. Avísale a tu docente.", "The class is full. Let your teacher know.") };
   if ((await classMembers.countDocuments({ userId: user._id })) >= SCHOOL.classesPerStudent)
-    return { error: `Puedes estar en ${SCHOOL.classesPerStudent} clases como máximo.` };
+    return { error: t(`Puedes estar en ${SCHOOL.classesPerStudent} clases como máximo.`, `You can be in up to ${SCHOOL.classesPerStudent} classes.`) };
 
   try {
     await classMembers.insertOne({ _id: new ObjectId(), classId: cls._id, userId: user._id, joinedAt: new Date() });

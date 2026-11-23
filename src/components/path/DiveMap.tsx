@@ -1,7 +1,8 @@
 import { Check, Lock, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import type { Unit } from "@/lib/path/content";
+import { translator, type Lang } from "@/lib/i18n";
+import { LEVEL_LABEL, type Unit } from "@/lib/path/content";
 
 /*
  * La ruta como una inmersión: cada unidad es una zona del mar, más profunda (y difícil) que la anterior.
@@ -10,16 +11,19 @@ import type { Unit } from "@/lib/path/content";
  */
 
 const ZONES = [
-  { name: "Superficie", depth: "0 m" },
-  { name: "Arrecife", depth: "20 m" },
-  { name: "Bosque de algas", depth: "50 m" },
-  { name: "Mar abierto", depth: "120 m" },
-  { name: "Zona crepuscular", depth: "300 m" },
-  { name: "Corrientes frías", depth: "700 m" },
-  { name: "Zona de medianoche", depth: "1,500 m" },
-  { name: "El abismo", depth: "4,000 m" },
+  { name: { es: "Superficie", en: "Surface" }, depth: "0 m" },
+  { name: { es: "Arrecife", en: "Reef" }, depth: "20 m" },
+  { name: { es: "Bosque de algas", en: "Kelp forest" }, depth: "50 m" },
+  { name: { es: "Mar abierto", en: "Open sea" }, depth: "120 m" },
+  { name: { es: "Zona crepuscular", en: "Twilight zone" }, depth: "300 m" },
+  { name: { es: "Corrientes frías", en: "Cold currents" }, depth: "700 m" },
+  { name: { es: "Zona de medianoche", en: "Midnight zone" }, depth: "1,500 m" },
+  { name: { es: "El abismo", en: "The abyss" }, depth: "4,000 m" },
 ];
-export const zoneOf = (i: number) => ZONES[i] ?? { name: `Profundidad ${i + 1}`, depth: "" };
+export const zoneOf = (i: number, lang: Lang = "es") => {
+  const z = ZONES[i];
+  return z ? { name: z.name[lang], depth: z.depth } : { name: lang === "en" ? `Depth ${i + 1}` : `Profundidad ${i + 1}`, depth: "" };
+};
 
 const ROW = 150; // distancia vertical entre lecciones
 const TAIL = 40;
@@ -77,7 +81,18 @@ const BUBBLES = [
   [12, 4, 8.5], [37, 5, 10], [63, 3, 9], [86, 4, 11],
 ] as const;
 
-export function DiveMap({ units, lessons, loggedIn }: { units: Unit[]; lessons: Map<string, DiveLesson>; loggedIn: boolean }) {
+export function DiveMap({
+  units,
+  lessons,
+  loggedIn,
+  lang = "es",
+}: {
+  units: Unit[];
+  lessons: Map<string, DiveLesson>;
+  loggedIn: boolean;
+  lang?: Lang;
+}) {
+  const t = translator(lang);
   // Índice global de la primera lección de cada zona
   const starts = units.map((_, u) => units.slice(0, u).reduce((a, x) => a + x.lessons.length, 0));
   return (
@@ -144,22 +159,22 @@ export function DiveMap({ units, lessons, loggedIn }: { units: Unit[]; lessons: 
                 />
                 <div className="max-w-md rounded-2xl bg-[#020617]/40 p-4 ring-1 ring-white/10 backdrop-blur-sm">
                   <p className={`text-xs font-bold uppercase tracking-[0.14em] ${expert ? "text-[#fbbf24]" : "text-[#7dd3fc]"}`}>
-                    {expert ? "Prueba final" : `Unidad ${u + 1}`} · {zone.name} · {zone.depth}
+                    {expert ? t("Prueba final", "Final test") : t(`Unidad ${u + 1}`, `Unit ${u + 1}`)} · {zone.name} · {zone.depth}
                   </p>
                   <h2 className="mt-1.5 font-display text-2xl sm:text-3xl">{unit.title}</h2>
                   <p className="mt-1 text-sm text-white/75">
                     <span className={`mr-2 rounded-full px-2 py-0.5 text-[11px] font-bold uppercase ${expert ? "bg-[#f59e0b] text-[#0a0f1c]" : "bg-white/15"}`}>
-                      {unit.level}
+                      {LEVEL_LABEL[lang][unit.level]}
                     </span>
                     {unit.description}
                   </p>
                 </div>
                 {zoneDone ? (
                   <span className="mt-1 flex shrink-0 items-center gap-1.5 rounded-full bg-[#14b8a6]/25 px-3 py-1 text-xs font-semibold text-[#99f6e4]">
-                    <ShieldCheck className="h-4 w-4" aria-hidden /> Zona superada
+                    <ShieldCheck className="h-4 w-4" aria-hidden /> {t("Zona superada", "Zone cleared")}
                   </span>
                 ) : (
-                  <span className="-mt-8 shrink-0" title="Anzuelos por descubrir en esta zona">
+                  <span className="-mt-8 shrink-0" title={t("Anzuelos por descubrir en esta zona", "Hooks to discover in this zone")}>
                     <Hook />
                   </span>
                 )}
@@ -236,12 +251,12 @@ export function DiveMap({ units, lessons, loggedIn }: { units: Unit[]; lessons: 
                       <Link
                         href={l.href}
                         className="group rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
-                        aria-label={`Lección ${start + i + 1}: ${l.title}${l.state === "done" ? " (completada, repasar)" : ""}`}
+                        aria-label={`${t("Lección", "Lesson")} ${start + i + 1}: ${l.title}${l.state === "done" ? t(" (completada, repasar)", " (completed, review)") : ""}`}
                       >
                         {node}
                       </Link>
                     ) : (
-                      <span aria-label={`Lección ${start + i + 1}: ${l.title} (bloqueada)`}>{node}</span>
+                      <span aria-label={`${t("Lección", "Lesson")} ${start + i + 1}: ${l.title} ${t("(bloqueada)", "(locked)")}`}>{node}</span>
                     )}
                     <span
                       className={`absolute top-1/2 w-[min(42vw,200px)] -translate-y-1/2 ${right ? "left-full pl-4 text-left" : "right-full pr-4 text-right"}`}
@@ -252,13 +267,13 @@ export function DiveMap({ units, lessons, loggedIn }: { units: Unit[]; lessons: 
                       <span className="text-xs text-white/60">
                         {l.state === "current"
                           ? loggedIn
-                            ? `${l.questions} preguntas · ¡bucea!`
-                            : "Crea tu cuenta para empezar"
+                            ? t(`${l.questions} preguntas · ¡bucea!`, `${l.questions} questions · dive in!`)
+                            : t("Crea tu cuenta para empezar", "Sign up to start")
                           : l.state === "done"
-                            ? "Repasar"
+                            ? t("Repasar", "Review")
                             : l.state === "area"
-                              ? `De tu área · ${l.questions} preguntas`
-                              : `${l.questions} preguntas`}
+                              ? t(`De tu área · ${l.questions} preguntas`, `For your team · ${l.questions} questions`)
+                              : t(`${l.questions} preguntas`, `${l.questions} questions`)}
                       </span>
                     </span>
                   </div>

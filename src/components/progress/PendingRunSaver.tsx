@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { saveRun, type RunInput } from "@/app/actions/runs";
+import { useT } from "@/components/i18n/LangProvider";
 import { PENDING_RUN_KEY } from "@/components/simulator/Summary";
 
 /** Sube la ronda que se hizo antes de crear la cuenta (guardada en sessionStorage). */
@@ -10,6 +11,7 @@ export function PendingRunSaver() {
   const router = useRouter();
   const [saved, setSaved] = useState<number | null>(null);
   const done = useRef(false);
+  const t = useT();
 
   useEffect(() => {
     if (done.current) return;
@@ -32,7 +34,8 @@ export function PendingRunSaver() {
   if (saved === null) return null;
   return (
     <p className="pop-in rounded-2xl border border-ok/40 bg-ok/10 px-5 py-3 text-sm">
-      <strong className="text-ok">Listo:</strong> guardamos la ronda que hiciste antes de registrarte ({saved} pts).
+      <strong className="text-ok">{t("Listo:", "Done:")}</strong>{" "}
+      {t(`guardamos la ronda que hiciste antes de registrarte (${saved} pts).`, `we saved the round you played before signing up (${saved} pts).`)}
     </p>
   );
 }

@@ -3,48 +3,66 @@
 import { Send } from "lucide-react";
 import { useActionState } from "react";
 import { submitReport, type ReportState } from "@/app/actions/alerts";
-import { REPORT_CHANNELS, REPORT_LIMITS } from "@/lib/community";
+import { useLang, useT } from "@/components/i18n/LangProvider";
+import { REPORT_CHANNEL_LABEL, REPORT_CHANNELS, REPORT_LIMITS } from "@/lib/community";
 
 export function ReportForm() {
   const [state, action, pending] = useActionState<ReportState, FormData>(submitReport, {});
+  const lang = useLang();
+  const t = useT();
   if (state.ok)
     return (
       <p role="status" className="rounded-2xl bg-ok/15 p-4 text-sm text-ok">
-        ¡Gracias! Revisaremos tu reporte antes de publicarlo. Así ayudas a que otras personas no caigan.
+        {t(
+          "¡Gracias! Revisaremos tu reporte antes de publicarlo. Así ayudas a que otras personas no caigan.",
+          "Thanks! We'll review your report before publishing it. You're helping others not fall for it.",
+        )}
       </p>
     );
   return (
     <form action={action} className="space-y-4">
       <label className="block">
-        <span className="mb-1.5 block text-sm font-medium">¿Por dónde te llegó?</span>
+        <span className="mb-1.5 block text-sm font-medium">{t("¿Por dónde te llegó?", "Where did you get it?")}</span>
         <select name="channel" required defaultValue="" className="field">
           <option value="" disabled>
-            Elige una opción
+            {t("Elige una opción", "Choose an option")}
           </option>
           {REPORT_CHANNELS.map((c) => (
-            <option key={c}>{c}</option>
+            <option key={c} value={c}>
+              {REPORT_CHANNEL_LABEL[lang][c]}
+            </option>
           ))}
         </select>
       </label>
       <label className="block">
-        <span className="mb-1.5 block text-sm font-medium">Número, correo, perfil o enlace (opcional)</span>
-        <input name="sender" maxLength={REPORT_LIMITS.senderMax} placeholder="Ej.: +503 7000-0000 o pago-sv.top" className="field" />
+        <span className="mb-1.5 block text-sm font-medium">{t("Número, correo, perfil o enlace (opcional)", "Number, email, profile or link (optional)")}</span>
+        <input
+          name="sender"
+          maxLength={REPORT_LIMITS.senderMax}
+          placeholder={t("Ej.: +1 555 0100 o pago-rapido.top", "E.g. +1 555 0100 or quick-pay.top")}
+          className="field"
+        />
       </label>
       <label className="block">
-        <span className="mb-1.5 block text-sm font-medium">Copia el mensaje</span>
+        <span className="mb-1.5 block text-sm font-medium">{t("Copia el mensaje", "Paste the message")}</span>
         <textarea
           name="text"
           required
           minLength={REPORT_LIMITS.textMin}
           maxLength={REPORT_LIMITS.textMax}
           rows={5}
-          placeholder="Pega aquí el texto del mensaje sospechoso"
+          placeholder={t("Pega aquí el texto del mensaje sospechoso", "Paste the text of the suspicious message here")}
           className="field min-h-32 resize-y py-3"
         />
       </label>
       <label className="flex gap-2.5 text-sm text-graphite">
         <input type="checkbox" name="sin_datos" value="si" required className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--brand)]" />
-        <span>Quité mis datos personales (mi nombre, mis números de cuenta, códigos, etc.). Entiendo que el mensaje se publicará sin mi nombre.</span>
+        <span>
+          {t(
+            "Quité mis datos personales (mi nombre, mis números de cuenta, códigos, etc.). Entiendo que el mensaje se publicará sin mi nombre.",
+            "I removed my personal data (my name, account numbers, codes, etc.). I understand the message will be published without my name.",
+          )}
+        </span>
       </label>
       {state.error && (
         <p role="alert" className="rounded-xl bg-bad/15 px-3 py-2 text-sm text-bad-text">
@@ -53,7 +71,7 @@ export function ReportForm() {
       )}
       <button type="submit" disabled={pending} className="btn btn-primary h-11 px-5 text-sm disabled:opacity-60">
         <Send className="h-4 w-4" aria-hidden />
-        {pending ? "Enviando…" : "Enviar reporte"}
+        {pending ? t("Enviando…", "Sending…") : t("Enviar reporte", "Send report")}
       </button>
     </form>
   );

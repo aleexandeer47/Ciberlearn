@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defaultNickname, NICK_RE, weekStart } from "./ranking";
+import { countryName, countryOptions, defaultNickname, isCountry, NICK_RE, weekStart } from "./ranking";
 
 describe("ranking", () => {
   it("la semana empieza el lunes 00:00 de El Salvador", () => {
@@ -17,6 +17,17 @@ describe("ranking", () => {
     expect(NICK_RE.test("ab")).toBe(false);
     expect(NICK_RE.test("con espacio")).toBe(false);
     expect(NICK_RE.test("<script>")).toBe(false);
+  });
+
+  it("países de todo el mundo, con nombre en cada idioma", () => {
+    expect(isCountry("US")).toBe(true);
+    expect(isCountry("OT")).toBe(true);
+    expect(isCountry("XX")).toBe(false);
+    expect(countryName("ES", "es")).toBe("España");
+    expect(countryName("ES", "en")).toBe("Spain");
+    const opts = countryOptions("en");
+    expect(opts.at(-1)).toEqual(["OT", "Other country"]);
+    expect(new Set(opts.map(([c]) => c)).size).toBe(opts.length);
   });
 
   it("apodo por defecto sin datos personales", () => {

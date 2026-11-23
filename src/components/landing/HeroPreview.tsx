@@ -1,15 +1,10 @@
 import { MessageSquare, TrendingUp } from "lucide-react";
 import type { CSSProperties } from "react";
+import { getT } from "@/lib/i18n-server";
 import { XRayLens } from "./XRayLens";
 
 const i = (n: number) => ({ "--i": n }) as CSSProperties;
 
-// Vista de ejemplo de la página de progreso (datos ilustrativos de una cuenta).
-const SKILLS = [
-  { label: "Remitente sospechoso", pct: 82 },
-  { label: "Urgencia o miedo", pct: 64 },
-  { label: "Enlace engañoso", pct: 41 },
-];
 
 function Dots() {
   return (
@@ -22,7 +17,14 @@ function Dots() {
 }
 
 /** Tarjetas de producto flotando sobre orbes de gradiente; la lupa va al centro. */
-export function HeroPreview() {
+export async function HeroPreview() {
+  const { t } = await getT();
+  // Vista de ejemplo de la página de progreso (datos ilustrativos de una cuenta).
+  const SKILLS = [
+    { label: t("Remitente sospechoso", "Suspicious sender"), pct: 82 },
+    { label: t("Urgencia o miedo", "Urgency or fear"), pct: 64 },
+    { label: t("Enlace engañoso", "Deceptive link"), pct: 41 },
+  ];
   return (
     <div className="relative mx-auto mt-16 max-w-[1120px]" data-enter>
       {/* Orbes: solo detrás de las tarjetas, nunca detrás del texto */}
@@ -41,15 +43,15 @@ export function HeroPreview() {
                 SMS
               </span>
             </div>
-            <p className="text-xs font-semibold">EnviaYa · +1 (786) 555-0143</p>
+            <p className="text-xs font-semibold">{t("EnviaYa", "ShipNow")} · +1 (786) 555-0143</p>
             <p className="mt-2 rounded-2xl rounded-tl-md bg-paper-2 px-3 py-2.5 text-[13px] leading-relaxed">
-              Su paquete está retenido por un saldo de $1.95. Pague hoy:{" "}
+              {t("Su paquete está retenido por un saldo de $1.95. Pague hoy:", "Your parcel is on hold for a $1.95 balance. Pay today:")}{" "}
               <span className="seg seg-link" data-state="marked">
-                enviaya-sv.delivery-pago.top
+                {t("enviaya.delivery-pago.top", "shipnow.delivery-fee.top")}
               </span>
             </p>
             <span className="mt-3 inline-flex rounded-full bg-bad-soft px-2.5 py-1 text-[11px] font-semibold text-[#b91c1c]">
-              Dominio raro detectado
+              {t("Dominio raro detectado", "Odd domain detected")}
             </span>
           </div>
         </div>
@@ -65,7 +67,7 @@ export function HeroPreview() {
               <Dots />
               <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-brand">
                 <TrendingUp className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
-                Tus skills
+                {t("Tus skills", "Your skills")}
               </span>
             </div>
             <ul className="space-y-3">
@@ -84,7 +86,7 @@ export function HeroPreview() {
                 </li>
               ))}
             </ul>
-            <p className="mt-4 text-[11px] text-ink-3">Punto débil: enlace engañoso</p>
+            <p className="mt-4 text-[11px] text-ink-3">{t("Punto débil: enlace engañoso", "Weak spot: deceptive link")}</p>
           </div>
         </div>
       </div>

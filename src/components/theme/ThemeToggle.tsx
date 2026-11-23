@@ -1,10 +1,10 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { useT } from "@/components/i18n/LangProvider";
 import { THEME_KEY, type ThemePref } from "./theme";
 
 const ORDER: ThemePref[] = ["system", "light", "dark"];
-const LABEL: Record<ThemePref, string> = { system: "Sistema", light: "Claro", dark: "Oscuro" };
 const EVENT = "ciberlearn-theme-change";
 const media = () => window.matchMedia("(prefers-color-scheme: dark)");
 
@@ -66,6 +66,8 @@ function Icon({ pref }: { pref: ThemePref }) {
 export function ThemeToggle() {
   const pref = useSyncExternalStore(subscribe, read, () => "system" as ThemePref);
   const next = ORDER[(ORDER.indexOf(pref) + 1) % ORDER.length];
+  const t = useT();
+  const LABEL: Record<ThemePref, string> = { system: t("Sistema", "System"), light: t("Claro", "Light"), dark: t("Oscuro", "Dark") };
 
   const onClick = () => {
     try {
@@ -80,8 +82,8 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={onClick}
-      aria-label={`Tema: ${LABEL[pref]}. Cambiar a ${LABEL[next]}`}
-      title={`Tema: ${LABEL[pref]}`}
+      aria-label={t(`Tema: ${LABEL[pref]}. Cambiar a ${LABEL[next]}`, `Theme: ${LABEL[pref]}. Switch to ${LABEL[next]}`)}
+      title={t(`Tema: ${LABEL[pref]}`, `Theme: ${LABEL[pref]}`)}
       className="grid h-10 w-10 place-items-center rounded-full text-fog transition-[color,background-color,transform] duration-150 hover:bg-desk-3 hover:text-chalk active:scale-95"
     >
       <Icon pref={pref} />

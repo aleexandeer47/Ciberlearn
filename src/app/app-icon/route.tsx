@@ -1,10 +1,14 @@
 import { ImageResponse } from "next/og";
 
 // Ícono de la app instalada (PWA) en PNG, generado a partir del escudo de la marca.
-// ?size=192|512  ·  &maskable=1 deja margen para los íconos redondos de Android.
+// ?size=16|48|128|192|512  ·  &maskable=1 deja margen para los íconos redondos de Android.
+// (16, 48 y 128 son los de la extensión del navegador.)
+const SIZES = [16, 48, 128, 192, 512];
+
 export function GET(request: Request) {
   const url = new URL(request.url);
-  const size = url.searchParams.get("size") === "512" ? 512 : 192;
+  const asked = Number(url.searchParams.get("size"));
+  const size = SIZES.includes(asked) ? asked : 192;
   const maskable = url.searchParams.get("maskable") === "1";
   const shield = Math.round(size * (maskable ? 0.52 : 0.7));
 

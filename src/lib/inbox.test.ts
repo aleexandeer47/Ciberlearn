@@ -79,3 +79,19 @@ describe("empresa: áreas, índice y reportes", () => {
     expect(subjectMatches("hola", sent)).toBe(false);
   });
 });
+
+import { INBOX_EN } from "./inbox.en";
+import { INBOX_EMAILS as ALL, localizeInbox } from "./inbox";
+
+describe("bandeja en inglés", () => {
+  it("cada correo tiene su versión en inglés con enlace y adjunto coherentes", () => {
+    expect(Object.keys(INBOX_EN).sort()).toEqual(ALL.map((e) => e.id).sort());
+    for (const e of ALL) {
+      const en = localizeInbox(e, "en");
+      expect(en.verdict).toBe(e.verdict);
+      expect(!!en.link, e.id).toBe(!!e.link);
+      expect(!!en.attachment, e.id).toBe(!!e.attachment);
+      expect(en.body.length, e.id).toBe(e.body.length);
+    }
+  });
+});

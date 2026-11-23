@@ -2,6 +2,7 @@ import "server-only";
 import { randomBytes } from "node:crypto";
 import { MongoServerError, ObjectId } from "mongodb";
 import { BUSINESS, FAMILY } from "@/lib/business";
+import { requestLang } from "@/lib/i18n-server";
 import { PLANS, type PlanId } from "@/lib/plans";
 import { SITE } from "@/lib/site";
 import { collections } from "./db";
@@ -18,12 +19,18 @@ type OnOrder = (reference: string) => Promise<void>;
 
 /** Crea una orden pendiente y su enlace de pago; devuelve la URL a la que hay que mandar a la persona. */
 async function openOrder(
-  input: Pick<OrderDoc, "userId" | "planId" | "amount" | "days" | "title" | "business"> & { description: string },
+  // title/description en español (así quedan en el registro); `en`: lo que ve en Wompi quien compra en inglés
+  input: Pick<OrderDoc, "userId" | "planId" | "amount" | "days" | "title" | "business"> & {
+    description: string;
+    en: { title: string; description: string };
+  },
   onOrder?: OnOrder,
 ): Promise<string> {
   const reference = `anz_${randomBytes(9).toString("hex")}`;
   const useMock = mockPaymentsEnabled();
-  if (!useMock && !wompiConfigured()) throw new CheckoutError("Los pagos todavía no están configurados.");
+  const en = (await requestLang()) === "en";
+  if (!useMock && !wompiConfigured())
+    throw new CheckoutError(en ? "Payments aren't set up yet." : "Los pagos todavía no están configurados.");
 
   const { orders } = await collections();
   const order: OrderDoc = {
@@ -47,8 +54,8 @@ async function openOrder(
   const link = await createPaymentLink({
     reference,
     amount: input.amount,
-    productName: `${SITE.name} ${input.title}`,
-    description: input.description,
+    productName: `${SITE.name} ${en ? input.en.title : input.title}`,
+    description: en ? input.en.description : input.description,
     redirectUrl: `${env.appUrl}/pago/resultado?ref=${reference}`,
     webhookUrl: `${env.appUrl}/api/wompi/webhook`,
   });
@@ -60,7 +67,15 @@ async function openOrder(
 export function startCheckout(userId: ObjectId, planId: PlanId, onOrder?: OnOrder): Promise<string> {
   const plan = PLANS[planId];
   return openOrder(
-    { userId, planId, amount: plan.price, days: plan.days, title: plan.name, description: `Acceso Pro por ${plan.days} días` },
+    {
+      userId,
+      planId,
+      amount: plan.price,
+      days: plan.days,
+      title: plan.name,
+      description: `Acceso Pro por ${plan.days} días`,
+      en: { title: planId === "pro-anual" ? "Pro yearly" : "Pro monthly", description: `Pro access for ${plan.days} days` },
+    },
     onOrder,
   );
 }
@@ -83,6 +98,12 @@ export function startBusinessCheckout(
       description: renew
         ? `Plan Empresa para ${b.orgName}: ${b.seats} empleados por ${BUSINESS.days} días`
         : `${b.seats} puestos adicionales para ${b.orgName} hasta el vencimiento del plan`,
+      en: {
+        title: renew ? `Business · ${b.seats} seats for 1 year` : `Business · ${b.seats} extra seats`,
+        description: renew
+          ? `Business plan for ${b.orgName}: ${b.seats} employees for ${BUSINESS.days} days`
+          : `${b.seats} extra seats for ${b.orgName} until the plan expires`,
+      },
     },
     onOrder,
   );
@@ -99,6 +120,10 @@ export function startFamilyCheckout(userId: ObjectId, f: { orgId: ObjectId; orgN
       title: `Pro Familiar · ${FAMILY.seats} personas por 1 año`,
       business: { orgId: f.orgId, action: "renovar", seats: FAMILY.seats },
       description: `Pro Familiar para ${f.orgName}: hasta ${FAMILY.seats} personas por ${FAMILY.days} días`,
+      en: {
+        title: `Family plan · ${FAMILY.seats} people for 1 year`,
+        description: `Family plan for ${f.orgName}: up to ${FAMILY.seats} people for ${FAMILY.days} days`,
+      },
     },
     onOrder,
   );

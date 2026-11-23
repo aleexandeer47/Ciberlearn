@@ -4,8 +4,10 @@ import { Check, Swords, Trophy, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { submitChallenge, type ChallengeResult } from "@/app/actions/challenge";
+import { useT } from "@/components/i18n/LangProvider";
 import { MessageCard, type MessageChannel } from "@/components/MessageCard";
 import { ShareButtons } from "@/components/share/ShareButtons";
+import { SITE } from "@/lib/site";
 
 export interface PublicChallengeItem {
   id: string;
@@ -38,6 +40,12 @@ export function ChallengePlayer({
   const [res, setRes] = useState<Done | null>(null);
   const [error, setError] = useState("");
   const total = items.length;
+  const t = useT();
+  const dare = (score: number | null) =>
+    t(
+      `Te reto: saqué ${score}/${total} detectando estafas en ${SITE.name}. ¿Me ganas?`,
+      `I dare you: I scored ${score}/${total} spotting scams on ${SITE.name}. Can you beat me?`,
+    );
 
   async function choose(a: "phishing" | "legit") {
     const next = [...answers, a];
@@ -64,16 +72,16 @@ export function ChallengePlayer({
           <Swords className="h-7 w-7" strokeWidth={1.75} aria-hidden />
         </span>
         <h1 className="mt-5 font-display text-3xl">
-          {isCreator ? "Tu reto" : `${creatorName} te reta`}
+          {isCreator ? t("Tu reto", "Your challenge") : t(`${creatorName} te reta`, `${creatorName} challenges you`)}
         </h1>
         <p className="mt-2 text-fog">
           {isCreator
             ? creatorScore === null
-              ? `Juégalo primero: tu puntaje será la marca a vencer. Son ${total} mensajes.`
-              : `Tu marca: ${creatorScore}/${total}. Compártelo y mira quién te gana.`
+              ? t(`Juégalo primero: tu puntaje será la marca a vencer. Son ${total} mensajes.`, `Play it first: your score will be the one to beat. It's ${total} messages.`)
+              : t(`Tu marca: ${creatorScore}/${total}. Compártelo y mira quién te gana.`, `Your score: ${creatorScore}/${total}. Share it and see who beats you.`)
             : creatorScore === null
-              ? `${total} mensajes: ¿trampa o real? ${creatorName} aún no lo juega.`
-              : `Sacó ${creatorScore}/${total}. ¿Puedes ganarle? Son ${total} mensajes: ¿trampa o real?`}
+              ? t(`${total} mensajes: ¿trampa o real? ${creatorName} aún no lo juega.`, `${total} messages: scam or real? ${creatorName} hasn't played yet.`)
+              : t(`Sacó ${creatorScore}/${total}. ¿Puedes ganarle? Son ${total} mensajes: ¿trampa o real?`, `They scored ${creatorScore}/${total}. Can you beat them? ${total} messages: scam or real?`)}
         </p>
         {error && (
           <p role="alert" className="mt-4 text-sm text-bad-text">
@@ -82,24 +90,26 @@ export function ChallengePlayer({
         )}
         {!isCreator && !loggedIn && (
           <label className="mx-auto mt-6 block max-w-xs text-left">
-            <span className="mb-1.5 block text-sm font-medium">Tu nombre para la tabla (opcional)</span>
+            <span className="mb-1.5 block text-sm font-medium">{t("Tu nombre para la tabla (opcional)", "Your name for the leaderboard (optional)")}</span>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={20}
-              placeholder="Ej.: Ana"
+              placeholder={t("Ej.: Ana", "E.g. Ana")}
               className="field"
             />
-            <span className="mt-1 block text-xs text-fog">Lo verá cualquiera con el enlace. Usa un apodo si prefieres.</span>
+            <span className="mt-1 block text-xs text-fog">
+              {t("Lo verá cualquiera con el enlace. Usa un apodo si prefieres.", "Anyone with the link will see it. Use a nickname if you prefer.")}
+            </span>
           </label>
         )}
         {replay ? (
           <div className="mt-6 flex justify-center">
-            <ShareButtons path={`/reto/${code}`} text={`Te reto: saqué ${creatorScore}/${total} detectando estafas en Ciberlearn. ¿Me ganas?`} />
+            <ShareButtons path={`/reto/${code}`} text={dare(creatorScore)} />
           </div>
         ) : (
           <button type="button" onClick={() => setPhase("play")} className="btn btn-primary mt-6 h-12 px-8">
-            Empezar
+            {t("Empezar", "Start")}
           </button>
         )}
       </div>
@@ -119,7 +129,7 @@ export function ChallengePlayer({
           </span>
         </div>
         <div key={it.id} className="reveal-item mt-8">
-          <p className="eyebrow">¿Trampa o real?</p>
+          <p className="eyebrow">{t("¿Trampa o real?", "Scam or real?")}</p>
           <div className="mt-4">
             <MessageCard channel={it.channel} from={it.from} text={it.text} />
           </div>
@@ -132,11 +142,11 @@ export function ChallengePlayer({
                 onClick={() => choose(c)}
                 className="min-h-14 rounded-2xl border-2 border-desk-line bg-desk-2 px-4 py-3 font-semibold transition-[border-color,background-color,transform] duration-150 hover:border-brand hover:bg-field active:scale-[0.98] disabled:opacity-60"
               >
-                {c === "phishing" ? "Es trampa" : "Es real"}
+                {c === "phishing" ? t("Es trampa", "It's a scam") : t("Es real", "It's real")}
               </button>
             ))}
           </div>
-          {phase === "sending" && <p className="mt-4 text-center text-sm text-fog">Calificando…</p>}
+          {phase === "sending" && <p className="mt-4 text-center text-sm text-fog">{t("Calificando…", "Scoring…")}</p>}
         </div>
       </div>
     );
@@ -145,14 +155,14 @@ export function ChallengePlayer({
   // Resultado
   const r = res!;
   const headline = r.isCreator
-    ? "Tu marca quedó guardada"
+    ? t("Tu marca quedó guardada", "Your score is saved")
     : r.outcome === "ganaste"
-      ? `¡Le ganaste a ${r.creatorName}!`
+      ? t(`¡Le ganaste a ${r.creatorName}!`, `You beat ${r.creatorName}!`)
       : r.outcome === "empate"
-        ? `Empate con ${r.creatorName}`
+        ? t(`Empate con ${r.creatorName}`, `Tied with ${r.creatorName}`)
         : r.outcome === "perdiste"
-          ? `${r.creatorName} te ganó`
-          : "¡Listo!";
+          ? t(`${r.creatorName} te ganó`, `${r.creatorName} beat you`)
+          : t("¡Listo!", "Done!");
 
   return (
     <div className="space-y-6">
@@ -164,29 +174,29 @@ export function ChallengePlayer({
         <h1 className="mt-2 font-display text-2xl">{headline}</h1>
         {!r.isCreator && r.creatorScore !== null && (
           <p className="mt-1 text-fog">
-            {r.creatorName}: {r.creatorScore}/{r.total} · tú: {r.score}/{r.total}
+            {r.creatorName}: {r.creatorScore}/{r.total} · {t("tú", "you")}: {r.score}/{r.total}
           </p>
         )}
         <div className="mt-6 flex flex-col items-center gap-3">
           {r.isCreator ? (
             <>
-              <p className="text-sm text-fog">Ahora mándalo a quien quieras:</p>
-              <ShareButtons path={`/reto/${code}`} text={`Te reto: saqué ${r.score}/${r.total} detectando estafas en Ciberlearn. ¿Me ganas?`} />
+              <p className="text-sm text-fog">{t("Ahora mándalo a quien quieras:", "Now send it to whoever you want:")}</p>
+              <ShareButtons path={`/reto/${code}`} text={dare(r.score)} />
             </>
           ) : loggedIn ? (
             <Link href="/reto" className="btn btn-primary h-12 px-6">
-              Crear mi propio reto
+              {t("Crear mi propio reto", "Create my own challenge")}
             </Link>
           ) : (
             <Link href="/registro?next=/reto" className="btn btn-primary h-12 px-6">
-              Crea tu cuenta y reta a tus amigos
+              {t("Crea tu cuenta y reta a tus amigos", "Sign up and challenge your friends")}
             </Link>
           )}
         </div>
       </div>
 
       <section>
-        <h2 className="font-display text-xl">Las respuestas</h2>
+        <h2 className="font-display text-xl">{t("Las respuestas", "The answers")}</h2>
         <ul className="mt-3 space-y-2">
           {r.results.map((x, n) => (
             <li key={x.id} className="flex gap-3 rounded-2xl border border-desk-line bg-desk-2 p-4 text-sm">
@@ -195,7 +205,7 @@ export function ChallengePlayer({
               </span>
               <span>
                 <span className="font-semibold">
-                  {n + 1}. Era {x.answer === "phishing" ? "trampa" : "real"}.
+                  {n + 1}. {x.answer === "phishing" ? t("Era trampa", "It was a scam") : t("Era real", "It was real")}.
                 </span>{" "}
                 <span className="text-graphite">{x.explain}</span>
               </span>
@@ -206,7 +216,7 @@ export function ChallengePlayer({
 
       {r.top.length > 0 && (
         <section>
-          <h2 className="font-display text-xl">Tabla del reto</h2>
+          <h2 className="font-display text-xl">{t("Tabla del reto", "Challenge leaderboard")}</h2>
           <ol className="mt-3 divide-y divide-desk-line rounded-2xl border border-desk-line bg-desk-2">
             {r.top.map((p, n) => (
               <li key={n} className="flex items-center justify-between px-4 py-2.5 text-sm">

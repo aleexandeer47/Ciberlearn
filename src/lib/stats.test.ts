@@ -28,6 +28,7 @@ describe("niveles", () => {
     expect(levelFor(9999).name).toBe("Ojo de halcón");
     expect(levelFor(9999).nextName).toBeNull();
     expect(levelFor(1000).progress).toBeCloseTo(0.5);
+    expect(levelFor(9999, "en").name).toBe("Hawk eye");
   });
 });
 
@@ -47,7 +48,7 @@ describe("racha de días", () => {
 
 describe("computeStats", () => {
   it("calcula XP, skills, debilidad e insignias", () => {
-    const s = computeStats([run("2026-11-18", [100, 100, 100, 100, 100]), run("2026-11-19", [40, 80], false)], day("2026-11-19"));
+    const s = computeStats([run("2026-11-18", [100, 100, 100, 100, 100]), run("2026-11-19", [40, 80], false)], "es", day("2026-11-19"));
     expect(s.xp).toBe(620);
     expect(s.level.name).toBe("Observador");
     expect(s.messages).toBe(7);

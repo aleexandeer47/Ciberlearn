@@ -2,6 +2,7 @@ import "server-only";
 import { ObjectId } from "mongodb";
 import { headers } from "next/headers";
 import { classConsentText, CONSENT_TEXT, LEGAL, orgConsentText, type ConsentDocument } from "@/lib/legal";
+import { requestLang } from "@/lib/i18n-server";
 import { collections } from "./db";
 import type { ConsentDoc } from "./models";
 
@@ -25,6 +26,7 @@ export async function recordConsents(input: {
   const h = await headers();
   const ip = clientIp(h);
   const userAgent = h.get("user-agent")?.slice(0, 300) ?? null;
+  const lang = await requestLang();
   const acceptedAt = new Date();
   const docs: ConsentDoc[] = DOCS.map((document) => ({
     _id: new ObjectId(),
@@ -32,7 +34,7 @@ export async function recordConsents(input: {
     email: input.email,
     document,
     version: LEGAL[document].version,
-    text: CONSENT_TEXT[document],
+    text: CONSENT_TEXT[document][lang],
     source: input.source,
     ...(input.orderRef ? { orderRef: input.orderRef } : {}),
     acceptedAt,
@@ -53,7 +55,7 @@ export async function recordClassConsent(input: { userId: ObjectId; email: strin
     email: input.email,
     document: "clase",
     version: LEGAL.privacidad.version,
-    text: classConsentText(input.className),
+    text: classConsentText(input.className, await requestLang()),
     source: "unirse-clase",
     classId: input.classId,
     acceptedAt: new Date(),
@@ -78,7 +80,7 @@ export async function recordOrgConsent(input: {
     email: input.email,
     document: "empresa",
     version: LEGAL.privacidad.version,
-    text: orgConsentText(input.orgName, input.kind),
+    text: orgConsentText(input.orgName, input.kind, await requestLang()),
     source: "unirse-empresa",
     orgId: input.orgId,
     acceptedAt: new Date(),

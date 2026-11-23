@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { requestT } from "@/lib/i18n-server";
 import { isPlanId } from "@/lib/plans";
 import { CheckoutError, failOrder, fulfillOrder, mockPaymentsEnabled, startCheckout } from "@/lib/server/billing";
 import { consentError, readConsent, recordConsents } from "@/lib/server/consent";
@@ -14,7 +15,8 @@ export async function checkout(form: FormData) {
   if (!user) redirect(`/registro?next=${encodeURIComponent("/planes")}`);
 
   // Antes de cobrar: aceptación expresa de términos (con reembolsos) y privacidad, cada una por separado.
-  const missing = consentError(readConsent(form));
+  const { lang, t } = await requestT();
+  const missing = consentError(readConsent(form), lang);
   if (missing) redirect(`/planes?error=${encodeURIComponent(missing)}`);
 
   let url: string;
@@ -23,7 +25,7 @@ export async function checkout(form: FormData) {
       recordConsents({ userId: user._id, email: user.email, source: "compra", orderRef }),
     );
   } catch (e) {
-    const msg = e instanceof CheckoutError ? e.message : "No pudimos iniciar el pago. Intenta de nuevo.";
+    const msg = e instanceof CheckoutError ? e.message : t("No pudimos iniciar el pago. Intenta de nuevo.", "We couldn't start the payment. Please try again.");
     if (!(e instanceof CheckoutError)) console.error("[checkout]", e);
     redirect(`/planes?error=${encodeURIComponent(msg)}`);
   }

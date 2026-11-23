@@ -1,5 +1,7 @@
-/** "Ciberlearn <hola@dominio.com>" o "hola@dominio.com" -> { name, email }. null si no es válido. */
-export function parseFrom(value: string, defaultName = "Ciberlearn"): { name: string; email: string } | null {
+import { SITE } from "@/lib/site";
+
+/** "Unhooked <hola@dominio.com>" o "hola@dominio.com" -> { name, email }. null si no es válido. */
+export function parseFrom(value: string, defaultName: string = SITE.name): { name: string; email: string } | null {
   const v = value.trim().replace(/^["']|["']$/g, "");
   const m = v.match(/^\s*"?([^"<]*?)"?\s*<([^>]+)>\s*$/);
   const email = (m ? m[2] : v).trim();

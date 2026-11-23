@@ -1,7 +1,8 @@
 "use server";
 
 import { ObjectId } from "mongodb";
-import { MODE_INFO, SCENARIO_BY_ID } from "@/lib/scenarios/packs";
+import { requestT } from "@/lib/i18n-server";
+import { MODE_INFO, scenarioById } from "@/lib/scenarios/packs";
 import { SCENARIOS } from "@/lib/scenarios/data";
 import { segmentScenario } from "@/lib/scenarios/segment";
 import type { Verdict } from "@/lib/scenarios/types";
@@ -25,21 +26,23 @@ const FREE_IDS = new Set(SCENARIOS.map((s) => s.id));
  * marcó y decidió: los puntos que muestre el navegador no se usan.
  */
 export async function saveRun(input: RunInput): Promise<SaveRunResult> {
-  const user = await getCurrentUser();
-  if (!user) return { ok: false, error: "Inicia sesión para guardar tu progreso." };
+  const [user, { lang, t }] = await Promise.all([getCurrentUser(), requestT()]);
+  if (!user) return { ok: false, error: t("Inicia sesión para guardar tu progreso.", "Log in to save your progress.") };
 
   const info = MODE_INFO[input?.mode];
-  if (!info) return { ok: false, error: "Modo desconocido." };
-  if (info.pro && !user.isPro) return { ok: false, error: "Este modo es parte del plan Pro." };
+  if (!info) return { ok: false, error: t("Modo desconocido.", "Unknown mode.") };
+  if (info.pro && !user.isPro) return { ok: false, error: t("Este modo es parte del plan Pro.", "This mode is part of the Pro plan.") };
+  const invalid = t("Ronda inválida.", "Invalid round.");
   if (!Array.isArray(input.answers) || input.answers.length === 0 || input.answers.length > 20)
-    return { ok: false, error: "Ronda inválida." };
+    return { ok: false, error: invalid };
 
   const seen = new Set<string>();
   const answers: AnswerDoc[] = [];
   for (const a of input.answers) {
-    const scenario = SCENARIO_BY_ID.get(a?.scenarioId);
-    if (!scenario || seen.has(scenario.id)) return { ok: false, error: "Ronda inválida." };
-    if (!user.isPro && !FREE_IDS.has(scenario.id)) return { ok: false, error: "Mensaje del plan Pro." };
+    // Se califica con el texto en el idioma en que se jugó (las claves de las frases dependen de él).
+    const scenario = typeof a?.scenarioId === "string" ? scenarioById(lang, a.scenarioId) : undefined;
+    if (!scenario || seen.has(scenario.id)) return { ok: false, error: invalid };
+    if (!user.isPro && !FREE_IDS.has(scenario.id)) return { ok: false, error: t("Mensaje del plan Pro.", "Pro plan message.") };
     seen.add(scenario.id);
 
     const verdict = a.verdict === "phishing" || a.verdict === "legit" ? a.verdict : null;

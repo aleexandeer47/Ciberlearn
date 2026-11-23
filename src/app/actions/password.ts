@@ -4,6 +4,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { ObjectId } from "mongodb";
 import { redirect } from "next/navigation";
 import { resetPasswordEmail } from "@/lib/emails/resetPassword";
+import { requestT } from "@/lib/i18n-server";
 import { collections } from "@/lib/server/db";
 import { emailConfigured, sendEmail } from "@/lib/server/email";
 import { env } from "@/lib/server/env";
@@ -23,7 +24,8 @@ export interface ForgotState {
 
 export async function requestPasswordReset(_prev: ForgotState, form: FormData): Promise<ForgotState> {
   const email = String(form.get("email") ?? "").trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return { error: "Escribe el correo de tu cuenta." };
+  const { lang, t } = await requestT();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return { error: t("Escribe el correo de tu cuenta.", "Enter your account email.") };
 
   const { users, passwordResets } = await collections();
   const user = await users.findOne({ email }, { projection: { name: 1 } });
@@ -46,7 +48,7 @@ export async function requestPasswordReset(_prev: ForgotState, form: FormData): 
   });
 
   const link = `${env.appUrl}/restablecer?token=${token}`;
-  const { sent } = await sendEmail({ to: email, ...resetPasswordEmail({ name: user.name, link, minutes: TOKEN_MINUTES }) });
+  const { sent } = await sendEmail({ to: email, ...resetPasswordEmail({ name: user.name, link, minutes: TOKEN_MINUTES, lang }) });
   return { done: true, devLink: !sent && !env.isProd && !emailConfigured() ? link : undefined };
 }
 
@@ -58,9 +60,10 @@ export async function resetPassword(_prev: ResetState, form: FormData): Promise<
   const token = String(form.get("token") ?? "");
   const password = String(form.get("password") ?? "");
   const confirm = String(form.get("confirm") ?? "");
-  if (password.length < 8) return { error: "La contraseña debe tener al menos 8 caracteres." };
-  if (password.length > 200) return { error: "La contraseña es demasiado larga." };
-  if (password !== confirm) return { error: "Las dos contraseñas no coinciden." };
+  const { t } = await requestT();
+  if (password.length < 8) return { error: t("La contraseña debe tener al menos 8 caracteres.", "Your password must be at least 8 characters.") };
+  if (password.length > 200) return { error: t("La contraseña es demasiado larga.", "That password is too long.") };
+  if (password !== confirm) return { error: t("Las dos contraseñas no coinciden.", "The two passwords don't match.") };
 
   const { passwordResets, users, sessions } = await collections();
   const now = new Date();
@@ -69,7 +72,7 @@ export async function resetPassword(_prev: ResetState, form: FormData): Promise<
     { tokenHash: sha256(token), usedAt: null, expiresAt: { $gt: now } },
     { $set: { usedAt: now } },
   );
-  if (!reset) return { error: "El enlace venció o ya se usó. Pide uno nuevo." };
+  if (!reset) return { error: t("El enlace venció o ya se usó. Pide uno nuevo.", "The link expired or was already used. Ask for a new one.") };
 
   await users.updateOne({ _id: reset.userId }, { $set: { passwordHash: await hashPassword(password) } });
   // Cierra todas las sesiones abiertas e invalida los otros enlaces pendientes.

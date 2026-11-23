@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { useId } from "react";
+import { useT } from "@/components/i18n/LangProvider";
 import { CONSENT_FIELD, LEGAL } from "@/lib/legal";
 
 /**
@@ -15,6 +18,7 @@ export function ConsentChecks({
   tone?: "desk" | "paper";
 }) {
   const id = useId();
+  const t = useT();
   const text = tone === "paper" ? "text-ink-2" : "text-graphite";
   const link = `font-medium underline underline-offset-2 ${tone === "paper" ? "text-ink" : "text-chalk"}`;
   // En la tarjeta clara la casilla nativa debe dibujarse en modo claro aunque el sitio esté en oscuro
@@ -22,7 +26,7 @@ export function ConsentChecks({
 
   return (
     <fieldset className={`space-y-2.5 text-left text-[13px] leading-snug ${text}`}>
-      <legend className="sr-only">Aceptación de documentos legales</legend>
+      <legend className="sr-only">{t("Aceptación de documentos legales", "Acceptance of legal documents")}</legend>
       <label htmlFor={`${id}-t`} className="flex gap-2.5">
         <input
           id={`${id}-t`}
@@ -34,13 +38,13 @@ export function ConsentChecks({
           className={box}
         />
         <span>
-          He leído y acepto los{" "}
+          {t("He leído y acepto los ", "I have read and accept the ")}
           <Link href={LEGAL.terminos.path} target="_blank" className={link}>
-            Términos y condiciones
+            {t("Términos y condiciones", "Terms and conditions")}
           </Link>
-          , incluida la{" "}
+          {t(", incluida la ", ", including the ")}
           <Link href={LEGAL.reembolsos.path} target="_blank" className={link}>
-            Política de reembolso
+            {t("Política de reembolso", "Refund policy")}
           </Link>
           .
         </span>
@@ -56,11 +60,11 @@ export function ConsentChecks({
           className={box}
         />
         <span>
-          He leído y acepto la{" "}
+          {t("He leído y acepto la ", "I have read and accept the ")}
           <Link href={LEGAL.privacidad.path} target="_blank" className={link}>
-            Política de privacidad
-          </Link>{" "}
-          y el tratamiento de mis datos personales que ahí se describe.
+            {t("Política de privacidad", "Privacy policy")}
+          </Link>
+          {t(" y el tratamiento de mis datos personales que ahí se describe.", " and the processing of my personal data described there.")}
         </span>
       </label>
     </fieldset>

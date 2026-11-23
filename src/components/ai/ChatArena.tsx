@@ -4,7 +4,9 @@ import { Crown, Hammer, LogIn, Phone, RotateCcw, Send, ShieldAlert, ShieldCheck,
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { sendMessage, startChat, type ChatAccess, type ChatMsg } from "@/app/actions/ai";
+import { useT } from "@/components/i18n/LangProvider";
 import type { Persona } from "@/lib/ai/personas";
+import type { T } from "@/lib/i18n";
 
 type PublicPersona = Pick<Persona, "id" | "title" | "description" | "from" | "channel">;
 type Notice = "proximamente" | "pro" | "login" | null;
@@ -25,6 +27,7 @@ export function ChatArena({ personas, enabled, loggedIn, isPro, left: initialLef
   const [end, setEnd] = useState<{ status: "won" | "lost"; feedback: string; xp: number } | null>(null);
   const [tactics, setTactics] = useState<string[]>([]);
   const bottom = useRef<HTMLDivElement>(null);
+  const t = useT();
 
   useEffect(() => {
     bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -52,17 +55,17 @@ export function ChatArena({ personas, enabled, loggedIn, isPro, left: initialLef
   };
 
   const send = async () => {
-    const t = text.trim();
-    if (!t || !chatId || busy || end) return;
+    const msg = text.trim();
+    if (!msg || !chatId || busy || end) return;
     setText("");
     setError(null);
-    setMsgs((m) => [...m, { role: "user", content: t }]);
+    setMsgs((m) => [...m, { role: "user", content: msg }]);
     setBusy(true);
-    const r = await sendMessage(chatId, t);
+    const r = await sendMessage(chatId, msg);
     setBusy(false);
     if (!r.ok) {
       setMsgs((m) => m.slice(0, -1));
-      setText(t);
+      setText(msg);
       return setError(r.error);
     }
     setTactics(r.tactics);
@@ -86,14 +89,14 @@ export function ChatArena({ personas, enabled, loggedIn, isPro, left: initialLef
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-fog">
             {!enabled
-              ? "Exclusivo del plan Pro. Muy pronto."
+              ? t("Exclusivo del plan Pro. Muy pronto.", "Pro plan only. Coming soon.")
               : isPro
-                ? `Te quedan ${left} de ${limit} chats hoy.`
-                : "Exclusivo del plan Pro."}
+                ? t(`Te quedan ${left} de ${limit} chats hoy.`, `You have ${left} of ${limit} chats left today.`)
+                : t("Exclusivo del plan Pro.", "Pro plan only.")}
           </p>
           {!isPro && (
             <Link href="/planes" className="text-sm font-semibold text-brand hover:underline">
-              Ver plan Pro
+              {t("Ver plan Pro", "See Pro plan")}
             </Link>
           )}
         </div>
@@ -119,7 +122,7 @@ export function ChatArena({ personas, enabled, loggedIn, isPro, left: initialLef
                   </span>
                   <span className="mt-4 font-display text-xl">{p.title}</span>
                   <span className="mt-1 text-sm text-fog">{p.description}</span>
-                  <span className="mt-4 text-sm font-semibold text-brand">{busy ? "Preparando…" : "Empezar"}</span>
+                  <span className="mt-4 text-sm font-semibold text-brand">{busy ? t("Preparando…", "Getting ready…") : t("Empezar", "Start")}</span>
                 </button>
               </li>
             );
@@ -139,9 +142,9 @@ export function ChatArena({ personas, enabled, loggedIn, isPro, left: initialLef
           </span>
           <div className="min-w-0">
             <p className="truncate font-semibold">{persona.from}</p>
-            <p className="text-xs text-fog">{persona.channel === "Llamada" ? "Llamada (transcripción)" : "Número no guardado"}</p>
+            <p className="text-xs text-fog">{persona.channel === "Llamada" ? t("Llamada (transcripción)", "Call (transcript)") : t("Número no guardado", "Unsaved number")}</p>
           </div>
-          <span className="ml-auto rounded-full bg-field px-2.5 py-1 text-xs font-semibold text-brand">Práctica con IA</span>
+          <span className="ml-auto rounded-full bg-field px-2.5 py-1 text-xs font-semibold text-brand">{t("Práctica con IA", "AI practice")}</span>
         </div>
 
         <div className="flex-1 space-y-3 overflow-y-auto px-4 py-5" aria-live="polite">
@@ -158,7 +161,7 @@ export function ChatArena({ personas, enabled, loggedIn, isPro, left: initialLef
           ))}
           {busy && (
             <div className="flex justify-start">
-              <p className="rounded-2xl rounded-tl-md bg-paper px-4 py-3 ring-1 ring-line" aria-label="Escribiendo">
+              <p className="rounded-2xl rounded-tl-md bg-paper px-4 py-3 ring-1 ring-line" aria-label={t("Escribiendo", "Typing")}>
                 <span className="flex gap-1">
                   {[0, 1, 2].map((d) => (
                     <span key={d} className="h-2 w-2 animate-bounce rounded-full bg-ink-3" style={{ animationDelay: `${d * 120}ms` }} />
@@ -171,7 +174,7 @@ export function ChatArena({ personas, enabled, loggedIn, isPro, left: initialLef
             <div className={`pop-in rounded-2xl p-5 ${end.status === "won" ? "bg-ok-soft" : "bg-bad-soft"} text-ink`}>
               <p className={`flex items-center gap-2 font-semibold ${end.status === "won" ? "text-ok" : "text-[#b91c1c]"}`}>
                 {end.status === "won" ? <ShieldCheck className="h-5 w-5" strokeWidth={2} /> : <ShieldAlert className="h-5 w-5" strokeWidth={2} />}
-                {end.status === "won" ? "No caíste" : "Caíste en la trampa"}
+                {end.status === "won" ? t("No caíste", "You didn't fall for it") : t("Caíste en la trampa", "You fell for the trap")}
                 {end.xp > 0 && <span className="ml-auto text-sm">+{end.xp} XP</span>}
               </p>
               <p className="mt-2 leading-relaxed">{end.feedback}</p>
@@ -185,7 +188,7 @@ export function ChatArena({ personas, enabled, loggedIn, isPro, left: initialLef
         {end ? (
           <div className="flex gap-2 border-t border-desk-line p-4">
             <button type="button" onClick={reset} className="btn btn-primary h-11 flex-1">
-              <RotateCcw className="h-4 w-4" strokeWidth={2} aria-hidden /> Otro escenario
+              <RotateCcw className="h-4 w-4" strokeWidth={2} aria-hidden /> {t("Otro escenario", "Another scenario")}
             </button>
           </div>
         ) : (
@@ -197,7 +200,7 @@ export function ChatArena({ personas, enabled, loggedIn, isPro, left: initialLef
             }}
           >
             <label htmlFor="ia-msg" className="sr-only">
-              Tu respuesta
+              {t("Tu respuesta", "Your reply")}
             </label>
             <input
               id="ia-msg"
@@ -205,11 +208,11 @@ export function ChatArena({ personas, enabled, loggedIn, isPro, left: initialLef
               onChange={(e) => setText(e.target.value)}
               maxLength={500}
               autoComplete="off"
-              placeholder="Responde como lo harías en la vida real"
+              placeholder={t("Responde como lo harías en la vida real", "Reply the way you would in real life")}
               disabled={busy}
               className="field flex-1"
             />
-            <button type="submit" disabled={busy || !text.trim()} className="btn btn-primary h-12 w-12 shrink-0 p-0 disabled:opacity-50" aria-label="Enviar">
+            <button type="submit" disabled={busy || !text.trim()} className="btn btn-primary h-12 w-12 shrink-0 p-0 disabled:opacity-50" aria-label={t("Enviar", "Send")}>
               <Send className="h-5 w-5" strokeWidth={2} />
             </button>
           </form>
@@ -218,19 +221,22 @@ export function ChatArena({ personas, enabled, loggedIn, isPro, left: initialLef
 
       <aside className="space-y-4">
         <div className="rounded-3xl border border-desk-line bg-desk-2 p-5 text-sm">
-          <p className="font-semibold">Cómo funciona</p>
+          <p className="font-semibold">{t("Cómo funciona", "How it works")}</p>
           <p className="mt-2 text-fog">
-            La IA intenta engañarte. Responde como lo harías de verdad. Ganas si no entregas datos ni dinero y cortas la estafa.
+            {t(
+              "La IA intenta engañarte. Responde como lo harías de verdad. Ganas si no entregas datos ni dinero y cortas la estafa.",
+              "The AI tries to trick you. Reply as you really would. You win if you don't hand over data or money and you shut the scam down.",
+            )}
           </p>
-          <p className="mt-3 text-fog">Es una práctica: nunca escribas tus datos reales.</p>
+          <p className="mt-3 text-fog">{t("Es una práctica: nunca escribas tus datos reales.", "It's practice: never type your real details.")}</p>
         </div>
         {tactics.length > 0 && (
           <div className="rounded-3xl border border-desk-line bg-desk-2 p-5 text-sm">
-            <p className="font-semibold">Tácticas que está usando</p>
+            <p className="font-semibold">{t("Tácticas que está usando", "Tactics they're using")}</p>
             <ul className="mt-2 flex flex-wrap gap-1.5">
-              {tactics.slice(0, 6).map((t) => (
-                <li key={t} className="rounded-full bg-bad-soft px-2.5 py-1 text-xs font-medium text-[#b91c1c]">
-                  {t}
+              {tactics.slice(0, 6).map((x) => (
+                <li key={x} className="rounded-full bg-bad-soft px-2.5 py-1 text-xs font-medium text-[#b91c1c]">
+                  {x}
                 </li>
               ))}
             </ul>
@@ -242,29 +248,37 @@ export function ChatArena({ personas, enabled, loggedIn, isPro, left: initialLef
 }
 
 
-const NOTICES = {
-  proximamente: {
-    Icon: Hammer,
-    title: "Aún no está listo",
-    text: "Estamos trabajando en los chats con IA. Muy pronto podrás practicar contra un estafador que conversa contigo. Será exclusivo del plan Pro.",
-    cta: null,
-  },
-  pro: {
-    Icon: Crown,
-    title: "Exclusivo del plan Pro",
-    text: "Los chats con IA están incluidos en Pro, junto con vidas infinitas en la ruta y el pack de mensajes avanzados.",
-    cta: { href: "/planes", label: "Ver plan Pro" },
-  },
-  login: {
-    Icon: LogIn,
-    title: "Inicia sesión",
-    text: "Necesitas una cuenta con plan Pro para usar los chats con IA.",
-    cta: { href: "/entrar?next=/ia", label: "Entrar" },
-  },
-} as const;
+const notices = (t: T) =>
+  ({
+    proximamente: {
+      Icon: Hammer,
+      title: t("Aún no está listo", "Not ready yet"),
+      text: t(
+        "Estamos trabajando en los chats con IA. Muy pronto podrás practicar contra un estafador que conversa contigo. Será exclusivo del plan Pro.",
+        "We're working on the AI chats. Soon you'll be able to practice against a scammer who chats with you. It will be Pro only.",
+      ),
+      cta: null,
+    },
+    pro: {
+      Icon: Crown,
+      title: t("Exclusivo del plan Pro", "Pro plan only"),
+      text: t(
+        "Los chats con IA están incluidos en Pro, junto con vidas infinitas en la ruta y el pack de mensajes avanzados.",
+        "AI chats are included in Pro, along with unlimited lives on the path and the advanced message pack.",
+      ),
+      cta: { href: "/planes", label: t("Ver plan Pro", "See Pro plan") },
+    },
+    login: {
+      Icon: LogIn,
+      title: t("Inicia sesión", "Log in"),
+      text: t("Necesitas una cuenta con plan Pro para usar los chats con IA.", "You need an account with the Pro plan to use AI chats."),
+      cta: { href: "/entrar?next=/ia", label: t("Entrar", "Log in") },
+    },
+  }) as const;
 
 function NoticeDialog({ kind, onClose }: { kind: Exclude<Notice, null>; onClose: () => void }) {
-  const n = NOTICES[kind];
+  const t = useT();
+  const n = notices(t)[kind];
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -288,7 +302,7 @@ function NoticeDialog({ kind, onClose }: { kind: Exclude<Notice, null>; onClose:
           type="button"
           onClick={onClose}
           className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-lg text-fog hover:bg-desk-3 hover:text-chalk"
-          aria-label="Cerrar"
+          aria-label={t("Cerrar", "Close")}
         >
           <X className="h-5 w-5" strokeWidth={2} />
         </button>
@@ -306,7 +320,7 @@ function NoticeDialog({ kind, onClose }: { kind: Exclude<Notice, null>; onClose:
             </Link>
           )}
           <button type="button" onClick={onClose} className="btn btn-ghost h-11 px-5">
-            Entendido
+            {t("Entendido", "Got it")}
           </button>
         </div>
       </div>

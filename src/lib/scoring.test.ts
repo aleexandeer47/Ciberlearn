@@ -1,28 +1,44 @@
 import { describe, expect, it } from "vitest";
 import { SCENARIOS } from "./scenarios/data";
-import { ALL_SCENARIOS, scenariosFor, trainingSet } from "./scenarios/packs";
+import { allScenarios, scenariosFor, trainingSet } from "./scenarios/packs";
 import { segmentScenario } from "./scenarios/segment";
 import { scoreScenario, summarize } from "./scoring";
 
 const phishing = SCENARIOS.find((s) => s.id === "banco-bloqueo")!;
 const legit = SCENARIOS.find((s) => s.id === "banco-estado-cuenta")!;
 
+const ALL_SCENARIOS = [...allScenarios("es"), ...allScenarios("en")];
+
 describe("escenarios", () => {
   it("tienen ids únicos entre todos los packs", () => {
-    const ids = ALL_SCENARIOS.map((s) => s.id);
+    const ids = allScenarios("es").map((s) => s.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("la versión en inglés coincide con la española (ids, veredicto, señales)", () => {
+    const shape = (s: (typeof ALL_SCENARIOS)[number]) => ({
+      id: s.id,
+      channel: s.channel,
+      verdict: s.verdict,
+      difficulty: s.difficulty,
+      signals: s.signals.map((x) => [x.id, x.category]),
+      attachments: s.attachments?.length ?? 0,
+      legit: s.legitReasons?.length ?? 0,
+    });
+    expect(allScenarios("en").map(shape)).toEqual(allScenarios("es").map(shape));
   });
 
   it("cada modo produce un set válido", () => {
     for (const mode of ["clasico", "pro", "contrarreloj", "entrenamiento"] as const) {
       expect(scenariosFor(mode, "adjunto").length).toBeGreaterThanOrEqual(5);
+      expect(scenariosFor(mode, "adjunto", "en").map((s) => s.id)).toEqual(scenariosFor(mode, "adjunto").map((s) => s.id));
     }
     const t = trainingSet("adjunto");
     expect(t.some((s) => s.verdict === "legit")).toBe(true);
     expect(t.filter((s) => s.signals.some((x) => x.category === "adjunto")).length).toBeGreaterThanOrEqual(2);
   });
 
-  it.each(ALL_SCENARIOS.map((s) => [s.id, s] as const))("%s está bien armado", (_id, s) => {
+  it.each(ALL_SCENARIOS.map((s) => [s.id + (s.context.startsWith("You") ? " (en)" : ""), s] as const))("%s está bien armado", (_id, s) => {
     const seg = segmentScenario(s);
     const used = new Set(seg.all.map((x) => x.signal).filter(Boolean));
     const declared = new Set(s.signals.map((x) => x.id));

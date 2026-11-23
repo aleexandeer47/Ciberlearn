@@ -1,13 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-
-const MODE_LABEL: Record<string, string> = {
-  clasico: "Clásico",
-  pro: "Pack avanzado",
-  contrarreloj: "Contrarreloj",
-  entrenamiento: "Entrenamiento",
-};
+import { useLang, useT } from "@/components/i18n/LangProvider";
+import { LOCALE } from "@/lib/i18n";
 
 interface Point {
   date: string;
@@ -20,6 +15,14 @@ export function HistoryChart({ points }: { points: Point[] }) {
   const wrap = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(600);
   const [hover, setHover] = useState<number | null>(null);
+  const lang = useLang();
+  const t = useT();
+  const MODE_LABEL: Record<string, string> = {
+    clasico: t("Clásico", "Classic"),
+    pro: t("Pack avanzado", "Advanced pack"),
+    contrarreloj: t("Contrarreloj", "Time trial"),
+    entrenamiento: t("Entrenamiento", "Training"),
+  };
 
   useEffect(() => {
     const el = wrap.current;
@@ -37,7 +40,7 @@ export function HistoryChart({ points }: { points: Point[] }) {
   const x = (i: number) => pad.l + (n === 1 ? iw / 2 : (i / (n - 1)) * iw);
   const y = (v: number) => pad.t + ih - (v / 100) * ih;
   const path = points.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.score).toFixed(1)}`).join(" ");
-  const fmt = (iso: string) => new Date(iso).toLocaleDateString("es-SV", { day: "numeric", month: "short" });
+  const fmt = (iso: string) => new Date(iso).toLocaleDateString(LOCALE[lang], { day: "numeric", month: "short" });
 
   const onMove = (clientX: number) => {
     const r = wrap.current!.getBoundingClientRect();
@@ -54,7 +57,7 @@ export function HistoryChart({ points }: { points: Point[] }) {
         width={w}
         height={H}
         role="img"
-        aria-label={`Puntaje de tus últimas ${n} rondas`}
+        aria-label={t(`Puntaje de tus últimas ${n} rondas`, `Score of your last ${n} rounds`)}
         onPointerMove={(e) => onMove(e.clientX)}
         onPointerLeave={() => setHover(null)}
         className="block touch-pan-y"
@@ -105,7 +108,7 @@ export function HistoryChart({ points }: { points: Point[] }) {
         </div>
       )}
       <table className="sr-only">
-        <caption>Puntaje por ronda</caption>
+        <caption>{t("Puntaje por ronda", "Score per round")}</caption>
         <tbody>
           {points.map((p, i) => (
             <tr key={i}>

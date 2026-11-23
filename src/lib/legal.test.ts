@@ -17,6 +17,11 @@ describe("consentimiento", () => {
     ).toBeNull();
   });
 
+  it("también en inglés", () => {
+    expect(consentError({ terminos: false, privacidad: false }, "en")).toMatch(/Terms.*Privacy/);
+    expect(consentError({ terminos: true, privacidad: false }, "en")).toBe("To continue, accept the Privacy policy.");
+  });
+
   it("solo cuenta el valor exacto de la casilla", () => {
     const c = readConsent(form({ [CONSENT_FIELD.terminos]: "on", [CONSENT_FIELD.privacidad]: "" }));
     expect(c).toEqual({ terminos: false, privacidad: false });

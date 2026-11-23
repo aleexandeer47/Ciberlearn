@@ -1,7 +1,8 @@
 "use server";
 
 import { MongoServerError, ObjectId } from "mongodb";
-import { caseForDay, DAILY_BY_ID, DAILY_XP, nextStreak } from "@/lib/daily";
+import { caseForDay, DAILY_BY_ID, DAILY_XP, localizeDaily, nextStreak } from "@/lib/daily";
+import { requestT } from "@/lib/i18n-server";
 import { dayKey } from "@/lib/dayKey";
 import { collections } from "@/lib/server/db";
 import { getCurrentUser } from "@/lib/server/session";
@@ -24,9 +25,10 @@ export type DailyResult =
 
 /** Responde la estafa del día. Con sesión guarda la respuesta (una por día), la racha y el XP. */
 export async function answerDaily(choice: string): Promise<DailyResult> {
-  if (choice !== "phishing" && choice !== "legit") return { ok: false, error: "Respuesta no válida." };
+  const { lang, t } = await requestT();
+  if (choice !== "phishing" && choice !== "legit") return { ok: false, error: t("Respuesta no válida.", "Invalid answer.") };
   const today = dayKey();
-  const kase = caseForDay(today);
+  const kase = caseForDay(today, lang);
   const reveal = { answer: kase.answer, explain: kase.explain, tip: kase.tip };
 
   const user = await getCurrentUser();
@@ -41,7 +43,8 @@ export async function answerDaily(choice: string): Promise<DailyResult> {
     // Ya respondió hoy: se devuelve su primera respuesta, sin sumar nada
     const prev = await dailyAnswers.findOne({ userId: user._id, day: today });
     const doc = await users.findOne({ _id: user._id }, { projection: { daily: 1 } });
-    const k = DAILY_BY_ID.get(prev?.caseId ?? "") ?? kase;
+    const found = DAILY_BY_ID.get(prev?.caseId ?? "");
+    const k = found ? localizeDaily(found, lang) : kase;
     return {
       ok: true,
       correct: !!prev?.correct,

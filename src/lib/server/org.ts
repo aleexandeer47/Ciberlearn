@@ -5,7 +5,8 @@ import { AREAS, orgActive, pct, readinessScore, type AreaId, type OrgKind } from
 import { currentStreak } from "@/lib/daily";
 import { dayKey } from "@/lib/dayKey";
 import { LESSONS } from "@/lib/path/content";
-import { CATEGORY_LABELS } from "@/lib/scenarios/categories";
+import type { Lang } from "@/lib/i18n";
+import { categoryLabels } from "@/lib/scenarios/categories";
 import type { SignalCategory } from "@/lib/scenarios/types";
 import { collections } from "./db";
 
@@ -84,7 +85,8 @@ export interface MemberRow {
 }
 
 /** Todo lo que ve el encargado: avance de cada persona, puntos débiles del equipo y simulacros. */
-export async function teamReport(orgId: ObjectId) {
+export async function teamReport(orgId: ObjectId, lang: Lang = "es") {
+  const CL = categoryLabels(lang);
   const { users, runs, phishTargets, phishCampaigns, inboxResults, orgReports } = await collections();
   const members = await users
     .find(
@@ -171,7 +173,7 @@ export async function teamReport(orgId: ObjectId) {
   }
   const weakestOf = (list: { c: SignalCategory; total: number; found: number }[]) => {
     const seen = list.filter((x) => x.total >= 3).sort((a, b) => a.found / a.total - b.found / b.total);
-    return seen[0] ? CATEGORY_LABELS[seen[0].c]?.label ?? seen[0].c : null;
+    return seen[0] ? CL[seen[0].c]?.label ?? seen[0].c : null;
   };
 
   const rows: MemberRow[] = members.map((m) => {
@@ -206,7 +208,7 @@ export async function teamReport(orgId: ObjectId) {
   });
 
   const skills = [...team.entries()]
-    .map(([c, v]) => ({ category: c, label: CATEGORY_LABELS[c]?.label ?? c, pct: pct(v.found, v.total), total: v.total }))
+    .map(([c, v]) => ({ category: c, label: CL[c]?.label ?? c, pct: pct(v.found, v.total), total: v.total }))
     .sort((a, b) => a.pct - b.pct);
 
   const sent = rows.reduce((a, r) => a + r.simsSent, 0);

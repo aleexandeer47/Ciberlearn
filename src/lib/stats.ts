@@ -1,5 +1,6 @@
 // Estadísticas de una persona a partir de sus rondas guardadas. Funciones puras.
-import { CATEGORY_LABELS } from "./scenarios/categories";
+import type { Lang } from "./i18n";
+import { CATEGORIES, categoryLabels } from "./scenarios/categories";
 import type { SignalCategory } from "./scenarios/types";
 
 export interface StatAnswer {
@@ -18,22 +19,22 @@ export interface StatRun {
 }
 
 export const LEVELS = [
-  { xp: 0, name: "Novato" },
-  { xp: 500, name: "Observador" },
-  { xp: 1500, name: "Detective" },
-  { xp: 3500, name: "Analista" },
-  { xp: 7000, name: "Ojo de halcón" },
+  { xp: 0, name: { es: "Novato", en: "Rookie" } },
+  { xp: 500, name: { es: "Observador", en: "Observer" } },
+  { xp: 1500, name: { es: "Detective", en: "Detective" } },
+  { xp: 3500, name: { es: "Analista", en: "Analyst" } },
+  { xp: 7000, name: { es: "Ojo de halcón", en: "Hawk eye" } },
 ] as const;
 
-export function levelFor(xp: number) {
+export function levelFor(xp: number, lang: Lang = "es") {
   let i = 0;
   while (i + 1 < LEVELS.length && xp >= LEVELS[i + 1].xp) i++;
   const cur = LEVELS[i];
   const next = LEVELS[i + 1];
   return {
     index: i + 1,
-    name: cur.name,
-    nextName: next?.name ?? null,
+    name: cur.name[lang],
+    nextName: next?.name[lang] ?? null,
     progress: next ? (xp - cur.xp) / (next.xp - cur.xp) : 1,
     toNext: next ? next.xp - xp : 0,
   };
@@ -63,12 +64,14 @@ export function streakDays(dates: Date[], now = new Date()) {
   return n;
 }
 
-export function computeStats(runs: StatRun[], now = new Date()) {
+export function computeStats(runs: StatRun[], lang: Lang = "es", now = new Date()) {
+  const L = categoryLabels(lang);
+  const en = lang === "en";
   const answers = runs.flatMap((r) => r.answers);
   const xp = answers.reduce((a, x) => a + x.points, 0);
 
   const skillMap = new Map<SignalCategory, { found: number; total: number }>();
-  for (const c of Object.keys(CATEGORY_LABELS) as SignalCategory[]) skillMap.set(c, { found: 0, total: 0 });
+  for (const c of CATEGORIES) skillMap.set(c, { found: 0, total: 0 });
   for (const a of answers)
     for (const s of a.signals) {
       const v = skillMap.get(s.category)!;
@@ -77,7 +80,7 @@ export function computeStats(runs: StatRun[], now = new Date()) {
     }
   const skills: Skill[] = [...skillMap.entries()].map(([category, v]) => ({
     category,
-    label: CATEGORY_LABELS[category].label,
+    label: L[category].label,
     ...v,
     pct: v.total ? Math.round((v.found / v.total) * 100) : 0,
   }));
@@ -90,26 +93,46 @@ export function computeStats(runs: StatRun[], now = new Date()) {
   const streak = streakDays(runs.map((r) => r.createdAt), now);
 
   const achievements = [
-    { id: "primer-sello", title: "Primer sello", desc: "Termina tu primera ronda", earned: runs.length >= 1 },
-    { id: "perfecto", title: "Perfecto", desc: "Saca 100 en un mensaje", earned: answers.some((a) => a.points === 100) },
+    {
+      id: "primer-sello",
+      title: en ? "First stamp" : "Primer sello",
+      desc: en ? "Finish your first round" : "Termina tu primera ronda",
+      earned: runs.length >= 1,
+    },
+    {
+      id: "perfecto",
+      title: en ? "Perfect" : "Perfecto",
+      desc: en ? "Score 100 on a message" : "Saca 100 en un mensaje",
+      earned: answers.some((a) => a.points === 100),
+    },
     {
       id: "impecable",
-      title: "Ronda impecable",
-      desc: "Acierta todos los veredictos de una ronda",
+      title: en ? "Flawless round" : "Ronda impecable",
+      desc: en ? "Get every verdict right in a round" : "Acierta todos los veredictos de una ronda",
       earned: runs.some((r) => r.answers.length >= 5 && r.answers.every((a) => a.verdictCorrect)),
     },
     {
       id: "cazaenlaces",
-      title: "Cazaenlaces",
-      desc: "Detecta 10 enlaces engañosos",
+      title: en ? "Link hunter" : "Cazaenlaces",
+      desc: en ? "Spot 10 deceptive links" : "Detecta 10 enlaces engañosos",
       earned: answers.flatMap((a) => a.signals).filter((s) => s.category === "enlace" && s.found).length >= 10,
     },
-    { id: "constancia", title: "Constancia", desc: "Practica 3 días seguidos", earned: streak >= 3 },
-    { id: "detective", title: "Detective", desc: "Llega al nivel Detective", earned: xp >= 1500 },
+    {
+      id: "constancia",
+      title: en ? "Consistency" : "Constancia",
+      desc: en ? "Practice 3 days in a row" : "Practica 3 días seguidos",
+      earned: streak >= 3,
+    },
+    {
+      id: "detective",
+      title: "Detective",
+      desc: en ? "Reach Detective level" : "Llega al nivel Detective",
+      earned: xp >= 1500,
+    },
     {
       id: "sin-paranoia",
-      title: "Precisión quirúrgica",
-      desc: "Encuentra la mitad de las señales sin marcar nada normal",
+      title: en ? "Surgical precision" : "Precisión quirúrgica",
+      desc: en ? "Find half the signs without marking anything normal" : "Encuentra la mitad de las señales sin marcar nada normal",
       earned: runs.some((r) => {
         const sig = r.answers.flatMap((a) => a.signals);
         return (
@@ -124,7 +147,7 @@ export function computeStats(runs: StatRun[], now = new Date()) {
 
   return {
     xp,
-    level: levelFor(xp),
+    level: levelFor(xp, lang),
     runs: runs.length,
     messages: answers.length,
     accuracy: answers.length ? Math.round((answers.filter((a) => a.verdictCorrect).length / answers.length) * 100) : 0,

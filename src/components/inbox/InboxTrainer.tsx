@@ -3,25 +3,20 @@
 import { AlertOctagon, ArrowLeft, Check, CircleCheck, Flag, Inbox, Link2, Paperclip, RotateCcw, Trash2, X, Zap } from "lucide-react";
 import { useState } from "react";
 import { finishInbox, startInbox, type FinishInbox } from "@/app/actions/inbox";
+import { useT } from "@/components/i18n/LangProvider";
 import type { InboxAction, Outcome, PublicInboxEmail } from "@/lib/inbox";
 
-const ACTION_LABEL: Record<InboxAction, string> = {
-  reportar: "Reportado",
-  eliminar: "Eliminado",
-  seguro: "Seguro",
-  abrir: "Abriste el enlace",
-};
 const ACTION_TONE: Record<InboxAction, string> = {
   reportar: "bg-[#f97316]/15 text-[#c2410c] dark:text-[#fdba74]",
   eliminar: "bg-desk-3 text-fog",
   seguro: "bg-ok/15 text-ok",
   abrir: "bg-bad/15 text-bad-text",
 };
-const OUTCOME: Record<Outcome, { label: string; cls: string }> = {
-  excelente: { label: "Excelente", cls: "bg-ok text-white" },
-  bien: { label: "Bien", cls: "bg-[#0ea5e9] text-white" },
-  error: { label: "Error", cls: "bg-[#f59e0b] text-[#0a0f1c]" },
-  cayo: { label: "Caíste", cls: "bg-bad text-white" },
+const OUTCOME_CLS: Record<Outcome, string> = {
+  excelente: "bg-ok text-white",
+  bien: "bg-[#0ea5e9] text-white",
+  error: "bg-[#f59e0b] text-[#0a0f1c]",
+  cayo: "bg-bad text-white",
 };
 
 const initials = (s: string) =>
@@ -41,6 +36,19 @@ export function InboxTrainer() {
   const [hoverUrl, setHoverUrl] = useState("");
   const [result, setResult] = useState<Extract<FinishInbox, { ok: true }> | null>(null);
   const [error, setError] = useState("");
+  const t = useT();
+  const ACTION_LABEL: Record<InboxAction, string> = {
+    reportar: t("Reportado", "Reported"),
+    eliminar: t("Eliminado", "Deleted"),
+    seguro: t("Seguro", "Safe"),
+    abrir: t("Abriste el enlace", "Opened the link"),
+  };
+  const OUTCOME_LABEL: Record<Outcome, string> = {
+    excelente: t("Excelente", "Excellent"),
+    bien: t("Bien", "Good"),
+    error: "Error",
+    cayo: t("Caíste", "You fell for it"),
+  };
 
   async function start() {
     setPhase("loading");
@@ -86,14 +94,16 @@ export function InboxTrainer() {
         <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-field text-brand">
           <Inbox className="h-7 w-7" strokeWidth={1.75} aria-hidden />
         </span>
-        <h2 className="mt-4 font-display text-2xl">Tu bandeja de hoy tiene 8 correos</h2>
+        <h2 className="mt-4 font-display text-2xl">{t("Tu bandeja de hoy tiene 8 correos", "Today's inbox has 8 emails")}</h2>
         <p className="mx-auto mt-2 max-w-md text-fog">
-          Algunos son reales y otros trampas. Revisa cada uno como lo harías en tu trabajo: reporta, elimina, marca como seguro…
-          o abre el enlace si confías.
+          {t(
+            "Algunos son reales y otros trampas. Revisa cada uno como lo harías en tu trabajo: reporta, elimina, marca como seguro… o abre el enlace si confías.",
+            "Some are real and some are traps. Check each one as you would at work: report, delete, mark as safe… or open the link if you trust it.",
+          )}
         </p>
         {error && <p className="mt-4 text-sm text-bad-text">{error}</p>}
         <button type="button" onClick={start} disabled={phase === "loading"} className="btn btn-primary mt-6 h-12 px-7 disabled:opacity-60">
-          {phase === "loading" ? "Abriendo…" : "Abrir la bandeja"}
+          {phase === "loading" ? t("Abriendo…", "Opening…") : t("Abrir la bandeja", "Open the inbox")}
         </button>
       </div>
     );
@@ -103,10 +113,10 @@ export function InboxTrainer() {
       <div className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-4">
           {[
-            ["Puntaje", `${result.score}/100`],
-            ["Trampas reportadas", `${result.reported} de ${result.phishing}`],
-            ["Enlaces peligrosos abiertos", String(result.clicked)],
-            ["Correos reales reportados", String(result.falsePositives)],
+            [t("Puntaje", "Score"), `${result.score}/100`],
+            [t("Trampas reportadas", "Traps reported"), `${result.reported} ${t("de", "of")} ${result.phishing}`],
+            [t("Enlaces peligrosos abiertos", "Dangerous links opened"), String(result.clicked)],
+            [t("Correos reales reportados", "Real emails reported"), String(result.falsePositives)],
           ].map(([k, v]) => (
             <div key={k} className="rounded-3xl border border-desk-line bg-desk-2 p-5">
               <p className="text-sm text-fog">{k}</p>
@@ -124,24 +134,27 @@ export function InboxTrainer() {
             <li key={x.id} className="rounded-2xl border border-desk-line bg-desk-2 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="font-semibold">{x.subject}</p>
-                <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${OUTCOME[x.outcome].cls}`}>{OUTCOME[x.outcome].label}</span>
+                <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${OUTCOME_CLS[x.outcome]}`}>{OUTCOME_LABEL[x.outcome]}</span>
               </div>
               <p className="mt-1 text-sm text-fog">
-                Era {x.verdict === "phishing" ? "una trampa" : "un correo real"} · tú: {ACTION_LABEL[x.action].toLowerCase()}
+                {x.verdict === "phishing" ? t("Era una trampa", "It was a trap") : t("Era un correo real", "It was a real email")} · {t("tú", "you")}:{" "}
+                {ACTION_LABEL[x.action].toLowerCase()}
               </p>
               <p className="mt-2 text-[15px] leading-relaxed text-graphite">{x.explain}</p>
             </li>
           ))}
         </ul>
         <div className="rounded-3xl bg-field p-5 text-sm text-graphite">
-          <p className="font-semibold text-chalk">Lo ideal</p>
+          <p className="font-semibold text-chalk">{t("Lo ideal", "Best practice")}</p>
           <p className="mt-1">
-            Ante una trampa, <strong>repórtala</strong>: así tu equipo de TI puede avisar a los demás. Eliminarla te protege
-            a ti, pero no al resto. Y si un correo es real, no lo reportes: los falsos positivos también cuestan tiempo.
+            {t(
+              "Ante una trampa, repórtala: así tu equipo de TI puede avisar a los demás. Eliminarla te protege a ti, pero no al resto. Y si un correo es real, no lo reportes: los falsos positivos también cuestan tiempo.",
+              "When you spot a trap, report it: that way your IT team can warn everyone else. Deleting it protects you, but not the rest. And if an email is real, don't report it: false positives cost time too.",
+            )}
           </p>
         </div>
         <button type="button" onClick={start} className="btn btn-primary h-12 px-6">
-          <RotateCcw className="h-4 w-4" aria-hidden /> Otra bandeja
+          <RotateCcw className="h-4 w-4" aria-hidden /> {t("Otra bandeja", "Another inbox")}
         </button>
       </div>
     );
@@ -155,9 +168,9 @@ export function InboxTrainer() {
       {/* Barra superior */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-desk-line px-4 py-3">
         <p className="flex items-center gap-2 font-semibold">
-          <Inbox className="h-4 w-4 text-brand" aria-hidden /> Bandeja de entrada
+          <Inbox className="h-4 w-4 text-brand" aria-hidden /> {t("Bandeja de entrada", "Inbox")}
           <span className="text-sm font-normal text-fog">
-            · {done}/{emails.length} revisados
+            · {done}/{emails.length} {t("revisados", "reviewed")}
           </span>
         </p>
         <button
@@ -166,7 +179,7 @@ export function InboxTrainer() {
           disabled={done < emails.length || phase === "sending"}
           className="btn btn-primary h-9 px-4 text-sm disabled:opacity-50"
         >
-          {phase === "sending" ? "Calificando…" : "Terminar y ver resultados"}
+          {phase === "sending" ? t("Calificando…", "Scoring…") : t("Terminar y ver resultados", "Finish and see results")}
         </button>
       </div>
       {error && <p className="border-b border-desk-line px-4 py-2 text-sm text-bad-text">{error}</p>}
@@ -205,17 +218,17 @@ export function InboxTrainer() {
         {current && (
           <div className="flex min-h-[560px] flex-col">
             <div className="flex flex-wrap gap-2 border-b border-desk-line px-4 py-3">
-              <button type="button" onClick={() => setSel(null)} className="btn btn-ghost h-9 px-3 text-sm md:hidden" aria-label="Volver a la lista">
+              <button type="button" onClick={() => setSel(null)} className="btn btn-ghost h-9 px-3 text-sm md:hidden" aria-label={t("Volver a la lista", "Back to the list")}>
                 <ArrowLeft className="h-4 w-4" aria-hidden />
               </button>
               <button type="button" onClick={() => act("reportar")} className="btn h-9 bg-[#f97316] px-3 text-sm text-white hover:brightness-95">
-                <Flag className="h-4 w-4" aria-hidden /> Reportar phishing
+                <Flag className="h-4 w-4" aria-hidden /> {t("Reportar phishing", "Report phishing")}
               </button>
               <button type="button" onClick={() => act("eliminar")} className="btn btn-ghost h-9 px-3 text-sm">
-                <Trash2 className="h-4 w-4" aria-hidden /> Eliminar
+                <Trash2 className="h-4 w-4" aria-hidden /> {t("Eliminar", "Delete")}
               </button>
               <button type="button" onClick={() => act("seguro")} className="btn btn-ghost h-9 px-3 text-sm">
-                <CircleCheck className="h-4 w-4" aria-hidden /> Es seguro
+                <CircleCheck className="h-4 w-4" aria-hidden /> {t("Es seguro", "It's safe")}
               </button>
             </div>
             <article className="flex-1 bg-paper p-6 text-ink">
@@ -225,7 +238,9 @@ export function InboxTrainer() {
                 <span>
                   <span className="font-semibold">{current.fromName}</span>{" "}
                   <span className="font-mono text-[13px] text-ink-2">&lt;{current.fromEmail}&gt;</span>
-                  <span className="block text-xs text-ink-3">Para: mí · {current.time}</span>
+                  <span className="block text-xs text-ink-3">
+                    {t("Para: mí", "To: me")} · {current.time}
+                  </span>
                 </span>
               </div>
               <div className="mt-6 space-y-3 leading-relaxed">
@@ -258,21 +273,26 @@ export function InboxTrainer() {
               {acts[current.id] === "abrir" && (
                 <p className="mt-6 flex items-start gap-2 rounded-xl bg-bad-soft p-3 text-sm">
                   <AlertOctagon className="mt-0.5 h-4 w-4 shrink-0 text-bad" aria-hidden />
-                  Abriste {current.link ? "el enlace" : "el adjunto"}. Si confías en este correo, sigue con el siguiente; si no,
-                  puedes cambiar tu decisión antes de terminar.
+                  {current.link
+                    ? t("Abriste el enlace.", "You opened the link.")
+                    : t("Abriste el adjunto.", "You opened the attachment.")}{" "}
+                  {t(
+                    "Si confías en este correo, sigue con el siguiente; si no, puedes cambiar tu decisión antes de terminar.",
+                    "If you trust this email, move on to the next one; if not, you can change your decision before finishing.",
+                  )}
                 </p>
               )}
             </article>
             {/* Barra de estado: como en un navegador, muestra a dónde lleva el enlace */}
             <p className="h-8 truncate border-t border-desk-line bg-desk-3 px-4 py-1.5 font-mono text-xs text-fog">
-              {hoverUrl ? `→ ${hoverUrl}` : current.link ? "Pasa el mouse sobre el botón para ver a dónde lleva" : ""}
+              {hoverUrl ? `→ ${hoverUrl}` : current.link ? t("Pasa el mouse sobre el botón para ver a dónde lleva", "Hover over the button to see where it goes") : ""}
             </p>
           </div>
         )}
         {!current && (
           <div className="hidden place-items-center p-10 text-fog md:grid">
             <span className="flex items-center gap-2">
-              {done === emails.length ? <Check className="h-4 w-4" aria-hidden /> : <X className="h-4 w-4" aria-hidden />} Elige un correo
+              {done === emails.length ? <Check className="h-4 w-4" aria-hidden /> : <X className="h-4 w-4" aria-hidden />} {t("Elige un correo", "Choose an email")}
             </span>
           </div>
         )}

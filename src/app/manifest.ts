@@ -1,12 +1,13 @@
 import type { MetadataRoute } from "next";
 import { SITE } from "@/lib/site";
 
+// El manifiesto es uno solo para los dos idiomas: nombre de marca y textos cortos.
+// Las páginas que abre (/ruta, /diaria...) salen en el idioma de cada persona.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: `${SITE.name}: aprende a detectar estafas`,
+    name: SITE.name,
     short_name: SITE.name,
-    description: SITE.description,
-    lang: "es-SV",
+    description: `${SITE.description.es} / ${SITE.description.en}`,
     start_url: "/ruta",
     scope: "/",
     display: "standalone",
@@ -19,9 +20,9 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: "/app-icon?size=512&maskable=1", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
     shortcuts: [
-      { name: "La estafa del día", url: "/diaria" },
-      { name: "Ruta guiada", url: "/ruta" },
-      { name: "Alertas de estafas", url: "/alertas" },
+      { name: "Hoy · Today", url: "/diaria" },
+      { name: "Ruta · Path", url: "/ruta" },
+      { name: "Alertas · Alerts", url: "/alertas" },
     ],
   };
 }

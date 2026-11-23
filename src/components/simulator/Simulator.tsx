@@ -3,7 +3,8 @@
 import { Flame, Mail, MessageSquare, Smartphone } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RunInput } from "@/app/actions/runs";
-import { CHANNEL_LABELS } from "@/lib/scenarios/categories";
+import { useLang, useT } from "@/components/i18n/LangProvider";
+import { channelLabels } from "@/lib/scenarios/categories";
 import { segmentScenario } from "@/lib/scenarios/segment";
 import type { Inline, Scenario, Verdict } from "@/lib/scenarios/types";
 import { scoreScenario, type ScenarioResult } from "@/lib/scoring";
@@ -13,7 +14,6 @@ import { MessageView } from "./MessageView";
 import { ResultPanel } from "./ResultPanel";
 import { Summary } from "./Summary";
 
-const DIFFICULTY = ["", "Fácil", "Media", "Difícil"] as const;
 const CHANNEL_ICON = { email: Mail, sms: MessageSquare, chat: Smartphone } as const;
 const text = (x: Inline) => (typeof x === "string" ? x : x.t);
 const EMPTY: ReadonlySet<string> = new Set();
@@ -26,6 +26,9 @@ interface Props {
 }
 
 export function Simulator({ scenarios, mode = "clasico", seconds }: Props) {
+  const lang = useLang();
+  const t = useT();
+  const DIFFICULTY = ["", t("Fácil", "Easy"), t("Media", "Medium"), t("Difícil", "Hard")];
   const [results, setResults] = useState<ScenarioResult[]>([]);
   const [verdicts, setVerdicts] = useState<(Verdict | null)[]>([]);
   const [times, setTimes] = useState<number[]>([]);
@@ -118,8 +121,8 @@ export function Simulator({ scenarios, mode = "clasico", seconds }: Props) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
-      const t = e.target as HTMLElement;
-      if (t.closest("input, textarea, button, a, [role=button]")) return;
+      const el = e.target as HTMLElement;
+      if (el.closest("input, textarea, button, a, [role=button]")) return;
       const k = e.key.toLowerCase();
       if (!revealed && k === "p") decide("phishing");
       else if (!revealed && k === "l") decide("legit");
@@ -148,7 +151,7 @@ export function Simulator({ scenarios, mode = "clasico", seconds }: Props) {
     <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[260px_1fr]">
       <aside className="hidden lg:block">
         <div className="sticky top-24">
-          <p className="mb-3 px-2 font-mono text-[11px] text-fog">Bandeja · {scenarios.length}</p>
+          <p className="mb-3 px-2 font-mono text-[11px] text-fog">{t("Bandeja", "Inbox")} · {scenarios.length}</p>
           <ul className="space-y-1">
             {scenarios.map((s, i) => {
               const r = results[i];
@@ -174,10 +177,10 @@ export function Simulator({ scenarios, mode = "clasico", seconds }: Props) {
                         })()
                       )}
                     </span>
-                    <span className="min-w-0 flex-1 truncate">{locked ? "Mensaje sin abrir" : text(s.from.name)}</span>
+                    <span className="min-w-0 flex-1 truncate">{locked ? t("Mensaje sin abrir", "Unopened message") : text(s.from.name)}</span>
                     {r && (
                       <span
-                        aria-label={r.verdictCorrect ? "acertado" : "fallado"}
+                        aria-label={r.verdictCorrect ? t("acertado", "correct") : t("fallado", "missed")}
                         className={`h-2 w-2 shrink-0 rounded-full ${r.verdictCorrect ? "bg-ok" : "bg-bad"}`}
                       />
                     )}
@@ -188,7 +191,7 @@ export function Simulator({ scenarios, mode = "clasico", seconds }: Props) {
             })}
           </ul>
           <div className="mt-6 rounded-xl border border-desk-line p-3 text-xs leading-relaxed text-fog">
-            Atajos: <kbd>P</kbd> phishing · <kbd>L</kbd> legítimo · <kbd>Enter</kbd> siguiente
+            {t("Atajos", "Shortcuts")}: <kbd>P</kbd> phishing · <kbd>L</kbd> {t("legítimo", "legit")} · <kbd>Enter</kbd> {t("siguiente", "next")}
           </div>
         </div>
       </aside>
@@ -211,7 +214,7 @@ export function Simulator({ scenarios, mode = "clasico", seconds }: Props) {
             {streak >= 2 && (
               <span key={streak} className="pop-in shrink-0 rounded-full bg-brand/15 px-2.5 py-1 text-xs font-semibold text-brand">
                 <Flame className="mr-1 inline h-3.5 w-3.5 -translate-y-px" strokeWidth={1.75} aria-hidden />
-                {streak} seguidas
+                {streak} {t("seguidas", "in a row")}
               </span>
             )}
             <span className="shrink-0 font-semibold text-lg tabular-nums" aria-live="polite">
@@ -237,13 +240,13 @@ export function Simulator({ scenarios, mode = "clasico", seconds }: Props) {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="max-w-2xl">
             <p className="font-mono text-[11px] text-fog">
-              Mensaje {view + 1} de {scenarios.length} · {CHANNEL_LABELS[scenario.channel]} · {DIFFICULTY[scenario.difficulty]}
+              {t("Mensaje", "Message")} {view + 1} {t("de", "of")} {scenarios.length} · {channelLabels(lang)[scenario.channel]} · {DIFFICULTY[scenario.difficulty]}
             </p>
             <p className="mt-2 text-[15px] leading-relaxed text-chalk/90">{scenario.context}</p>
           </div>
           {reviewing && (
             <button type="button" onClick={() => setView(Math.min(active, scenarios.length - 1))} className="btn btn-ghost px-4 py-2 text-sm">
-              Volver al mensaje actual →
+              {t("Volver al mensaje actual →", "Back to current message →")}
             </button>
           )}
         </div>
@@ -273,11 +276,11 @@ export function Simulator({ scenarios, mode = "clasico", seconds }: Props) {
             <div className="mb-3 flex items-center justify-between gap-3 px-1 text-sm">
               <span className="text-fog">
                 {marked.size === 0 ? (
-                  <>Toca lo que te parezca sospechoso para resaltarlo</>
+                  <>{t("Toca lo que te parezca sospechoso para resaltarlo", "Tap anything that looks suspicious to highlight it")}</>
                 ) : (
                   <>
                     <span className="mr-1.5 inline-block h-2.5 w-2.5 rounded-sm bg-hl align-middle" />
-                    <strong className="text-chalk">{marked.size}</strong> {marked.size === 1 ? "parte resaltada" : "partes resaltadas"}
+                    <strong className="text-chalk">{marked.size}</strong> {marked.size === 1 ? t("parte resaltada", "part highlighted") : t("partes resaltadas", "parts highlighted")}
                   </>
                 )}
               </span>
@@ -287,16 +290,16 @@ export function Simulator({ scenarios, mode = "clasico", seconds }: Props) {
                   onClick={() => setMarks((p) => Object.assign([...p], { [view]: new Set() }))}
                   className="text-fog underline-offset-2 hover:text-chalk hover:underline"
                 >
-                  Borrar
+                  {t("Borrar", "Clear")}
                 </button>
               )}
             </div>
             <div className="grid grid-cols-2 gap-2">
               <button type="button" onClick={() => decide("phishing")} className="btn btn-danger px-4 py-3.5">
-                Es phishing <kbd className="hidden sm:inline">P</kbd>
+                {t("Es phishing", "It's phishing")} <kbd className="hidden sm:inline">P</kbd>
               </button>
               <button type="button" onClick={() => decide("legit")} className="btn btn-ok px-4 py-3.5">
-                Es legítimo <kbd className="hidden sm:inline">L</kbd>
+                {t("Es legítimo", "It's legit")} <kbd className="hidden sm:inline">L</kbd>
               </button>
             </div>
           </div>

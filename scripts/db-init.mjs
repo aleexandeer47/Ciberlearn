@@ -69,6 +69,11 @@ const specs = {
     [{ userId: 1, day: 1 }, {}],
     [{ createdAt: 1 }, { expireAfterSeconds: 30 * 86400 }],
   ],
+  ai_checks: [
+    [{ userId: 1, day: 1 }, {}],
+    [{ createdAt: 1 }, { expireAfterSeconds: 2 * 86400 }],
+  ],
+  push_subs: [[{ endpoint: 1 }, { unique: true }]],
   // Prueba de aceptación de términos y privacidad: sin TTL
   consents: [[{ userId: 1, acceptedAt: -1 }, {}]],
   // Plan Empresa

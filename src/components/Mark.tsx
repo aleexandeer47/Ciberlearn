@@ -3,7 +3,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 
 /**
- * Firma de Ciberlearn: un trazo a mano bajo la palabra clave de un título,
+ * Firma de Unhooked: un trazo a mano bajo la palabra clave de un título,
  * como la marca de un revisor. Se dibuja una sola vez al entrar en pantalla.
  * El estado se escribe directo en el DOM (data-drawn) para no re-renderizar.
  */

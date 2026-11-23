@@ -1,0 +1,19 @@
+{
+  "name": { "message": "Unhooked: ¿es estafa?" },
+  "description": { "message": "Mira el dominio real de cualquier sitio y revisa enlaces sospechosos antes de caer." },
+  "realDomain": { "message": "Dominio real de esta página" },
+  "verdictOk": { "message": "No vemos señales claras en esta dirección. Aun así, nunca escribas claves ni códigos desde un enlace que te mandaron." },
+  "verdictRisk": { "message": "Cuidado: esta dirección tiene señales que se usan en estafas." },
+  "notWeb": { "message": "Abre una página web para revisar su dirección." },
+  "flagHttp": { "message": "Sin https: la conexión no va cifrada. No escribas datos aquí." },
+  "flagIp": { "message": "Es una dirección IP en vez de un nombre de dominio." },
+  "flagAt": { "message": "Tiene “@”: todo lo de antes se ignora, el sitio real es lo que va después." },
+  "flagPunycode": { "message": "Letras de otro alfabeto (“xn--”) que imitan un nombre real." },
+  "flagTld": { "message": "Terminación barata muy usada en estafas (.top, .xyz, .click…)." },
+  "flagBrandSub": { "message": "Una marca conocida aparece antes del dominio de otra persona." },
+  "flagLookalike": { "message": "El dominio imita una marca con números o guiones." },
+  "openChecker": { "message": "Revisar un mensaje en Unhooked" },
+  "privacy": { "message": "La revisión ocurre en tu navegador. No vemos lo que navegas." },
+  "menuLink": { "message": "¿Es estafa? Revisar este enlace" },
+  "menuText": { "message": "¿Es estafa? Revisar este texto" }
+}

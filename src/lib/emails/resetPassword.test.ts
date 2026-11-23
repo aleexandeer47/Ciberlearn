@@ -12,6 +12,13 @@ describe("correo de recuperación", () => {
     expect(m.text.startsWith("Hola, Ana:")).toBe(true);
   });
 
+  it("sale en inglés si se pide", () => {
+    const m = resetPasswordEmail({ name: "Ana Prueba", link, minutes: 60, lang: "en" });
+    expect(m.subject).toMatch(/^Reset your/);
+    expect(m.text).toContain("60 minutes");
+    expect(m.html).toContain('lang="en"');
+  });
+
   it("escapa el nombre para que no se pueda inyectar HTML", () => {
     const m = resetPasswordEmail({ name: '<img src=x onerror="alert(1)">', link, minutes: 60 });
     expect(m.html).not.toContain("<img src=x");

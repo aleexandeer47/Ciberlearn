@@ -1,5 +1,9 @@
 // Plan Empresa: precios por puesto y plantillas de simulacros. Funciones puras (se prueban sin base de datos).
 
+import type { Lang } from "./i18n";
+
+type L = Record<Lang, string>;
+
 export const BUSINESS = {
   /** US$ por empleado al año */
   seatPrice: 24,
@@ -78,7 +82,7 @@ export interface PhishTemplate {
   signals: string[];
 }
 
-export const PHISH_TEMPLATES: PhishTemplate[] = [
+const PHISH_ES: PhishTemplate[] = [
   {
     id: "buzon-lleno",
     title: "Buzón de correo lleno",
@@ -112,7 +116,7 @@ export const PHISH_TEMPLATES: PhishTemplate[] = [
     signals: [
       "Una factura que no esperabas, de un remitente sin nombre de empresa.",
       "Presión con recargos y plazos.",
-      "Las facturas reales llegan como DTE (PDF/JSON) de un proveedor conocido, no como un enlace para “ver”.",
+      "Las facturas reales llegan como factura electrónica (PDF) de un proveedor conocido, no como un enlace para “ver”.",
     ],
   },
   {
@@ -123,7 +127,7 @@ export const PHISH_TEMPLATES: PhishTemplate[] = [
     subject: () => "Confirme sus datos para recibir el bono de fin de año",
     body: (org, n) => [
       `Hola ${n},`,
-      `${org} otorgará un bono especial de fin de año. Para incluirle en la planilla, confirme su información antes del viernes.`,
+      `${org} otorgará un bono especial de fin de año. Para incluirle en la nómina, confirme su información antes del viernes.`,
       "Si no confirma a tiempo, el bono se pagará hasta el próximo periodo.",
     ],
     cta: "Confirmar mis datos",
@@ -153,7 +157,91 @@ export const PHISH_TEMPLATES: PhishTemplate[] = [
   },
 ];
 
-export const PHISH_BY_ID = new Map(PHISH_TEMPLATES.map((t) => [t.id, t]));
+const PHISH_EN: PhishTemplate[] = [
+  {
+    id: "buzon-lleno",
+    title: "Mailbox full",
+    difficulty: "Fácil",
+    fromName: (org) => `IT Support · ${org}`,
+    subject: () => "Action required: your mailbox has reached 98% capacity",
+    body: (org, n) => [
+      `Hi ${n},`,
+      `Your ${org} mailbox is almost full. If you don't expand it within the next 24 hours, you'll stop receiving messages.`,
+      "Sign in to expand your storage at no cost.",
+    ],
+    cta: "Expand my mailbox",
+    signals: [
+      "Urgency: “within the next 24 hours”.",
+      "It asks you to sign in from a link instead of going in the usual way yourself.",
+      "The sender claims to be IT, but the email doesn't come from the company's domain.",
+    ],
+  },
+  {
+    id: "factura",
+    title: "Supplier invoice past due",
+    difficulty: "Media",
+    fromName: () => "Accounts receivable",
+    subject: () => "Overdue invoice #F-20931 – avoid late fees",
+    body: (org, n) => [
+      `Dear ${n},`,
+      `This is a reminder that invoice #F-20931 issued to ${org} was due 3 days ago. To avoid late fees, review the document and confirm payment today.`,
+      "You can view the invoice at the link below.",
+    ],
+    cta: "View invoice",
+    signals: [
+      "An invoice you weren't expecting, from a sender with no company name.",
+      "Pressure with late fees and deadlines.",
+      "Real e-invoices arrive as a PDF from a supplier you know, not as a link to “view”.",
+    ],
+  },
+  {
+    id: "bono",
+    title: "Bonus payment",
+    difficulty: "Media",
+    fromName: (org) => `Human Resources · ${org}`,
+    subject: () => "Confirm your details to receive the year-end bonus",
+    body: (org, n) => [
+      `Hi ${n},`,
+      `${org} will be paying a special year-end bonus. To include you in payroll, confirm your information before Friday.`,
+      "If you don't confirm in time, the bonus will be paid in the next period.",
+    ],
+    cta: "Confirm my details",
+    signals: [
+      "It offers money in exchange for “confirming details” the company already has.",
+      "A short deadline and a loss if you don't act.",
+      "HR doesn't need you to re-enter your details through a link.",
+    ],
+  },
+  {
+    id: "documento",
+    title: "Shared document",
+    difficulty: "Difícil",
+    fromName: (org) => `${org} (via Shared Documents)`,
+    subject: (org) => `A file was shared with you: “Performance review 2026 – ${org}.pdf”`,
+    body: (org, n) => [
+      `Hi ${n},`,
+      `${org} management shared a document with you: “Performance review 2026”.`,
+      "The document will be available for 7 days.",
+    ],
+    cta: "Open document",
+    signals: [
+      "It plays on curiosity: a review about you that you weren't expecting.",
+      "A real document service shows who shared it and from which account; here there's nobody specific.",
+      "Before opening it, check with the person who supposedly shared it.",
+    ],
+  },
+];
+
+/** Plantillas en español (las que se guardan en las campañas: el id es el mismo en los dos idiomas). */
+export const PHISH_TEMPLATES = PHISH_ES;
+export const PHISH_BY_ID = new Map(PHISH_ES.map((t) => [t.id, t]));
+const PHISH_BY_ID_EN = new Map(PHISH_EN.map((t) => [t.id, t]));
+export const phishTemplates = (lang: Lang) => (lang === "en" ? PHISH_EN : PHISH_ES);
+export const phishTemplate = (id: string, lang: Lang) => (lang === "en" ? PHISH_BY_ID_EN : PHISH_BY_ID).get(id);
+export const DIFFICULTY_LABEL: Record<Lang, Record<PhishTemplate["difficulty"], string>> = {
+  es: { Fácil: "Fácil", Media: "Media", Difícil: "Difícil" },
+  en: { Fácil: "Easy", Media: "Medium", Difícil: "Hard" },
+};
 
 // ---------------------------------------------------------------------------------------------
 // Rutas por área: el encargado asigna un área a cada persona y sus lecciones clave se desbloquean.
@@ -161,25 +249,37 @@ export const PHISH_BY_ID = new Map(PHISH_TEMPLATES.map((t) => [t.id, t]));
 
 export type AreaId = "finanzas" | "atencion" | "direccion" | "operaciones";
 
-export const AREAS: Record<AreaId, { label: string; focus: string; lessons: string[] }> = {
+export const AREAS: Record<AreaId, { label: L; focus: L; lessons: string[] }> = {
   finanzas: {
-    label: "Finanzas y pagos",
-    focus: "Fraude del jefe, facturas con cuentas cambiadas y transferencias urgentes.",
+    label: { es: "Finanzas y pagos", en: "Finance and payments" },
+    focus: {
+      es: "Fraude del jefe, facturas con cuentas cambiadas y transferencias urgentes.",
+      en: "Boss fraud, invoices with swapped accounts and urgent transfers.",
+    },
     lessons: ["u7l1", "u7l2", "u1l3", "u4l3", "u8l3"],
   },
   atencion: {
-    label: "Atención al cliente y ventas",
-    focus: "Llamadas falsas, perfiles que suplantan a la empresa, remesas y soporte falso.",
+    label: { es: "Atención al cliente y ventas", en: "Customer service and sales" },
+    focus: {
+      es: "Llamadas falsas, perfiles que suplantan a la empresa, remesas y soporte falso.",
+      en: "Fake calls, profiles impersonating the company, money transfers and fake support.",
+    },
     lessons: ["u4l3", "u5l2", "u4l1", "u7l3", "u2l1"],
   },
   direccion: {
-    label: "Dirección y gerencia",
-    focus: "Mensajes casi perfectos, voces clonadas, cuentas robadas y verificación en dos pasos.",
+    label: { es: "Dirección y gerencia", en: "Leadership and management" },
+    focus: {
+      es: "Mensajes casi perfectos, voces clonadas, cuentas robadas y verificación en dos pasos.",
+      en: "Almost perfect messages, cloned voices, stolen accounts and two-step verification.",
+    },
     lessons: ["u7l1", "u8l2", "u5l1", "u6l2", "u8l3"],
   },
   operaciones: {
-    label: "Operaciones y personal general",
-    focus: "Leer enlaces, archivos y QR, contraseñas y apps del celular.",
+    label: { es: "Operaciones y personal general", en: "Operations and general staff" },
+    focus: {
+      es: "Leer enlaces, archivos y QR, contraseñas y apps del celular.",
+      en: "Reading links, files and QR codes, passwords and phone apps.",
+    },
     lessons: ["u3l1", "u3l2", "u6l1", "u6l3", "u2l2"],
   },
 };
@@ -215,26 +315,47 @@ export function readinessScore(x: ReadinessInput) {
   return Math.round(parts.reduce((a, [v, k]) => a + Math.max(0, Math.min(100, v)) * k, 0) / w);
 }
 
-export function readinessLevel(score: number) {
-  if (score >= 75) return { label: "Preparada", tone: "ok" as const };
-  if (score >= 50) return { label: "En progreso", tone: "warn" as const };
-  return { label: "En riesgo", tone: "bad" as const };
+export function readinessLevel(score: number, lang: Lang = "es") {
+  const en = lang === "en";
+  if (score >= 75) return { label: en ? "Prepared" : "Preparada", tone: "ok" as const };
+  if (score >= 50) return { label: en ? "In progress" : "En progreso", tone: "warn" as const };
+  return { label: en ? "At risk" : "En riesgo", tone: "bad" as const };
 }
 
 /** Recomendaciones concretas a partir de los puntos débiles (para el informe de gerencia). */
-export function recommendations(x: ReadinessInput, weakestSkill: string | null, membersWithoutArea: number) {
+export function recommendations(x: ReadinessInput, weakestSkill: string | null, membersWithoutArea: number, lang: Lang = "es") {
+  const t = (es: string, en: string) => (lang === "en" ? en : es);
   const out: string[] = [];
   if (x.pathPct === null || x.pathPct < 50)
-    out.push("Pide que cada persona complete al menos una lección por semana de la ruta guiada.");
-  if (x.clickRate === null) out.push("Envía un primer simulacro de phishing para medir cómo reacciona el equipo.");
-  else if (x.clickRate > 20) out.push("Más de 1 de cada 5 personas cayó en un simulacro: repite uno al mes y comenta los resultados con el equipo.");
+    out.push(t("Pide que cada persona complete al menos una lección por semana de la ruta guiada.", "Ask everyone to complete at least one guided-path lesson a week."));
+  if (x.clickRate === null)
+    out.push(t("Envía un primer simulacro de phishing para medir cómo reacciona el equipo.", "Send a first phishing drill to measure how the team reacts."));
+  else if (x.clickRate > 20)
+    out.push(
+      t(
+        "Más de 1 de cada 5 personas cayó en un simulacro: repite uno al mes y comenta los resultados con el equipo.",
+        "More than 1 in 5 people fell for a drill: repeat one every month and go over the results with the team.",
+      ),
+    );
   if (x.reportRate !== null && x.reportRate < 30)
-    out.push("Pocas personas reportan los correos sospechosos: recuérdales usar “Reportar phishing” en vez de solo borrarlos.");
-  if (x.inboxScore === null) out.push("Pide al equipo que practique en la bandeja de entrenamiento: simula un día normal de correo.");
-  else if (x.inboxScore < 70) out.push("El puntaje en la bandeja de entrenamiento es bajo: practiquen con una bandeja por semana.");
-  if (weakestSkill) out.push(`Refuercen la señal que más se les escapa: “${weakestSkill}”.`);
+    out.push(
+      t(
+        "Pocas personas reportan los correos sospechosos: recuérdales usar “Reportar phishing” en vez de solo borrarlos.",
+        "Few people report suspicious emails: remind them to use “Report phishing” instead of just deleting them.",
+      ),
+    );
+  if (x.inboxScore === null)
+    out.push(t("Pide al equipo que practique en la bandeja de entrenamiento: simula un día normal de correo.", "Ask the team to practice in the training inbox: it simulates a normal day of email."));
+  else if (x.inboxScore < 70)
+    out.push(t("El puntaje en la bandeja de entrenamiento es bajo: practiquen con una bandeja por semana.", "The training inbox score is low: practice with one inbox a week."));
+  if (weakestSkill) out.push(t(`Refuercen la señal que más se les escapa: “${weakestSkill}”.`, `Work on the sign they miss most: “${weakestSkill}”.`));
   if (membersWithoutArea > 0)
-    out.push(`Asigna un área a ${membersWithoutArea === 1 ? "1 persona" : `${membersWithoutArea} personas`} para abrir las lecciones clave de su puesto.`);
+    out.push(
+      t(
+        `Asigna un área a ${membersWithoutArea === 1 ? "1 persona" : `${membersWithoutArea} personas`} para abrir las lecciones clave de su puesto.`,
+        `Assign a team to ${membersWithoutArea === 1 ? "1 person" : `${membersWithoutArea} people`} to unlock the key lessons for their role.`,
+      ),
+    );
   return out.slice(0, 5);
 }
 

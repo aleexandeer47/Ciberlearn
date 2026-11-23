@@ -5,6 +5,8 @@ import type { Scenario } from "./types";
  * (las páginas que los usan revisan el plan en el servidor).
  * Marcas ficticias nuevas: Mercadito (compraventa), Billetera Tunco (pagos),
  * Supermercados La Ceiba y Distribuidora Lempa (proveedor).
+ *
+ * Hay una versión en inglés con los mismos ids y señales en pro.en.ts.
  */
 
 export const PRO_SCENARIOS: Scenario[] = [
@@ -19,7 +21,7 @@ export const PRO_SCENARIOS: Scenario[] = [
     body: [
       ["¡Buenas! Me interesa la bici, la compro al precio que pide."],
       [{ t: "Ya le hice el pago por Mercadito Pagos, para recibirlo solo tiene que confirmar sus datos aquí:", s: "yapague" }],
-      [{ t: "mercadito-pagos-sv.com/recibir/48291", s: "enlace", href: "https://mercadito-pagos-sv.com/recibir/48291" }],
+      [{ t: "mercadito-pagos.com/recibir/48291", s: "enlace", href: "https://mercadito-pagos.com/recibir/48291" }],
       [{ t: "Le va a pedir los datos de su tarjeta para depositarle, es normal.", s: "tarjeta" }],
       [{ t: "Apúrese porque el enlace vence en 30 minutos y se cancela la compra.", s: "urgencia" }],
     ],
@@ -36,7 +38,7 @@ export const PRO_SCENARIOS: Scenario[] = [
         category: "enlace",
         title: "Sitio que imita a la plataforma",
         explanation:
-          "mercadito-pagos-sv.com no es Mercadito: es un dominio aparte. Si un pago fuera real, lo verías dentro de la app, no en un enlace que te mandan por chat.",
+          "mercadito-pagos.com no es Mercadito: es un dominio aparte. Si un pago fuera real, lo verías dentro de la app, no en un enlace que te mandan por chat.",
       },
       {
         id: "tarjeta",
@@ -61,24 +63,24 @@ export const PRO_SCENARIOS: Scenario[] = [
     verdict: "phishing",
     difficulty: 3,
     context:
-      "Trabajas en contabilidad de Grupo Atlacatl. Distribuidora Lempa es proveedor real y escribe desde @distlempa.com.sv.",
+      "Trabajas en contabilidad de Grupo Atlacatl. Distribuidora Lempa es proveedor real y escribe desde @distlempa.com.",
     from: { name: "Facturación Distribuidora Lempa", address: { t: "facturacion@distlempa-dte.com", s: "dominio" } },
-    subject: ["DTE pendiente de pago: Factura electrónica 0031-2291"],
+    subject: ["Pendiente de pago: Factura electrónica 0031-2291"],
     time: "11:18",
     body: [
-      ["Estimados, adjuntamos el documento tributario electrónico de la compra de octubre."],
+      ["Estimados, adjuntamos la factura electrónica de la compra de octubre."],
       [{ t: "Les informamos que cambiamos de banco: a partir de hoy los pagos deben hacerse a la nueva cuenta indicada en el documento.", s: "cuenta" }],
-      ["Para ver el DTE, abra el archivo adjunto desde su computadora."],
+      ["Para ver la factura, abra el archivo adjunto desde su computadora."],
       ["Saludos cordiales, Departamento de Facturación."],
     ],
-    attachments: [{ name: "DTE_0031-2291.html", s: "adjunto" }],
+    attachments: [{ name: "Factura_0031-2291.html", s: "adjunto" }],
     signals: [
       {
         id: "dominio",
         category: "remitente",
         title: "Dominio parecido, no el real",
         explanation:
-          "El proveedor usa distlempa.com.sv; este correo viene de distlempa-dte.com. Con la factura electrónica (DTE) aparecieron muchos correos falsos de “facturas”.",
+          "El proveedor usa distlempa.com; este correo viene de distlempa-dte.com. Con la factura electrónica aparecieron muchos correos falsos de “facturas”.",
       },
       {
         id: "cuenta",
@@ -92,7 +94,7 @@ export const PRO_SCENARIOS: Scenario[] = [
         category: "adjunto",
         title: "Factura en .html",
         explanation:
-          "Un DTE real llega como PDF y JSON. Un .html se abre en el navegador y suele mostrar un inicio de sesión falso para robarte la contraseña del correo.",
+          "Una factura electrónica real llega como PDF (y a veces XML o JSON). Un .html se abre en el navegador y suele mostrar un inicio de sesión falso para robarte la contraseña del correo.",
       },
     ],
     takeaway:
@@ -104,7 +106,7 @@ export const PRO_SCENARIOS: Scenario[] = [
     verdict: "phishing",
     difficulty: 2,
     context: "Usas la app Billetera Tunco. Te escribe un contacto que dice ser soporte.",
-    from: { name: { t: "Soporte Billetera Tunco 🛡️", s: "soporte" }, address: "+503 7000-0000 (no guardado)" },
+    from: { name: { t: "Soporte Billetera Tunco 🛡️", s: "soporte" }, address: "Número no guardado" },
     time: "08:05",
     body: [
       ["Hola, le saluda el equipo de seguridad de Billetera Tunco."],
@@ -142,20 +144,20 @@ export const PRO_SCENARIOS: Scenario[] = [
     verdict: "legit",
     difficulty: 3,
     context:
-      "Ayer compraste unos audífonos en línea y te dieron el número de guía EY-559201. EnvíaYa usa el dominio enviaya.com.sv.",
+      "Ayer compraste unos audífonos en línea y te dieron el número de guía EY-559201. EnvíaYa usa el dominio enviaya.com.",
     from: { name: "EnviaYa", address: "Código corto 7350" },
     time: "10:12",
     body: [
       [
         "EnvíaYa: tu paquete EY-559201 sale hoy a ruta de entrega. Llegará entre 2:00 y 5:00 p. m.",
-        "Detalle en enviaya.com.sv/rastreo. No se requiere ningún pago.",
+        "Detalle en enviaya.com/rastreo. No se requiere ningún pago.",
       ],
     ],
     signals: [],
     legitReasons: [
       "Coincide con una compra que sí hiciste y con tu número de guía.",
       "Viene de un código corto, no de un número extranjero.",
-      "El dominio es el oficial (enviaya.com.sv) y no hay enlace que pida datos.",
+      "El dominio es el oficial (enviaya.com) y no hay enlace que pida datos.",
       "Aclara que no hay nada que pagar.",
     ],
     takeaway: "El mismo tipo de mensaje puede ser real o falso: lo que decide es el contexto (¿esperabas el paquete?) y los detalles (dominio, pagos, datos).",
@@ -165,8 +167,8 @@ export const PRO_SCENARIOS: Scenario[] = [
     channel: "email",
     verdict: "legit",
     difficulty: 3,
-    context: "Eres cliente de Banco Izalco (bancoizalco.com.sv). No has pedido cambiar tu contraseña.",
-    from: { name: "Banco Izalco", address: "notificaciones@bancoizalco.com.sv" },
+    context: "Eres cliente de Banco Izalco (bancoizalco.com). No has pedido cambiar tu contraseña.",
+    from: { name: "Banco Izalco", address: "notificaciones@bancoizalco.com" },
     subject: ["Se solicitó un cambio de contraseña"],
     time: "23:51",
     body: [
@@ -189,7 +191,7 @@ export const PRO_SCENARIOS: Scenario[] = [
     channel: "email",
     verdict: "phishing",
     difficulty: 2,
-    context: "Compras a veces en Supermercados La Ceiba, cuyo dominio es superlaceiba.com.sv.",
+    context: "Compras a veces en Supermercados La Ceiba, cuyo dominio es superlaceiba.com.",
     from: { name: "Supermercados La Ceiba", address: { t: "premios@superlaceiba-aniversario.shop", s: "dominio" } },
     subject: [{ t: "🎉 ¡Ganaste una gift card de $500 por nuestro aniversario!", s: "premio" }],
     time: "12:30",
@@ -207,7 +209,7 @@ export const PRO_SCENARIOS: Scenario[] = [
         id: "dominio",
         category: "remitente",
         title: "Dominio .shop desconocido",
-        explanation: "El súper usa superlaceiba.com.sv. Un dominio con “aniversario” y terminación .shop lo registró otra persona.",
+        explanation: "El súper usa superlaceiba.com. Un dominio con “aniversario” y terminación .shop lo registró otra persona.",
       },
       {
         id: "premio",

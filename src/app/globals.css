@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 /*
- * Ciberlearn. Sistema basado en DESIGN.md (lienzo claro y aireado, un solo color
+ * Unhooked. Sistema basado en DESIGN.md (lienzo claro y aireado, un solo color
  * de acción, bandas de color y orbes de gradiente detrás de las tarjetas de producto),
- * con la paleta azul de Ciberlearn y versión oscura equivalente.
+ * con la paleta azul de Unhooked y versión oscura equivalente.
  * Nombres de tokens por función:
  *   desk   = lienzo de la página        desk-2 = tarjetas      desk-3 = sección alterna (fog)
  *   field  = banda de color (celeste)   mint   = contrapunto menta para destacados

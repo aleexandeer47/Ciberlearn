@@ -1,5 +1,7 @@
 // Retos entre amigos y alertas de la comunidad. Funciones puras (se prueban sin base de datos).
 
+import type { Lang } from "./i18n";
+
 export const CHALLENGE_SIZE = 5;
 
 /** Nombre visible en un reto: letras, números, espacios y . _ - (2 a 20). */
@@ -30,6 +32,11 @@ export function challengeOutcome(mine: number, theirs: number | null) {
 export const REPORT_CHANNELS = ["SMS", "WhatsApp", "Correo", "Llamada", "Redes sociales", "Otro"] as const;
 export type ReportChannel = (typeof REPORT_CHANNELS)[number];
 export const isReportChannel = (v: unknown): v is ReportChannel => REPORT_CHANNELS.includes(v as ReportChannel);
+/** Nombre del canal en cada idioma (se guarda la clave en español). */
+export const REPORT_CHANNEL_LABEL: Record<Lang, Record<ReportChannel, string>> = {
+  es: { SMS: "SMS", WhatsApp: "WhatsApp", Correo: "Correo", Llamada: "Llamada", "Redes sociales": "Redes sociales", Otro: "Otro" },
+  en: { SMS: "Text (SMS)", WhatsApp: "WhatsApp", Correo: "Email", Llamada: "Phone call", "Redes sociales": "Social media", Otro: "Other" },
+};
 
 export const REPORT_LIMITS = { textMin: 15, textMax: 1000, senderMax: 120, perDay: 3 } as const;
 

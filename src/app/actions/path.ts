@@ -1,7 +1,8 @@
 "use server";
 
 import { ObjectId } from "mongodb";
-import { isUnlocked, LESSON_BY_ID, LESSON_ORDER, XP } from "@/lib/path/content";
+import { requestLang } from "@/lib/i18n-server";
+import { isUnlocked, LESSON_BY_ID, LESSON_ORDER, localizeExercise, XP } from "@/lib/path/content";
 import { loseOne, regen, view, type LivesView } from "@/lib/lives";
 import { collections } from "@/lib/server/db";
 import { extraUnlocked, getCurrentUser } from "@/lib/server/session";
@@ -70,7 +71,8 @@ export async function answerExercise(lessonId: string, exerciseId: string, choic
   }
 
   const fresh = await users.findOne({ _id: user._id }, { projection: { lives: 1 } });
-  return { ok: true, correct, answer: ex.answer, explain: ex.explain, lives: view(fresh?.lives, user.isPro) };
+  const explain = localizeExercise(ex, await requestLang()).explain;
+  return { ok: true, correct, answer: ex.answer, explain, lives: view(fresh?.lives, user.isPro) };
 }
 
 export interface CompleteResult {

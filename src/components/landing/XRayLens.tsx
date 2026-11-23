@@ -2,7 +2,9 @@
 
 import { Check } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useLang, useT } from "@/components/i18n/LangProvider";
+import type { Lang } from "@/lib/i18n";
 
 /*
  * Dos capas con filas de la MISMA altura: el correo tal como se ve y su
@@ -23,117 +25,173 @@ const Truth = ({ children, tone = "info" }: { children: ReactNode; tone?: "info"
   <span className={tone === "danger" ? "font-semibold text-[#ff8a8a]" : "text-accent"}>{children}</span>
 );
 
-const ROWS: Row[] = [
-  {
-    h: "h-[84px]",
-    clue: "Remitente falso",
-    surface: (
-      <div className="flex h-full items-center gap-3 border-b border-line px-5">
-        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#0f4c81] font-semibold text-sm text-white">
-          BI
-        </div>
-        <div className="min-w-0">
-          <p className="font-semibold text-ink">Banco Izalco</p>
-          <p className="truncate font-mono text-xs text-ink-2">seguridad@bancoizalco-alertas.com</p>
-        </div>
-        <span className="ml-auto text-xs text-ink-3">7:42</span>
-      </div>
-    ),
-    xray: (
-      <div className="flex h-full flex-col justify-center border-b border-white/10 px-5 font-mono text-xs leading-relaxed">
-        <p className="text-fog">remitente real:</p>
-        <p>
-          seguridad@<Truth tone="danger">bancoizalco-alertas.com</Truth>
-        </p>
-        <p className="text-fog">
-          el banco usa <Truth>bancoizalco.com.sv</Truth>
-        </p>
-      </div>
-    ),
+const COPY = {
+  es: {
+    clues: ["Remitente falso", "Urgencia", "Saludo genérico", "Enlace engañoso", "Pide tu clave"],
+    bank: "Banco Izalco",
+    from: ["seguridad@", "bancoizalco-alertas.com"],
+    realSender: "remitente real:",
+    bankUses: "el banco usa",
+    bankDomain: "bancoizalco.com",
+    subject: "URGENTE: su cuenta será bloqueada en 24 horas",
+    pressure: "presión:",
+    pressureText: "te quieren apurar para que no pienses",
+    greeting: "Estimado cliente:",
+    yourName: "¿y tu nombre?",
+    toThousands: "enviado a miles a la vez",
+    filler: "Detectamos actividad inusual. Verifique su identidad para evitar la suspensión de su cuenta.",
+    fillerX: "texto de relleno: suena serio, pero no dice nada concreto",
+    button: "Verificar mi cuenta",
+    goesTo: "el botón lleva a:",
+    link: ["http://bancoizalco.", "verificar-cuenta.co", "/login"],
+    asks: "Tenga a mano su usuario, contraseña y el código SMS.",
+    asksX: ["clave + código", "= te vacían la cuenta"],
   },
-  {
-    h: "h-[72px]",
-    clue: "Urgencia",
-    surface: (
-      <div className="flex h-full items-center px-5">
-        <p className="font-semibold leading-snug text-ink">URGENTE: su cuenta será bloqueada en 24 horas</p>
-      </div>
-    ),
-    xray: (
-      <div className="flex h-full items-center px-5 font-mono text-xs">
-        <p>
-          <Truth tone="danger">presión:</Truth> te quieren apurar para que no pienses
-        </p>
-      </div>
-    ),
+  en: {
+    clues: ["Fake sender", "Urgency", "Generic greeting", "Deceptive link", "Asks for your password"],
+    bank: "Izalco Bank",
+    from: ["security@", "izalcobank-alerts.com"],
+    realSender: "real sender:",
+    bankUses: "the bank uses",
+    bankDomain: "izalcobank.com",
+    subject: "URGENT: your account will be locked in 24 hours",
+    pressure: "pressure:",
+    pressureText: "they want to rush you so you don't think",
+    greeting: "Dear customer,",
+    yourName: "what about your name?",
+    toThousands: "sent to thousands at once",
+    filler: "We detected unusual activity. Verify your identity to avoid your account being suspended.",
+    fillerX: "filler text: sounds serious, but says nothing specific",
+    button: "Verify my account",
+    goesTo: "the button goes to:",
+    link: ["http://izalcobank.", "verify-account.co", "/login"],
+    asks: "Have your username, password and text-message code ready.",
+    asksX: ["password + code", "= they empty your account"],
   },
-  {
-    h: "h-[48px]",
-    clue: "Saludo genérico",
-    surface: (
-      <div className="flex h-full items-center px-5 text-ink">
-        <p>Estimado cliente:</p>
-      </div>
-    ),
-    xray: (
-      <div className="flex h-full items-center px-5 font-mono text-xs">
-        <p>
-          <Truth>¿y tu nombre?</Truth> → enviado a miles a la vez
-        </p>
-      </div>
-    ),
-  },
-  {
-    h: "h-[76px]",
-    surface: (
-      <div className="flex h-full items-center px-5 text-[15px] leading-relaxed text-ink-2">
-        <p>Detectamos actividad inusual. Verifique su identidad para evitar la suspensión de su cuenta.</p>
-      </div>
-    ),
-    xray: (
-      <div className="flex h-full items-center px-5 font-mono text-xs leading-relaxed text-fog">
-        <p>texto de relleno: suena serio, pero no dice nada concreto</p>
-      </div>
-    ),
-  },
-  {
-    h: "h-[72px]",
-    clue: "Enlace engañoso",
-    surface: (
-      <div className="flex h-full items-center px-5">
-        <span className="rounded-lg bg-[#0f4c81] px-5 py-2.5 text-sm font-semibold text-white">Verificar mi cuenta</span>
-      </div>
-    ),
-    xray: (
-      <div className="flex h-full flex-col justify-center px-5 font-mono text-xs leading-relaxed">
-        <p className="text-fog">el botón lleva a:</p>
-        <p className="break-all">
-          http://bancoizalco.<Truth tone="danger">verificar-cuenta.co</Truth>/login
-        </p>
-      </div>
-    ),
-  },
-  {
-    h: "h-[64px]",
-    clue: "Pide tu clave",
-    surface: (
-      <div className="flex h-full items-center border-t border-line px-5 text-sm text-ink-2">
-        <p>Tenga a mano su usuario, contraseña y el código SMS.</p>
-      </div>
-    ),
-    xray: (
-      <div className="flex h-full items-center border-t border-white/10 px-5 font-mono text-xs">
-        <p>
-          <Truth tone="danger">clave + código</Truth> = te vacían la cuenta
-        </p>
-      </div>
-    ),
-  },
-];
+} satisfies Record<Lang, unknown>;
 
-const CLUE_ROWS = ROWS.map((r, i) => (r.clue ? i : -1)).filter((i) => i >= 0);
+function rowsFor(lang: Lang): Row[] {
+  const k = COPY[lang];
+  return [
+    {
+      h: "h-[84px]",
+      clue: k.clues[0],
+      surface: (
+        <div className="flex h-full items-center gap-3 border-b border-line px-5">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#0f4c81] font-semibold text-sm text-white">
+            BI
+          </div>
+          <div className="min-w-0">
+            <p className="font-semibold text-ink">{k.bank}</p>
+            <p className="truncate font-mono text-xs text-ink-2">{k.from.join("")}</p>
+          </div>
+          <span className="ml-auto text-xs text-ink-3">7:42</span>
+        </div>
+      ),
+      xray: (
+        <div className="flex h-full flex-col justify-center border-b border-white/10 px-5 font-mono text-xs leading-relaxed">
+          <p className="text-fog">{k.realSender}</p>
+          <p>
+            {k.from[0]}
+            <Truth tone="danger">{k.from[1]}</Truth>
+          </p>
+          <p className="text-fog">
+            {k.bankUses} <Truth>{k.bankDomain}</Truth>
+          </p>
+        </div>
+      ),
+    },
+    {
+      h: "h-[72px]",
+      clue: k.clues[1],
+      surface: (
+        <div className="flex h-full items-center px-5">
+          <p className="font-semibold leading-snug text-ink">{k.subject}</p>
+        </div>
+      ),
+      xray: (
+        <div className="flex h-full items-center px-5 font-mono text-xs">
+          <p>
+            <Truth tone="danger">{k.pressure}</Truth> {k.pressureText}
+          </p>
+        </div>
+      ),
+    },
+    {
+      h: "h-[48px]",
+      clue: k.clues[2],
+      surface: (
+        <div className="flex h-full items-center px-5 text-ink">
+          <p>{k.greeting}</p>
+        </div>
+      ),
+      xray: (
+        <div className="flex h-full items-center px-5 font-mono text-xs">
+          <p>
+            <Truth>{k.yourName}</Truth> → {k.toThousands}
+          </p>
+        </div>
+      ),
+    },
+    {
+      h: "h-[76px]",
+      surface: (
+        <div className="flex h-full items-center px-5 text-[15px] leading-relaxed text-ink-2">
+          <p>{k.filler}</p>
+        </div>
+      ),
+      xray: (
+        <div className="flex h-full items-center px-5 font-mono text-xs leading-relaxed text-fog">
+          <p>{k.fillerX}</p>
+        </div>
+      ),
+    },
+    {
+      h: "h-[72px]",
+      clue: k.clues[3],
+      surface: (
+        <div className="flex h-full items-center px-5">
+          <span className="rounded-lg bg-[#0f4c81] px-5 py-2.5 text-sm font-semibold text-white">{k.button}</span>
+        </div>
+      ),
+      xray: (
+        <div className="flex h-full flex-col justify-center px-5 font-mono text-xs leading-relaxed">
+          <p className="text-fog">{k.goesTo}</p>
+          <p className="break-all">
+            {k.link[0]}
+            <Truth tone="danger">{k.link[1]}</Truth>
+            {k.link[2]}
+          </p>
+        </div>
+      ),
+    },
+    {
+      h: "h-[64px]",
+      clue: k.clues[4],
+      surface: (
+        <div className="flex h-full items-center border-t border-line px-5 text-sm text-ink-2">
+          <p>{k.asks}</p>
+        </div>
+      ),
+      xray: (
+        <div className="flex h-full items-center border-t border-white/10 px-5 font-mono text-xs">
+          <p>
+            <Truth tone="danger">{k.asksX[0]}</Truth> {k.asksX[1]}
+          </p>
+        </div>
+      ),
+    },
+  ];
+}
+
+// Las filas con pista son las mismas en los dos idiomas.
+const ROW_SHAPE = rowsFor("es");
+const CLUE_ROWS = ROW_SHAPE.map((r, i) => (r.clue ? i : -1)).filter((i) => i >= 0);
 
 export function XRayLens() {
+  const lang = useLang();
+  const t = useT();
+  const ROWS = useMemo(() => rowsFor(lang), [lang]);
   const stageRef = useRef<HTMLDivElement>(null);
   const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [found, setFound] = useState<Set<number>>(new Set());
@@ -164,7 +222,7 @@ export function XRayLens() {
 
     const hitRow = (y: number) => {
       rowRefs.current.forEach((el, i) => {
-        if (!el || !ROWS[i].clue || foundRef.current.has(i)) return;
+        if (!el || !ROW_SHAPE[i].clue || foundRef.current.has(i)) return;
         if (y >= el.offsetTop && y <= el.offsetTop + el.offsetHeight) {
           setFound((prev) => (prev.has(i) ? prev : new Set(prev).add(i)));
         }
@@ -229,7 +287,7 @@ export function XRayLens() {
         ref={stageRef}
         className="relative mx-auto max-w-[520px] touch-pan-y select-none overflow-hidden rounded-2xl shadow-[0_40px_80px_-30px_var(--shadow)] ring-1 ring-desk-line"
         style={full ? ({ "--lr": "900px" } as CSSProperties) : undefined}
-        aria-label="Correo de ejemplo con lupa de rayos X"
+        aria-label={t("Correo de ejemplo con lupa de rayos X", "Sample email with an X-ray magnifier")}
         role="img"
       >
         {/* Capa visible: el correo en papel */}
@@ -260,15 +318,16 @@ export function XRayLens() {
         <div className="mb-2 flex items-center justify-between gap-3 text-sm">
           <span className="text-fog">
             {done ? (
-              <span className="text-accent">Encontraste las 5 trampas</span>
+              <span className="text-accent">{t("Encontraste las 5 trampas", "You found all 5 traps")}</span>
             ) : (
               <>
-                Pasa la lupa: <strong className="tabular-nums text-chalk">{found.size}/5</strong> pistas
+                {t("Pasa la lupa", "Move the magnifier")}: <strong className="tabular-nums text-chalk">{found.size}/5</strong>{" "}
+                {t("pistas", "clues")}
               </>
             )}
           </span>
           <button type="button" onClick={revealAll} className="btn btn-ghost px-3 py-1.5 text-xs">
-            {full ? "Volver a la lupa" : "Radiografía completa"}
+            {full ? t("Volver a la lupa", "Back to the magnifier") : t("Radiografía completa", "Full X-ray")}
           </button>
         </div>
         <ul className="flex flex-wrap gap-1.5" aria-live="polite">
@@ -289,7 +348,7 @@ export function XRayLens() {
         </ul>
         {done && (
           <Link href="/simulador" className="btn btn-primary reveal-item mt-4 w-full px-5 py-3">
-            Ahora encuéntralas tú solo en 10 mensajes →
+            {t("Ahora encuéntralas tú solo en 10 mensajes →", "Now find them yourself in 10 messages →")}
           </Link>
         )}
       </div>

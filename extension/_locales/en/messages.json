@@ -1,0 +1,19 @@
+{
+  "name": { "message": "Unhooked: is it a scam?" },
+  "description": { "message": "See the real domain of any site and check suspicious links before you fall for them." },
+  "realDomain": { "message": "Real domain of this page" },
+  "verdictOk": { "message": "No obvious warning signs in this address. Still, never enter passwords or codes from a link you were sent." },
+  "verdictRisk": { "message": "Careful: this address has signs used in scams." },
+  "notWeb": { "message": "Open a web page to check its address." },
+  "flagHttp": { "message": "No https: the connection isn't encrypted. Don't type your data here." },
+  "flagIp": { "message": "It's an IP address instead of a domain name." },
+  "flagAt": { "message": "It contains “@”: everything before it is ignored, the real site is what comes after." },
+  "flagPunycode": { "message": "Letters from another alphabet (“xn--”) that imitate a real name." },
+  "flagTld": { "message": "Cheap ending widely used in scams (.top, .xyz, .click…)." },
+  "flagBrandSub": { "message": "A well-known brand appears before someone else's domain." },
+  "flagLookalike": { "message": "The domain imitates a brand with numbers or hyphens." },
+  "openChecker": { "message": "Check a message in Unhooked" },
+  "privacy": { "message": "The check happens in your browser. We don't see your browsing." },
+  "menuLink": { "message": "Is it a scam? Check this link" },
+  "menuText": { "message": "Is it a scam? Check this text" }
+}

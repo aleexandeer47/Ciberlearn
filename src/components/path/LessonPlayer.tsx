@@ -4,13 +4,19 @@ import { ArrowRight, Check, HeartCrack, Mail, MessageSquare, Phone, Smartphone, 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { answerExercise, completeLesson, startLesson, type AnswerResult, type CompleteResult } from "@/app/actions/path";
+import { useLang, useT } from "@/components/i18n/LangProvider";
 import { ListenButton } from "@/components/theme/SimpleMode";
+import type { T } from "@/lib/i18n";
 import type { PublicExercise } from "@/lib/path/content";
 import { fmtWait, type LivesView } from "@/lib/lives";
 import { useCountUp } from "@/lib/useCountUp";
 import { Hearts } from "./Hearts";
 
 const CHANNEL_ICON = { Correo: Mail, SMS: MessageSquare, Chat: Smartphone, Llamada: Phone } as const;
+const CHANNEL_LABEL = {
+  es: { Correo: "Correo", SMS: "SMS", Chat: "Chat", Llamada: "Llamada" },
+  en: { Correo: "Email", SMS: "Text message", Chat: "Chat", Llamada: "Phone call" },
+} as const;
 
 type Phase = "loading" | "playing" | "feedback" | "no-lives" | "done" | "error";
 
@@ -30,6 +36,8 @@ export function LessonPlayer({ lesson, initialLives }: Props) {
   const ex = lesson.exercises[i];
   const total = lesson.exercises.length;
   const xpShown = useCountUp(result?.xp ?? 0, 900, 0);
+  const lang = useLang();
+  const t = useT();
 
   useEffect(() => {
     startLesson(lesson.id).then((r) => {
@@ -107,14 +115,14 @@ export function LessonPlayer({ lesson, initialLives }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [phase, ex, next, submit]);
 
-  if (phase === "no-lives") return <NoLives lives={lives} />;
+  if (phase === "no-lives") return <NoLives lives={lives} t={t} />;
   if (phase === "error")
     return (
       <Panel>
-        <h1 className="font-display text-2xl">Algo salió mal</h1>
-        <p className="mt-2 text-fog">Vuelve a la ruta e intenta de nuevo.</p>
+        <h1 className="font-display text-2xl">{t("Algo salió mal", "Something went wrong")}</h1>
+        <p className="mt-2 text-fog">{t("Vuelve a la ruta e intenta de nuevo.", "Go back to the path and try again.")}</p>
         <Link href="/ruta" className="btn btn-primary mt-6 h-11 px-5">
-          Volver a la ruta
+          {t("Volver a la ruta", "Back to the path")}
         </Link>
       </Panel>
     );
@@ -124,33 +132,37 @@ export function LessonPlayer({ lesson, initialLives }: Props) {
         <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-field text-brand">
           <Sparkles className="h-7 w-7" strokeWidth={1.75} aria-hidden />
         </span>
-        <span className="eyebrow mt-6">Lección completada</span>
+        <span className="eyebrow mt-6">{t("Lección completada", "Lesson complete")}</span>
         <h1 className="mt-2 font-display text-3xl">{lesson.title}</h1>
         <div className="mx-auto mt-8 grid max-w-sm grid-cols-2 gap-3">
           <div className="rounded-2xl border border-desk-line p-4">
             <p className="font-display text-4xl tabular-nums text-brand">+{xpShown}</p>
-            <p className="text-sm text-fog">XP ganado</p>
+            <p className="text-sm text-fog">{t("XP ganado", "XP earned")}</p>
           </div>
           <div className="rounded-2xl border border-desk-line p-4">
             <p className="font-display text-4xl tabular-nums">
               {result.correct}/{result.total}
             </p>
-            <p className="text-sm text-fog">correctas</p>
+            <p className="text-sm text-fog">{t("correctas", "correct")}</p>
           </div>
         </div>
-        {!result.firstTime && <p className="mt-4 text-sm text-fog">Repaso: ganas la mitad de XP por lección repetida.</p>}
+        {!result.firstTime && (
+          <p className="mt-4 text-sm text-fog">
+            {t("Repaso: ganas la mitad de XP por lección repetida.", "Review: you earn half the XP for a repeated lesson.")}
+          </p>
+        )}
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           {result.nextLessonId ? (
             <Link href={`/ruta/${result.nextLessonId}`} className="btn btn-primary h-12 px-6">
-              Siguiente lección <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden />
+              {t("Siguiente lección", "Next lesson")} <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden />
             </Link>
           ) : (
             <Link href="/ranking" className="btn btn-primary h-12 px-6">
-              Ver el ranking
+              {t("Ver el ranking", "See the leaderboard")}
             </Link>
           )}
           <Link href="/ruta" className="btn btn-ghost h-12 px-6">
-            Volver a la ruta
+            {t("Volver a la ruta", "Back to the path")}
           </Link>
         </div>
       </Panel>
@@ -163,7 +175,7 @@ export function LessonPlayer({ lesson, initialLives }: Props) {
     <div className="mx-auto flex min-h-[calc(100svh-4rem)] max-w-2xl flex-col px-4 py-6 sm:px-6">
       {/* Barra superior */}
       <div className="flex items-center gap-4">
-        <Link href="/ruta" className="grid h-9 w-9 place-items-center rounded-lg text-fog hover:bg-desk-3 hover:text-chalk" aria-label="Salir de la lección">
+        <Link href="/ruta" className="grid h-9 w-9 place-items-center rounded-lg text-fog hover:bg-desk-3 hover:text-chalk" aria-label={t("Salir de la lección", "Leave the lesson")}>
           <X className="h-5 w-5" strokeWidth={2} />
         </Link>
         <div className="h-3 flex-1 overflow-hidden rounded-full bg-desk-3" role="progressbar" aria-valuenow={Math.round(progress)} aria-valuemin={0} aria-valuemax={100}>
@@ -178,8 +190,8 @@ export function LessonPlayer({ lesson, initialLives }: Props) {
         <div key={ex.id} className="reveal-item mt-10 flex-1">
           {ex.kind === "veredicto" ? (
             <>
-              <p className="eyebrow">¿Trampa o real?</p>
-              <h1 className="mt-2 font-display text-2xl">Revisa este mensaje</h1>
+              <p className="eyebrow">{t("¿Trampa o real?", "Scam or real?")}</p>
+              <h1 className="mt-2 font-display text-2xl">{t("Revisa este mensaje", "Check this message")}</h1>
               <div className="preview-card mt-6 p-5">
                 <div className="flex items-center justify-between gap-2 text-xs font-semibold text-ink-3">
                   <span className="flex items-center gap-2">
@@ -187,9 +199,13 @@ export function LessonPlayer({ lesson, initialLives }: Props) {
                       const I = CHANNEL_ICON[ex.channel];
                       return <I className="h-4 w-4" strokeWidth={1.75} aria-hidden />;
                     })()}
-                    {ex.channel}
+                    {CHANNEL_LABEL[lang][ex.channel]}
                   </span>
-                  <ListenButton key={ex.id} text={`${ex.channel}. De: ${ex.from}. ${ex.text}`} className="text-ink-2" />
+                  <ListenButton
+                    key={ex.id}
+                    text={`${CHANNEL_LABEL[lang][ex.channel]}. ${t("De", "From")}: ${ex.from}. ${ex.text}`}
+                    className="text-ink-2"
+                  />
                 </div>
                 <p className="mt-2 break-words font-mono text-[13px] text-ink-2">{ex.from}</p>
                 <p className="mt-3 leading-relaxed text-ink">{ex.text}</p>
@@ -198,7 +214,7 @@ export function LessonPlayer({ lesson, initialLives }: Props) {
                 {(["phishing", "legit"] as const).map((c) => (
                   <Choice
                     key={c}
-                    label={c === "phishing" ? "Es trampa" : "Es real"}
+                    label={c === "phishing" ? t("Es trampa", "It's a scam") : t("Es real", "It's real")}
                     hint={c === "phishing" ? "P" : "L"}
                     state={stateOf(c, choice, fb)}
                     disabled={phase !== "playing" || busy}
@@ -209,11 +225,11 @@ export function LessonPlayer({ lesson, initialLives }: Props) {
             </>
           ) : (
             <>
-              <p className="eyebrow">{ex.kind === "enlace" ? "Lee el enlace" : "Elige la respuesta"}</p>
+              <p className="eyebrow">{ex.kind === "enlace" ? t("Lee el enlace", "Read the link") : t("Elige la respuesta", "Choose the answer")}</p>
               <h1 className="mt-2 font-display text-2xl leading-snug">{ex.prompt}</h1>
               <ListenButton
                 key={ex.id}
-                text={`${ex.prompt} ${ex.context ? `Enlace: ${ex.context}. ` : ""}Opciones: ${ex.options.map((o, n) => `${n + 1}: ${o}`).join(". ")}`}
+                text={`${ex.prompt} ${ex.context ? `${t("Enlace", "Link")}: ${ex.context}. ` : ""}${t("Opciones", "Options")}: ${ex.options.map((o, n) => `${n + 1}: ${o}`).join(". ")}`}
                 className="mt-3 text-fog"
               />
               {ex.context && (
@@ -250,13 +266,13 @@ export function LessonPlayer({ lesson, initialLives }: Props) {
             </span>
             <div className="flex-1">
               <p className={`font-semibold ${fb.correct ? "text-ok" : "text-[#b91c1c]"}`}>
-                {fb.correct ? "Correcto" : lives.infinite ? "Incorrecto" : "Incorrecto: pierdes una vida"}
+                {fb.correct ? t("Correcto", "Correct") : lives.infinite ? t("Incorrecto", "Incorrect") : t("Incorrecto: pierdes una vida", "Incorrect: you lose a life")}
               </p>
               <p className="mt-1 text-[15px] leading-relaxed">{fb.explain}</p>
             </div>
           </div>
           <button type="button" onClick={next} disabled={busy} className={`btn mt-4 h-12 w-full ${fb.correct ? "btn-ok" : "btn-danger"}`}>
-            {i + 1 < total ? "Continuar" : "Terminar lección"} <kbd className="hidden sm:inline">Enter</kbd>
+            {i + 1 < total ? t("Continuar", "Continue") : t("Terminar lección", "Finish lesson")} <kbd className="hidden sm:inline">Enter</kbd>
           </button>
         </div>
       )}
@@ -311,27 +327,32 @@ function Panel({ children }: { children: React.ReactNode }) {
   return <div className="reveal-item mx-auto max-w-lg px-4 py-16 text-center">{children}</div>;
 }
 
-function NoLives({ lives }: { lives: LivesView }) {
+function NoLives({ lives, t }: { lives: LivesView; t: T }) {
   return (
     <Panel>
       <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-bad-soft text-bad">
         <HeartCrack className="h-8 w-8" strokeWidth={1.75} aria-hidden />
       </span>
-      <h1 className="mt-6 font-display text-3xl">Te quedaste sin vidas</h1>
+      <h1 className="mt-6 font-display text-3xl">{t("Te quedaste sin vidas", "You're out of lives")}</h1>
       <p className="mt-3 text-fog">
         {lives.nextInMs !== null
-          ? `Recuperas una vida en ${fmtWait(lives.nextInMs)} y todas en ${fmtWait(lives.fullInMs ?? 0)}.`
-          : "Vuelve en un rato."}
+          ? t(
+              `Recuperas una vida en ${fmtWait(lives.nextInMs)} y todas en ${fmtWait(lives.fullInMs ?? 0)}.`,
+              `You get a life back in ${fmtWait(lives.nextInMs)} and all of them in ${fmtWait(lives.fullInMs ?? 0)}.`,
+            )
+          : t("Vuelve en un rato.", "Come back in a while.")}
       </p>
       <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
         <Link href="/planes" className="btn btn-primary h-12 px-6">
-          Vidas infinitas con Pro
+          {t("Vidas infinitas con Pro", "Unlimited lives with Pro")}
         </Link>
         <Link href="/ruta" className="btn btn-ghost h-12 px-6">
-          Volver a la ruta
+          {t("Volver a la ruta", "Back to the path")}
         </Link>
       </div>
-      <p className="mt-6 text-sm text-fog">Mientras tanto puedes practicar en el simulador clásico, que no usa vidas.</p>
+      <p className="mt-6 text-sm text-fog">
+        {t("Mientras tanto puedes practicar en el simulador clásico, que no usa vidas.", "Meanwhile you can practice in the classic simulator, which doesn't use lives.")}
+      </p>
     </Panel>
   );
 }

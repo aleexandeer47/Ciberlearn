@@ -4,6 +4,8 @@ import { MongoClient, type Db } from "mongodb";
 import { env } from "./env";
 import type {
   AiChatDoc,
+  AiCheckDoc,
+  PushSubDoc,
   ChallengeDoc,
   ChallengePlayDoc,
   ClassDoc,
@@ -84,6 +86,8 @@ export async function collections() {
     lessonAttempts: d.collection<LessonAttemptDoc>("lesson_attempts"),
     xpEvents: d.collection<XpEventDoc>("xp_events"),
     aiChats: d.collection<AiChatDoc>("ai_chats"),
+    aiChecks: d.collection<AiCheckDoc>("ai_checks"),
+    pushSubs: d.collection<PushSubDoc>("push_subs"),
     consents: d.collection<ConsentDoc>("consents"),
     orgs: d.collection<OrgDoc>("orgs"),
     phishCampaigns: d.collection<PhishCampaignDoc>("phish_campaigns"),
@@ -138,6 +142,9 @@ export async function ensureIndexes(d: Db) {
     d.collection("ai_chats").createIndex({ userId: 1, day: 1 }),
     // Las conversaciones con la IA se borran solas a los 30 días
     d.collection("ai_chats").createIndex({ createdAt: 1 }, { expireAfterSeconds: 30 * 86400 }),
+    d.collection("ai_checks").createIndex({ userId: 1, day: 1 }),
+    d.collection("ai_checks").createIndex({ createdAt: 1 }, { expireAfterSeconds: 2 * 86400 }),
+    d.collection("push_subs").createIndex({ endpoint: 1 }, { unique: true }),
     // Registro de aceptaciones de términos y privacidad (sin TTL: es la prueba del consentimiento)
     d.collection("consents").createIndex({ userId: 1, acceptedAt: -1 }),
     // Plan Empresa

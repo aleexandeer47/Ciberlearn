@@ -1,6 +1,8 @@
 import { Mail, MessageSquare, Smartphone, X } from "lucide-react";
 import Link from "next/link";
-import { SCENARIOS } from "@/lib/scenarios/data";
+import { getT } from "@/lib/i18n-server";
+import { channelLabels } from "@/lib/scenarios/categories";
+import { getScenarios } from "@/lib/scenarios/data";
 import { segmentScenario } from "@/lib/scenarios/segment";
 import type { Inline } from "@/lib/scenarios/types";
 
@@ -10,11 +12,7 @@ import type { Inline } from "@/lib/scenarios/types";
  * como tarjetas, sin revelar cuál es trampa.
  */
 
-const CHANNEL = {
-  email: { label: "Correo", Icon: Mail },
-  sms: { label: "SMS", Icon: MessageSquare },
-  chat: { label: "Chat", Icon: Smartphone },
-} as const;
+const ICON = { email: Mail, sms: MessageSquare, chat: Smartphone } as const;
 
 const text = (x: Inline) => (typeof x === "string" ? x : x.t);
 
@@ -23,15 +21,18 @@ function initials(name: string) {
   return clean ? clean.split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase() : "#";
 }
 
-export function ScamWall() {
+export async function ScamWall() {
+  const { lang, t } = await getT();
+  const labels = channelLabels(lang);
   return (
     <div className="columns-1 gap-4 sm:columns-2 lg:columns-4">
-      {SCENARIOS.map((s) => {
+      {getScenarios(lang).map((s) => {
         const seg = segmentScenario(s);
         const name = text(s.from.name);
         const address = text(s.from.address);
         const body = seg.body.flat().map((x) => x.text).join(" ");
-        const { label, Icon } = CHANNEL[s.channel];
+        const label = labels[s.channel];
+        const Icon = ICON[s.channel];
         let hue = 0;
         for (const ch of name) hue = (hue * 31 + ch.charCodeAt(0)) % 360;
         return (
@@ -61,7 +62,7 @@ export function ScamWall() {
                 {label}
               </span>
               <Link href="/simulador" className="text-sm font-semibold text-brand hover:underline">
-                ¿Trampa o real?
+                {t("¿Trampa o real?", "Scam or real?")}
               </Link>
             </footer>
           </article>

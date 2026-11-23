@@ -2,30 +2,44 @@
 
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
-import { CATEGORY_LABELS } from "@/lib/scenarios/categories";
+import { useLang } from "@/components/i18n/LangProvider";
+import type { Lang } from "@/lib/i18n";
+import { CATEGORIES, categoryLabels } from "@/lib/scenarios/categories";
 import type { SignalCategory } from "@/lib/scenarios/types";
 
-const EXAMPLES: Record<SignalCategory, string> = {
-  remitente: "soporte@grupoatlacatl-com.net",
-  urgencia: "Si no responde HOY, su cuenta será eliminada",
-  enlace: "“Verificar” → verificar-cuenta.co",
-  solicitud: "Envíenos su PIN para depositarle",
-  suplantacion: "Hola mami, cambié de número",
-  adjunto: "Formulario_Devolucion.zip",
-  oferta: "Gane $200 diarios dando likes",
-  contexto: "Su paquete está retenido (no pediste nada)",
+const EXAMPLES: Record<Lang, Record<SignalCategory, string>> = {
+  es: {
+    remitente: "soporte@grupoatlacatl-com.net",
+    urgencia: "Si no responde HOY, su cuenta será eliminada",
+    enlace: "“Verificar” → verificar-cuenta.co",
+    solicitud: "Envíenos su PIN para depositarle",
+    suplantacion: "Hola mami, cambié de número",
+    adjunto: "Formulario_Devolucion.zip",
+    oferta: "Gane $200 diarios dando likes",
+    contexto: "Su paquete está retenido (no pediste nada)",
+  },
+  en: {
+    remitente: "support@atlacatlgroup-com.net",
+    urgencia: "If you don't reply TODAY, your account will be deleted",
+    enlace: "“Verify” → verify-account.co",
+    solicitud: "Send us your PIN so we can deposit the money",
+    suplantacion: "Hi mom, I changed my number",
+    adjunto: "Refund_Form.zip",
+    oferta: "Earn $200 a day liking videos",
+    contexto: "Your parcel is on hold (you didn't order anything)",
+  },
 };
-
-const ORDER = Object.keys(CATEGORY_LABELS) as SignalCategory[];
 
 /** Lista de señales: cada fila se abre para mostrar cómo se ve en un mensaje. */
 export function SignalCards() {
+  const lang = useLang();
+  const L = categoryLabels(lang);
   const [open, setOpen] = useState<SignalCategory | null>("remitente");
 
   return (
     <ul className="divide-y divide-desk-line border-y border-desk-line">
-      {ORDER.map((cat, i) => {
-        const c = CATEGORY_LABELS[cat];
+      {CATEGORIES.map((cat, i) => {
+        const c = L[cat];
         const isOpen = open === cat;
         return (
           <li key={cat}>
@@ -54,7 +68,7 @@ export function SignalCards() {
               <div className="reveal-item pb-5 pl-10">
                 <p className="inline-block rounded-lg bg-paper px-3 py-2 font-mono text-[13px] text-ink ring-1 ring-line">
                   <span className="seg" data-state="marked">
-                    {EXAMPLES[cat]}
+                    {EXAMPLES[lang][cat]}
                   </span>
                 </p>
               </div>

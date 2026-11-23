@@ -1,9 +1,23 @@
 // Plantilla de las imágenes para compartir (WhatsApp, redes): 1200 × 630, colores de la marca.
 import type { ReactNode } from "react";
+import type { Lang } from "@/lib/i18n";
+import { SITE } from "@/lib/site";
 
 export const OG_SIZE = { width: 1200, height: 630 };
 
-export function OgFrame({ eyebrow, title, subtitle, badge }: { eyebrow: string; title: string; subtitle?: string; badge?: ReactNode }) {
+export function OgFrame({
+  eyebrow,
+  title,
+  subtitle,
+  badge,
+  lang = "es",
+}: {
+  eyebrow: string;
+  title: string;
+  subtitle?: string;
+  badge?: ReactNode;
+  lang?: Lang;
+}) {
   return (
     <div
       style={{
@@ -23,7 +37,7 @@ export function OgFrame({ eyebrow, title, subtitle, badge }: { eyebrow: string; 
           <path d="M12 2.75 19.25 5.5v5.75c0 4.6-3 8.3-7.25 9.99C7.75 19.55 4.75 15.85 4.75 11.25V5.5Z" fill="#3b82f6" />
           <path d="m8.75 12.25 2.25 2.25 4.5-4.75" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        Ciberlearn
+        {SITE.name}
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         <div style={{ fontSize: 28, letterSpacing: 4, textTransform: "uppercase", color: "#93c5fd", fontWeight: 700 }}>{eyebrow}</div>
@@ -31,7 +45,7 @@ export function OgFrame({ eyebrow, title, subtitle, badge }: { eyebrow: string; 
         {subtitle && <div style={{ fontSize: 32, color: "#cbd5e1", maxWidth: 940 }}>{subtitle}</div>}
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", fontSize: 26, color: "#94a3b8" }}>
-        <span>Aprende a detectar estafas digitales</span>
+        <span>{lang === "en" ? "Learn to spot online scams" : "Aprende a detectar estafas digitales"}</span>
         {badge}
       </div>
     </div>

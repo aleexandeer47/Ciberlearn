@@ -1,11 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { challengeOutcome, cleanPlayerName, cleanReportText, defang, isReportChannel, pickRandom } from "./community";
-import { caseForDay, currentStreak, DAILY_CASES, nextStreak, prevDay, publicDaily } from "./daily";
+import { caseForDay, currentStreak, DAILY_CASES, localizeDaily, nextStreak, prevDay, publicDaily } from "./daily";
+import { DAILY_EN } from "./daily.en";
 
 describe("estafa del día", () => {
   it("hay casos suficientes, con ids únicos y mezcla de trampas y reales", () => {
     expect(DAILY_CASES.length).toBeGreaterThanOrEqual(30);
     expect(new Set(DAILY_CASES.map((c) => c.id)).size).toBe(DAILY_CASES.length);
+    // Cada caso tiene su versión en inglés completa (y nada de más)
+    expect(Object.keys(DAILY_EN).sort()).toEqual(DAILY_CASES.map((c) => c.id).sort());
+    for (const c of DAILY_CASES) {
+      const en = localizeDaily(c, "en");
+      for (const k of ["from", "text", "explain", "tip"] as const) expect(en[k].length, `${c.id}.${k}`).toBeGreaterThan(3);
+      expect(en.answer).toBe(c.answer);
+    }
     const legit = DAILY_CASES.filter((c) => c.answer === "legit").length;
     expect(legit).toBeGreaterThan(5);
     expect(legit).toBeLessThan(DAILY_CASES.length / 2);

@@ -4,7 +4,8 @@ import { randomBytes } from "node:crypto";
 import { ObjectId } from "mongodb";
 import { redirect } from "next/navigation";
 import { CHALLENGE_SIZE, challengeOutcome, cleanPlayerName, pickRandom } from "@/lib/community";
-import { EXERCISE_BY_ID, VERDICT_POOL } from "@/lib/path/content";
+import { requestT } from "@/lib/i18n-server";
+import { EXERCISE_BY_ID, localizeExercise, VERDICT_POOL } from "@/lib/path/content";
 import { publicName } from "@/lib/ranking";
 import { collections } from "@/lib/server/db";
 import { getCurrentUser } from "@/lib/server/session";
@@ -56,14 +57,16 @@ export type ChallengeResult =
 
 /** Califica un reto en el servidor (las respuestas nunca van al navegador antes de jugar). */
 export async function submitChallenge(code: string, answers: string[], rawName: string): Promise<ChallengeResult> {
+  const { lang, t } = await requestT();
   const { challenges, challengePlays, users } = await collections();
   const ch = await challenges.findOne({ code: String(code).slice(0, 20) });
-  if (!ch) return { ok: false, error: "Este reto ya no existe." };
+  if (!ch) return { ok: false, error: t("Este reto ya no existe.", "This challenge no longer exists.") };
   if (!Array.isArray(answers) || answers.length !== ch.exerciseIds.length || answers.some((a) => a !== "phishing" && a !== "legit"))
-    return { ok: false, error: "Responde todos los mensajes." };
+    return { ok: false, error: t("Responde todos los mensajes.", "Answer every message.") };
 
   const results = ch.exerciseIds.map((id, i) => {
-    const ex = EXERCISE_BY_ID.get(id);
+    const found = EXERCISE_BY_ID.get(id);
+    const ex = found && localizeExercise(found, lang);
     const answer = ex?.kind === "veredicto" ? ex.answer : "phishing";
     return { id, correct: answers[i] === answer, answer, explain: ex?.explain ?? "" };
   });
@@ -88,7 +91,7 @@ export async function submitChallenge(code: string, answers: string[], rawName: 
     await challengePlays.insertOne({
       _id: new ObjectId(),
       challengeId: ch._id,
-      name: name ?? "Anónimo",
+      name: name ?? t("Anónimo", "Anonymous"),
       ...(user ? { userId: user._id } : {}),
       score,
       createdAt: new Date(),

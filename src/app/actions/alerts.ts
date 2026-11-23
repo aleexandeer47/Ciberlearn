@@ -3,6 +3,7 @@
 import { ObjectId } from "mongodb";
 import { refresh } from "next/cache";
 import { cleanReportText, isReportChannel, REPORT_LIMITS } from "@/lib/community";
+import { requestT } from "@/lib/i18n-server";
 import { collections } from "@/lib/server/db";
 import { getCurrentUser } from "@/lib/server/session";
 
@@ -13,19 +14,21 @@ export interface ReportState {
 
 /** Un usuario reporta una estafa. Queda pendiente hasta que un administrador la revise. */
 export async function submitReport(_prev: ReportState, form: FormData): Promise<ReportState> {
-  const user = await getCurrentUser();
-  if (!user) return { error: "Entra a tu cuenta para reportar." };
-  if (form.get("sin_datos") !== "si") return { error: "Confirma que quitaste tus datos personales del mensaje." };
+  const [user, { lang, t }] = await Promise.all([getCurrentUser(), requestT()]);
+  if (!user) return { error: t("Entra a tu cuenta para reportar.", "Log in to report.") };
+  if (form.get("sin_datos") !== "si")
+    return { error: t("Confirma que quitaste tus datos personales del mensaje.", "Confirm that you removed your personal data from the message.") };
 
   const channel = form.get("channel");
-  if (!isReportChannel(channel)) return { error: "Elige por dónde te llegó." };
+  if (!isReportChannel(channel)) return { error: t("Elige por dónde te llegó.", "Choose where you got it.") };
   const sender = cleanReportText(form.get("sender"), REPORT_LIMITS.senderMax);
   const text = cleanReportText(form.get("text"), REPORT_LIMITS.textMax);
-  if (text.length < REPORT_LIMITS.textMin) return { error: "Copia el mensaje (al menos unas palabras)." };
+  if (text.length < REPORT_LIMITS.textMin) return { error: t("Copia el mensaje (al menos unas palabras).", "Paste the message (at least a few words).") };
 
   const { scamReports } = await collections();
   const recent = await scamReports.countDocuments({ userId: user._id, createdAt: { $gt: new Date(Date.now() - 864e5) } });
-  if (recent >= REPORT_LIMITS.perDay) return { error: `Puedes enviar hasta ${REPORT_LIMITS.perDay} reportes por día.` };
+  if (recent >= REPORT_LIMITS.perDay)
+    return { error: t(`Puedes enviar hasta ${REPORT_LIMITS.perDay} reportes por día.`, `You can send up to ${REPORT_LIMITS.perDay} reports a day.`) };
 
   await scamReports.insertOne({
     _id: new ObjectId(),
@@ -36,6 +39,7 @@ export async function submitReport(_prev: ReportState, form: FormData): Promise<
     status: "pending",
     createdAt: new Date(),
     meToo: [],
+    lang,
   });
   return { ok: true };
 }

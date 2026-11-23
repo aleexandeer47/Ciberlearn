@@ -2,7 +2,8 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { ObjectId } from "mongodb";
-import { AI_LIMITS, PERSONA_BY_ID } from "@/lib/ai/personas";
+import { AI_LIMITS, personaById } from "@/lib/ai/personas";
+import { requestT } from "@/lib/i18n-server";
 import { dayKey } from "@/lib/dayKey";
 import { aiEnabled, scammerTurn } from "@/lib/server/ai";
 import { collections } from "@/lib/server/db";
@@ -19,22 +20,24 @@ async function usedToday(userId: ObjectId) {
 
 export async function startChat(personaId: string): Promise<{ ok: true; chatId: string; messages: ChatMsg[]; left: number } | Err> {
   // El servidor también lo bloquea: aunque alguien llame a la acción a mano, no gasta IA.
-  if (!aiEnabled()) return { ok: false, error: "Los chats con IA aún no están listos. Estamos trabajando en ello.", code: "proximamente" };
+  const { lang, t } = await requestT();
+  if (!aiEnabled())
+    return { ok: false, error: t("Los chats con IA aún no están listos. Estamos trabajando en ello.", "AI chats aren't ready yet. We're working on it."), code: "proximamente" };
   const user = await getCurrentUser();
-  if (!user) return { ok: false, error: "Inicia sesión para usar los chats.", code: "login" };
-  if (!user.isPro) return { ok: false, error: "Los chats con IA son exclusivos del plan Pro.", code: "pro" };
-  const persona = PERSONA_BY_ID.get(personaId);
-  if (!persona) return { ok: false, error: "Ese escenario no existe." };
+  if (!user) return { ok: false, error: t("Inicia sesión para usar los chats.", "Log in to use the chats."), code: "login" };
+  if (!user.isPro) return { ok: false, error: t("Los chats con IA son exclusivos del plan Pro.", "AI chats are Pro only."), code: "pro" };
+  const persona = personaById(personaId, lang);
+  if (!persona) return { ok: false, error: t("Ese escenario no existe.", "That scenario doesn't exist.") };
 
   const limit = AI_LIMITS.proPerDay;
   const used = await usedToday(user._id);
-  if (used >= limit) return { ok: false, code: "limite", error: "Llegaste al máximo de chats de hoy. Vuelve mañana." };
+  if (used >= limit) return { ok: false, code: "limite", error: t("Llegaste al máximo de chats de hoy. Vuelve mañana.", "You've reached today's chat limit. Come back tomorrow.") };
 
   const { aiChats } = await collections();
   const now = new Date();
   const messages: ChatMsg[] = [{ role: "assistant", content: persona.opening }];
   const _id = new ObjectId();
-  await aiChats.insertOne({ _id, userId: user._id, personaId, day: dayKey(now), messages, status: "active", createdAt: now, updatedAt: now });
+  await aiChats.insertOne({ _id, userId: user._id, personaId, lang, day: dayKey(now), messages, status: "active", createdAt: now, updatedAt: now });
   return { ok: true, chatId: _id.toHexString(), messages, left: limit - used - 1 };
 }
 
@@ -43,30 +46,33 @@ export type SendResult =
   | Err;
 
 export async function sendMessage(chatId: string, text: string): Promise<SendResult> {
-  if (!aiEnabled()) return { ok: false, error: "Los chats con IA aún no están listos.", code: "proximamente" };
+  const { t } = await requestT();
+  if (!aiEnabled()) return { ok: false, error: t("Los chats con IA aún no están listos.", "AI chats aren't ready yet."), code: "proximamente" };
   const user = await getCurrentUser();
-  if (!user) return { ok: false, error: "Inicia sesión.", code: "login" };
-  if (!user.isPro) return { ok: false, error: "Los chats con IA son exclusivos del plan Pro.", code: "pro" };
+  if (!user) return { ok: false, error: t("Inicia sesión.", "Log in."), code: "login" };
+  if (!user.isPro) return { ok: false, error: t("Los chats con IA son exclusivos del plan Pro.", "AI chats are Pro only."), code: "pro" };
   const content = String(text ?? "").trim().slice(0, AI_LIMITS.maxMessageLength);
-  if (!content) return { ok: false, error: "Escribe un mensaje." };
-  if (!ObjectId.isValid(chatId)) return { ok: false, error: "Chat no válido." };
+  if (!content) return { ok: false, error: t("Escribe un mensaje.", "Type a message.") };
+  if (!ObjectId.isValid(chatId)) return { ok: false, error: t("Chat no válido.", "Invalid chat.") };
 
   const { aiChats } = await collections();
   // El historial vive en el servidor: el navegador no puede inventar mensajes del "estafador".
   const chat = await aiChats.findOne({ _id: new ObjectId(chatId), userId: user._id });
-  if (!chat || chat.status !== "active") return { ok: false, error: "Este chat ya terminó." };
-  const persona = PERSONA_BY_ID.get(chat.personaId)!;
+  if (!chat || chat.status !== "active") return { ok: false, error: t("Este chat ya terminó.", "This chat has ended.") };
+  // Se sigue en el idioma en que empezó el chat
+  const chatLang = chat.lang ?? "es";
+  const persona = personaById(chat.personaId, chatLang)!;
 
   const userTurns = chat.messages.filter((m) => m.role === "user").length + 1;
   const history: ChatMsg[] = [...chat.messages, { role: "user", content }];
 
   let turn;
   try {
-    turn = await scammerTurn(persona, history);
+    turn = await scammerTurn(persona, history, chatLang);
   } catch (e) {
-    if (e instanceof Anthropic.RateLimitError) return { ok: false, error: "Hay mucha demanda en este momento. Intenta en un minuto." };
+    if (e instanceof Anthropic.RateLimitError) return { ok: false, error: t("Hay mucha demanda en este momento. Intenta en un minuto.", "There's a lot of demand right now. Try again in a minute.") };
     console.error("[ia] error al generar respuesta", e instanceof Anthropic.APIError ? e.status : e);
-    return { ok: false, error: "No pudimos generar la respuesta. Intenta de nuevo." };
+    return { ok: false, error: t("No pudimos generar la respuesta. Intenta de nuevo.", "We couldn't generate the reply. Please try again.") };
   }
 
   // Si se acaban los turnos sin caer, cuenta como que resistió.
@@ -74,7 +80,10 @@ export async function sendMessage(chatId: string, text: string): Promise<SendRes
   let feedback = turn.feedback;
   if (outcome === "continua" && userTurns >= AI_LIMITS.maxUserTurns) {
     outcome = "resistio";
-    feedback ||= "Llegaste al final sin entregar ningún dato. Bien: con un estafador, cortar la conversación siempre es la mejor salida.";
+    feedback ||=
+      chatLang === "en"
+        ? "You made it to the end without giving away any data. Well done: with a scammer, ending the conversation is always the best way out."
+        : "Llegaste al final sin entregar ningún dato. Bien: con un estafador, cortar la conversación siempre es la mejor salida.";
   }
 
   const status = outcome === "cayo" ? "lost" : outcome === "resistio" ? "won" : "active";
@@ -101,7 +110,7 @@ export async function sendMessage(chatId: string, text: string): Promise<SendRes
       },
     },
   );
-  if (updated.modifiedCount === 0) return { ok: false, error: "El chat cambió mientras respondías. Recarga la página." };
+  if (updated.modifiedCount === 0) return { ok: false, error: t("El chat cambió mientras respondías. Recarga la página.", "The chat changed while you were replying. Reload the page.") };
   if (xp > 0) await addXp(user._id, xp, "ia");
 
   return { ok: true, reply: status === "active" ? turn.reply : "", status, feedback: status !== "active" ? feedback : undefined, xp, tactics: turn.tactics };
