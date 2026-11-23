@@ -55,6 +55,8 @@ const nextConfig: NextConfig = {
     return [
       { source: "/es/sitemap.xml", destination: "/sitemap-es.xml" },
       { source: "/en/sitemap.xml", destination: "/sitemap-en.xml" },
+      // Google y algunos navegadores piden /favicon.ico directamente: el ícono en PNG de 48 px.
+      { source: "/favicon.ico", destination: "/app-icon?size=48" },
     ];
   },
   async headers() {
