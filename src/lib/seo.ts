@@ -57,19 +57,21 @@ export const languageUrls = (path: string) => ({
   "x-default": path || "/",
 });
 
-/** Entradas del sitemap: todas, o solo las de un idioma (para /es/sitemap.xml y /en/sitemap.xml). */
+/**
+ * Entradas del sitemap: todas, o solo las de un idioma (para /es/sitemap.xml y /en/sitemap.xml).
+ * Sin hreflang: ese enlace entre idiomas ya va en el <head> de cada página (alternatesFor), y
+ * ponerlo también aquí hace que el navegador muestre el sitemap como texto suelto.
+ */
 export function sitemapEntries(only?: Lang) {
-  return PUBLIC_PAGES.flatMap(({ path, priority }) => {
-    const languages = Object.fromEntries(Object.entries(languageUrls(path)).map(([k, v]) => [k, absolute(v)]));
-    return LANGS.filter((l) => !only || l === only).map((lang) => ({
+  return PUBLIC_PAGES.flatMap(({ path, priority }) =>
+    LANGS.filter((l) => !only || l === only).map((lang) => ({
       url: absolute(`/${lang}${path}`),
       changeFrequency: (path === "/diaria" || path === "/alertas" || path === "/ranking" ? "daily" : "weekly") as
         | "daily"
         | "weekly",
       priority,
-      alternates: { languages },
-    }));
-  });
+    })),
+  );
 }
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
@@ -81,9 +83,6 @@ export function langSitemapResponse(lang: Lang) {
       [
         "<url>",
         `<loc>${esc(e.url)}</loc>`,
-        ...Object.entries(e.alternates.languages).map(
-          ([hl, href]) => `<xhtml:link rel="alternate" hreflang="${hl}" href="${esc(href)}" />`,
-        ),
         `<changefreq>${e.changeFrequency}</changefreq>`,
         `<priority>${e.priority}</priority>`,
         "</url>",
@@ -91,7 +90,7 @@ export function langSitemapResponse(lang: Lang) {
     )
     .join("\n");
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls}
 </urlset>
 `;
