@@ -32,7 +32,8 @@ export type FlagId =
   | "generic"
   | "attachment"
   | "remote"
-  | "identity";
+  | "identity"
+  | "bank-data";
 
 export interface Flag {
   id: FlagId;
@@ -59,7 +60,8 @@ const BRANDS = ["paypal", "amazon", "apple", "icloud", "microsoft", "outlook", "
 const P = (es: string, en: string) => new RegExp(`(${es}|${en})`, "i");
 
 const RULES: { id: FlagId; weight: number; re: RegExp }[] = [
-  { id: "urgency", weight: 2, re: P("urgente|inmediat\\w*|hoy mismo|en las pr[oó]ximas \\d+ ?(horas|h)|[uú]ltim[oa] (aviso|oportunidad)|antes de las \\d|expira|vence hoy|de lo contrario", "urgent|immediately|right away|within \\d+ ?(hours|h)|final (notice|warning)|last chance|expires? today|act now|or else") },
+  // Incluye el lenguaje de las falsas multas y cobros (VMT, 2026): "vencida", "último recordatorio", "antes que aumente"
+  { id: "urgency", weight: 2, re: P("urgente|inmediat\\w*|hoy mismo|en las pr[oó]ximas \\d+ ?(horas|h)|[uú]ltim[oa] (aviso|oportunidad|recordatorio)|antes de las \\d|expira|vence hoy|de lo contrario|vencid[ao]|antes (de )?que aument\\w*|recargos?\\b|(en|dentro de) (dos|tres|\\d+) d[ií]as( h[aá]biles)?", "urgent|immediately|right away|within \\d+ ?(hours|h)|final (notice|warning|reminder)|last chance|expires? today|act now|or else|overdue|past due|before it (goes up|increases)|late fees?|within (two|three|\\d+) (business )?days") },
   { id: "threat", weight: 2, re: P("suspend\\w*|bloque\\w*|cancelad[ao]|eliminad[ao]|desactivad[ao]|multa|demanda|orden de captura|perder[aá]s?", "suspend\\w*|locked|blocked|deactivat\\w*|deleted|closed|fine|lawsuit|arrest warrant|you will lose") },
   { id: "code", weight: 4, re: P("c[oó]digo (de verificaci[oó]n|de 6|sms)|c[oó]digo que (te|le) (lleg|acaba)|d[ií]ctame|d[ií]ctenos|d[ií]game el c[oó]digo|p[aá]same el c[oó]digo|m[aá]ndame el c[oó]digo|\\botp\\b", "verification code|the code (you|we) (just )?(got|sent|received)|6-digit code|(read|tell) (me|us) the code|send me the code|one-time (code|password)|\\botp\\b") },
   { id: "credentials", weight: 4, re: P("contrase[nñ]a|clave (de acceso|de tu)|\\bpin\\b|usuario y clave|inicia sesi[oó]n|confirm[ae] (tus|sus) datos|verifica (tu|su) (cuenta|identidad)", "password|\\bpin\\b|log ?in to|sign in to|confirm your (details|information|account)|verify your (account|identity)|username and password") },
@@ -68,7 +70,10 @@ const RULES: { id: FlagId; weight: number; re: RegExp }[] = [
   { id: "identity", weight: 4, re: P("foto de (tu|su) (documento|dui|c[eé]dula|identificaci[oó]n|pasaporte|ine)|selfie", "photo of (your|both sides)|selfie|your (id|passport|driver's license) photo") },
   { id: "giftcard", weight: 4, re: P("tarjetas? de regalo|gift ?cards?|c[oó]digos? de (las )?tarjetas", "gift ?cards?|itunes card|google play card|steam card") },
   { id: "crypto", weight: 3, re: P("bitcoin|cripto\\w*|usdt|inversi[oó]n segura|duplica tu dinero|ganancias garantizadas|invert[ií] \\$|saqu[eé] \\$|el asesor", "bitcoin|crypto\\w*|usdt|guaranteed (returns|profit)|double your money|safe investment|i invested \\$|made \\$[\\d,]+ in \\d+ days|the advisor") },
-  { id: "prize", weight: 3, re: P("ganaste|has ganado|felicidades|premio|sorteo|seleccionad[oa]|bono de \\$|reembolso de \\$|devoluci[oó]n de \\$", "you('ve| have)? won(?!['’]t)\\b|congratulations|prize|winner|selected|giveaway|refund of \\$|bonus of \\$|\\$\\d+ (government )?grant") },
+  // Incluye las encuestas que "pagan" (BCR, 2026)
+  { id: "prize", weight: 3, re: P("ganaste|has ganado|felicidades|premio|sorteo|seleccionad[oa]|bono de \\$|reembolso de \\$|devoluci[oó]n de \\$|encuesta (pagada|remunerada)|(te |le )?pag(amos|an|ar[aá]n?) \\$?\\d+|\\$\\d+ por (responder|llenar|completar|contestar)|promete \\$", "you('ve| have)? won(?!['’]t)\\b|congratulations|prize|winner|selected|giveaway|refund of \\$|bonus of \\$|\\$\\d+ (government )?grant|paid survey|\\$\\d+ for (answering|completing|filling)|we('ll)? pay you \\$?\\d+") },
+  // Datos de la cuenta bancaria para "depositarte" un premio o pago
+  { id: "bank-data", weight: 3, re: P("cuenta de cobro|n[uú]mero de (tu |su )?cuenta|selecciona (tu|su) banco|nombre del beneficiario|datos bancarios", "bank account (number|details)|account number|select your bank|beneficiary name|banking details") },
   { id: "job", weight: 3, re: P("trabajo desde casa|gana \\$?\\d+ (al d[ií]a|diarios)|dando (me gusta|likes)|tareas vip|sin experiencia", "work from home|earn \\$?\\d+ (a|per) day|liking videos|vip tasks|no experience needed") },
   { id: "new-number", weight: 3, re: P("(este es|es) mi (n[uú]mero|cel) nuevo|cambi[eé] de n[uú]mero|se me (cay[oó]|arruin[oó]|perdi[oó]) el cel", "(this is )?my new number|i changed my number|i (dropped|lost|broke) my phone") },
   { id: "secrecy", weight: 2, re: P("no le digas a nadie|que quede entre nosotros|confidencial|no (me )?llames|no puedo hablar", "don'?t tell anyone|keep (this|it) between us|confidential|don'?t call( me)?|can'?t talk") },
@@ -179,6 +184,7 @@ export const FLAG_TEXT: Record<Lang, Record<FlagId, { title: string; why: string
     attachment: { title: "Archivo peligroso", why: "Archivos .zip, .exe, .apk o .html inesperados pueden instalar programas maliciosos o mostrar páginas falsas." },
     remote: { title: "Pide instalar una app o dar acceso remoto", why: "Con acceso remoto pueden controlar tu computadora o celular y tu banca." },
     identity: { title: "Pide foto de tu documento o una selfie", why: "Con tu documento y una selfie pueden abrir cuentas o pedir préstamos a tu nombre. Solo se suben dentro de la app oficial." },
+    "bank-data": { title: "Pide los datos de tu cuenta bancaria", why: "Para “depositarte” un premio o un pago te piden tu cuenta y tu banco. Con eso intentan entrar a tu cuenta o usarla para mover dinero de estafas." },
   },
   en: {
     "link-odd-tld": { title: "Link with a suspicious ending", why: "Endings like .top, .xyz, .click or .shop are cheap and widely used in scams. Banks and governments almost never use them." },
@@ -205,5 +211,6 @@ export const FLAG_TEXT: Record<Lang, Record<FlagId, { title: string; why: string
     attachment: { title: "Dangerous file", why: "Unexpected .zip, .exe, .apk or .html files can install malware or show fake pages." },
     remote: { title: "Asks you to install an app or give remote access", why: "With remote access they can control your computer or phone and your banking." },
     identity: { title: "Asks for a photo of your ID or a selfie", why: "With your ID and a selfie they can open accounts or take out loans in your name. Upload them only inside the official app." },
+    "bank-data": { title: "Asks for your bank account details", why: "To “deposit” a prize or payment they ask for your account and bank. They use it to try to get into your account or to move scam money through it." },
   },
 };

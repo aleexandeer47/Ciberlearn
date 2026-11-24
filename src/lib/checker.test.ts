@@ -45,6 +45,21 @@ describe("¿Es estafa? (reglas)", () => {
     expect(legit.filter((c) => checkMessage(`${c.from} ${c.text}`).risk === "alto").length).toBeLessThan(legit.length / 2);
   });
 
+  it("reconoce las estafas que circulan en El Salvador (VMT y BCR, 2026)", () => {
+    const ids = (t: string) => checkMessage(t).flags.map((f) => f.id);
+    // Frases citadas por el VMT en las falsas multas
+    expect(ids("Su multa de tráfico está vencida. Multa vencida, último recordatorio antes que aumente")).toEqual(
+      expect.arrayContaining(["urgency", "threat"]),
+    );
+    expect(checkMessage("Su multa de tráfico está vencida. Multa vencida, último recordatorio antes que aumente").risk).not.toBe("bajo");
+    // Encuesta que "paga" y pide la cuenta (BCR)
+    const bcr = "Gana $75 por responder una encuesta. Para pagarte, llena tu cuenta de cobro, el nombre del beneficiario y selecciona tu banco.";
+    expect(ids(bcr)).toEqual(expect.arrayContaining(["prize", "bank-data"]));
+    expect(checkMessage(bcr).risk).toBe("alto");
+    // Un aviso normal sigue siendo de bajo riesgo
+    expect(checkMessage("Tu factura de agua del mes está disponible en la app.").risk).toBe("bajo");
+  });
+
   it("cada señal tiene explicación en los dos idiomas", () => {
     expect(Object.keys(FLAG_TEXT.en).sort()).toEqual(Object.keys(FLAG_TEXT.es).sort());
   });

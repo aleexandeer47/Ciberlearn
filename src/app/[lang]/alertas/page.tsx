@@ -4,6 +4,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { toggleMeToo } from "@/app/actions/alerts";
+import { AlertSignals } from "@/components/alerts/AlertSignals";
 import { ReportForm } from "@/components/alerts/ReportForm";
 import { PageShell } from "@/components/SiteHeader";
 import { defang, REPORT_CHANNEL_LABEL, REPORT_CHANNELS } from "@/lib/community";
@@ -118,6 +119,12 @@ async function Feed({ searchParams }: { searchParams: PageProps<"/[lang]/alertas
                     {r.sender && <span className="break-all font-mono text-xs text-fog">{defang(r.sender)}</span>}
                   </div>
                   <p className="mt-3 whitespace-pre-line break-words leading-relaxed">{defang(r.text)}</p>
+                  {/* Señales detectadas automáticamente (las alertas que ya traen "Señales:" escritas a mano no se repiten) */}
+                  {!/^(Señales|Signs):/m.test(r.text) && (
+                    <div className="mt-3">
+                      <AlertSignals text={r.text} sender={r.sender} lang={lang} compact />
+                    </div>
+                  )}
                   <div className="mt-4 flex items-center justify-between gap-3">
                     <span className="flex items-center gap-1.5 text-sm text-fog">
                       <Users className="h-4 w-4" aria-hidden />

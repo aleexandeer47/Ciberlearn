@@ -1,23 +1,37 @@
 "use client";
 
 import { Send } from "lucide-react";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { submitReport, type ReportState } from "@/app/actions/alerts";
+import { AlertSignals } from "@/components/alerts/AlertSignals";
 import { useLang, useT } from "@/components/i18n/LangProvider";
 import { REPORT_CHANNEL_LABEL, REPORT_CHANNELS, REPORT_LIMITS } from "@/lib/community";
 
 export function ReportForm() {
-  const [state, action, pending] = useActionState<ReportState, FormData>(submitReport, {});
+  // Se guarda lo que la persona reportó para mostrarle las señales de alerta de su mensaje al terminar
+  const [sent, setSent] = useState<{ text: string; sender: string } | null>(null);
+  const [state, action, pending] = useActionState<ReportState, FormData>(async (prev, form) => {
+    setSent({ text: String(form.get("text") ?? ""), sender: String(form.get("sender") ?? "") });
+    return submitReport(prev, form);
+  }, {});
   const lang = useLang();
   const t = useT();
   if (state.ok)
     return (
-      <p role="status" className="rounded-2xl bg-ok/15 p-4 text-sm text-ok">
-        {t(
-          "¡Gracias! Revisaremos tu reporte antes de publicarlo. Así ayudas a que otras personas no caigan.",
-          "Thanks! We'll review your report before publishing it. You're helping others not fall for it.",
+      <div className="space-y-3">
+        <p role="status" className="rounded-2xl bg-ok/15 p-4 text-sm text-ok">
+          {t(
+            "¡Gracias! Revisaremos tu reporte antes de publicarlo. Así ayudas a que otras personas no caigan.",
+            "Thanks! We'll review your report before publishing it. You're helping others not fall for it.",
+          )}
+        </p>
+        {sent && (
+          <>
+            <p className="text-sm font-medium">{t("Esto es lo que vemos en tu mensaje:", "Here’s what we see in your message:")}</p>
+            <AlertSignals text={sent.text} sender={sent.sender} lang={lang} />
+          </>
         )}
-      </p>
+      </div>
     );
   return (
     <form action={action} className="space-y-4">
