@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import { translator, type Lang } from "@/lib/i18n";
 import { LEVEL_LABEL, type Unit } from "@/lib/path/content";
+import { CREATURES, creatureFor } from "./Creatures";
 
 /*
  * La ruta como una inmersión: cada unidad es una zona del mar, más profunda (y difícil) que la anterior.
@@ -64,16 +65,6 @@ function Hook() {
   );
 }
 
-function Fish() {
-  return (
-    <svg viewBox="0 0 48 28" className="dive-fish h-7 w-12 drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]" aria-hidden>
-      <path d="M8 14 C 14 3, 32 2, 40 14 C 32 26, 14 25, 8 14 Z" fill="#fbbf24" />
-      <path d="M8 14 L 1 6 L 2 14 L 1 22 Z" fill="#f59e0b" />
-      <circle cx="33" cy="12" r="2.2" fill="#0a0f1c" />
-      <path d="M22 9 q 3 5 0 10" stroke="#f59e0b" strokeWidth="1.6" fill="none" />
-    </svg>
-  );
-}
 
 // Burbujas decorativas (posiciones fijas para que el servidor y el navegador coincidan)
 const BUBBLES = [
@@ -95,6 +86,9 @@ export function DiveMap({
   const t = translator(lang);
   // Índice global de la primera lección de cada zona
   const starts = units.map((_, u) => units.slice(0, u).reduce((a, x) => a + x.lessons.length, 0));
+  // Ruta completa: el Kraken sale del abismo a celebrar
+  const allDone = units.every((un) => un.lessons.every((l) => lessons.get(l.id)?.state === "done"));
+  const Final = CREATURES[CREATURES.length - 1];
   return (
     <div className="dive-sea relative overflow-hidden rounded-[2rem] text-white shadow-[0_30px_80px_-40px_rgba(2,6,23,0.9)]">
       {/* Superficie: olas y rayos de luz */}
@@ -143,6 +137,9 @@ export function DiveMap({
           const reached = zoneDone ? all.length : curIdx >= 0 ? curIdx + 2 : doneCount > 0 ? doneCount + 1 : 0;
           const donePath = reached > 1 ? curve(all.slice(0, reached)) : "";
           const lineColor = expert ? "#fbbf24" : "#5eead4";
+          // Evolución del pez en esta zona (la última es el Kraken)
+          const creature = creatureFor(u, units.length);
+          const zoneReached = reached > 0 || list.some((l) => l.state !== "locked");
 
           return (
             <li key={unit.id} className="relative">
@@ -168,6 +165,16 @@ export function DiveMap({
                     </span>
                     {unit.description}
                   </p>
+                  {/* Etapa del pez en esta zona: se revela al llegar (la última es una sorpresa) */}
+                  <p className="mt-3 flex items-center gap-2 text-xs text-white/70">
+                    <creature.Svg
+                      className={`h-6 w-9 shrink-0 ${zoneReached ? "" : "opacity-60 brightness-0 invert-[.35]"}`}
+                    />
+                    <span>
+                      {t("Tu pez aquí", "Your fish here")}:{" "}
+                      <strong className={zoneReached ? "text-white" : "text-white/50"}>{zoneReached ? creature.name[lang] : "???"}</strong>
+                    </span>
+                  </p>
                 </div>
                 {zoneDone ? (
                   <span className="mt-1 flex shrink-0 items-center gap-1.5 rounded-full bg-[#14b8a6]/25 px-3 py-1 text-xs font-semibold text-[#99f6e4]">
@@ -192,14 +199,12 @@ export function DiveMap({
                 {donePath && (
                   <path
                     d={donePath}
-                    pathLength={1}
                     fill="none"
                     stroke={lineColor}
                     strokeWidth="4"
                     strokeLinecap="round"
                     vectorEffect="non-scaling-stroke"
                     className="dive-line-done drop-shadow-[0_0_6px_rgba(94,234,212,0.7)]"
-                    style={{ "--len": 1 } as CSSProperties}
                   />
                 )}
               </svg>
@@ -243,9 +248,19 @@ export function DiveMap({
                     style={{ left: `${x}%`, top: y }}
                   >
                     {l.state === "current" && (
-                      <span className={`absolute top-1/2 -translate-y-1/2 ${right ? "-left-16" : "-right-16 -scale-x-100"}`}>
-                        <Fish />
-                      </span>
+                      <>
+                        {/* Tableta y computadora: del lado contrario a la etiqueta, mirando hacia la lección */}
+                        <span
+                          title={creature.name[lang]}
+                          className={`absolute top-1/2 hidden -translate-y-1/2 sm:block ${right ? "right-full mr-2" : `left-full ml-2 ${creature.front ? "" : "-scale-x-100"}`}`}
+                        >
+                          <creature.Svg className={`dive-fish ${creature.size} drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]`} />
+                        </span>
+                        {/* Celular: encima de la lección, para que las criaturas grandes no se salgan del mar */}
+                        <span title={creature.name[lang]} className="absolute bottom-full left-1/2 mb-1 -translate-x-1/2 sm:hidden">
+                          <creature.Svg className={`dive-fish ${creature.front ? "h-12 w-14" : "h-8 w-12"} drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]`} />
+                        </span>
+                      </>
                     )}
                     {l.href ? (
                       <Link
@@ -284,6 +299,19 @@ export function DiveMap({
           );
         })}
       </ol>
+
+      {allDone && (
+        <div className="relative z-10 flex flex-col items-center px-6 pb-4 pt-2 text-center">
+          <Final.Svg className="dive-fish h-28 w-32 sm:h-36 sm:w-44" />
+          <p className="mt-3 font-display text-2xl">{t("¡Llegaste al abismo: eres el Kraken!", "You reached the abyss: you’re the Kraken!")}</p>
+          <p className="mt-1 max-w-md text-sm text-white/70">
+            {t(
+              "Del alevín de la superficie a la criatura más temida del mar. Ya no hay anzuelo que te atrape.",
+              "From a tiny fry at the surface to the most feared creature of the sea. No hook can catch you now.",
+            )}
+          </p>
+        </div>
+      )}
 
       {/* Fondo marino */}
       <svg viewBox="0 0 1200 80" preserveAspectRatio="none" className="relative block h-16 w-full text-[#01030b]" aria-hidden>
