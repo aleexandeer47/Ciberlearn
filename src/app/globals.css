@@ -330,18 +330,23 @@ body {
   filter: brightness(0.92);
 }
 
-.field {
-  width: 100%;
-  border-radius: 0.75rem;
-  border: 1px solid var(--desk-line);
-  background: var(--desk);
-  padding: 0.8rem 1rem;
-  color: var(--chalk);
-  outline: none;
-  transition: border-color 160ms ease;
-}
-.field:focus {
-  border-color: var(--accent);
+/* En la capa "components": así las utilidades (pl-10 para un ícono, pr-20 para un botón dentro,
+   py-0, w-24…) pueden ajustarlo. Fuera de capa, .field ganaba siempre y la lupa del buscador
+   quedaba encima del texto. */
+@layer components {
+  .field {
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid var(--desk-line);
+    background: var(--desk);
+    padding: 0.8rem 1rem;
+    color: var(--chalk);
+    outline: none;
+    transition: border-color 160ms ease;
+  }
+  .field:focus {
+    border-color: var(--accent);
+  }
 }
 
 kbd {
