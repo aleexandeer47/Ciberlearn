@@ -17,7 +17,8 @@ export interface RunInput {
   answers: { scenarioId: string; marked: string[]; verdict: Verdict | null; timeMs?: number }[];
 }
 
-export type SaveRunResult = { ok: true; score: number } | { ok: false; error: string };
+/** isPro: para que el resumen ofrezca los modos difíciles (Pro) o el plan (gratis). */
+export type SaveRunResult = { ok: true; score: number; isPro: boolean } | { ok: false; error: string; isPro?: boolean };
 
 const FREE_IDS = new Set(SCENARIOS.map((s) => s.id));
 
@@ -66,5 +67,5 @@ export async function saveRun(input: RunInput): Promise<SaveRunResult> {
   const { runs } = await collections();
   await runs.insertOne({ _id: new ObjectId(), userId: user._id, mode: input.mode, createdAt: new Date(), score, answers });
   await addXp(user._id, xpFromRun(answers.map((a) => a.points)), "simulador");
-  return { ok: true, score };
+  return { ok: true, score, isPro: user.isPro };
 }

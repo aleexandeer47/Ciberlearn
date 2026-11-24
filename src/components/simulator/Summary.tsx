@@ -72,14 +72,18 @@ export function Summary({
   const [copied, setCopied] = useState(false);
   const [save, setSave] = useState<{ state: SaveState; msg?: string }>({ state: "saving" });
   const sent = useRef(false);
+  // null mientras se guarda la ronda (el servidor responde si la cuenta es Pro)
+  const [pro, setPro] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (sent.current) return;
     sent.current = true;
     saveRun(run)
       .then((res) => {
-        if (res.ok) setSave({ state: "saved" });
-        else if (res.error.startsWith("Inicia sesión") || res.error.startsWith("Log in")) {
+        if (res.ok) {
+          setSave({ state: "saved" });
+          setPro(res.isPro);
+        } else if (res.error.startsWith("Inicia sesión") || res.error.startsWith("Log in")) {
           // Sin cuenta: la guardamos aquí y se sube al registrarse.
           try {
             sessionStorage.setItem(PENDING_RUN_KEY, JSON.stringify(run));
@@ -232,20 +236,42 @@ export function Summary({
         </ul>
       </section>
 
-      <section className="flex flex-col items-start justify-between gap-4 rounded-3xl bg-paper p-6 text-ink ring-1 ring-line sm:flex-row sm:items-center sm:p-8">
-        <div>
-          <h2 className="font-display text-xl font-semibold">{t("¿Quieres mensajes más difíciles?", "Want harder messages?")}</h2>
-          <p className="mt-1 text-ink-2">
-            {t(
-              "Pro suma un pack avanzado, contrarreloj y entrenamiento de tu punto débil.",
-              "Pro adds an advanced pack, a time trial and training for your weak spot.",
-            )}
-          </p>
-        </div>
-        <Link href="/planes" className="btn btn-ink shrink-0 px-6 py-3">
-          {t("Ver planes", "See plans")}
-        </Link>
-      </section>
+      {pro ? (
+        // Con Pro: acceso directo a los modos difíciles
+        <section className="rounded-3xl bg-paper p-6 text-ink ring-1 ring-line sm:p-8">
+          <h2 className="font-display text-xl font-semibold">{t("Sube la dificultad", "Turn up the difficulty")}</h2>
+          <p className="mt-1 text-ink-2">{t("Tienes Pro: elige tu siguiente reto.", "You have Pro: pick your next challenge.")}</p>
+          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {[
+              { href: "/simulador/pro", title: t("Pack avanzado", "Advanced pack"), desc: t("6 mensajes más difíciles", "6 harder messages") },
+              { href: "/simulador/contrarreloj", title: t("Contrarreloj", "Time trial"), desc: t("40 segundos por mensaje", "40 seconds per message") },
+              { href: "/simulador/entrenamiento", title: t("Entrenamiento", "Training"), desc: t("Tu punto débil", "Your weak spot") },
+            ].map((m) => (
+              <Link key={m.href} href={m.href} className="group rounded-2xl border border-line px-4 py-3 transition-colors hover:border-ink">
+                <p className="font-semibold">
+                  {m.title} <span className="inline-block transition-transform group-hover:translate-x-0.5">→</span>
+                </p>
+                <p className="text-sm text-ink-2">{m.desc}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : pro === false || save.state === "guest" ? (
+        <section className="flex flex-col items-start justify-between gap-4 rounded-3xl bg-paper p-6 text-ink ring-1 ring-line sm:flex-row sm:items-center sm:p-8">
+          <div>
+            <h2 className="font-display text-xl font-semibold">{t("¿Quieres mensajes más difíciles?", "Want harder messages?")}</h2>
+            <p className="mt-1 text-ink-2">
+              {t(
+                "Pro suma un pack avanzado, contrarreloj y entrenamiento de tu punto débil.",
+                "Pro adds an advanced pack, a time trial and training for your weak spot.",
+              )}
+            </p>
+          </div>
+          <Link href="/planes" className="btn btn-ink shrink-0 px-6 py-3">
+            {t("Ver planes", "See plans")}
+          </Link>
+        </section>
+      ) : null}
     </div>
   );
 }
