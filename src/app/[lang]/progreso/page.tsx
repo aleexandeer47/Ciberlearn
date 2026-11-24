@@ -2,11 +2,12 @@ import { Award, Crosshair, Flame, Inbox, Layers, Lock, Mail, Swords, Timer } fro
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Suspense, type CSSProperties } from "react";
+import { Suspense } from "react";
 import { logout } from "@/app/actions/auth";
 import { HistoryChart } from "@/components/progress/HistoryChart";
 import { PasswordNotice } from "@/components/progress/PasswordNotice";
 import { PendingRunSaver } from "@/components/progress/PendingRunSaver";
+import { SkillRadar } from "@/components/progress/SkillRadar";
 import { PageShell } from "@/components/SiteHeader";
 import { ShareAchievement } from "@/components/share/ShareAchievement";
 import { currentStreak } from "@/lib/daily";
@@ -26,7 +27,8 @@ export async function generateMetadata(): Promise<Metadata> {
 const FREE_HISTORY = 3;
 
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <section className={`rounded-3xl border border-desk-line bg-desk-2 p-5 sm:p-7 ${className}`}>{children}</section>;
+  // min-w-0: dentro de una cuadrícula, nada de su contenido (como un gráfico) puede ensanchar la página
+  return <section className={`min-w-0 rounded-3xl border border-desk-line bg-desk-2 p-5 sm:p-7 ${className}`}>{children}</section>;
 }
 
 async function ProLock({ title, text }: { title: string; text: string }) {
@@ -127,7 +129,7 @@ async function Dashboard() {
       </div>
 
       {/* Hábito y compartir */}
-      <div className="grid gap-5 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
         <Link href="/diaria" className="group rounded-3xl border border-desk-line bg-desk-2 p-5 transition-colors hover:border-brand">
           <p className="flex items-center gap-2 text-sm text-fog">
             <Flame className="h-4 w-4 text-[#f97316]" aria-hidden /> {t("Estafa del día", "Scam of the day")}
@@ -173,7 +175,7 @@ async function Dashboard() {
       ) : (
         <>
           {/* Nivel + cifras */}
-          <div className="grid gap-5 lg:grid-cols-[1.1fr_1fr]">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.1fr_1fr]">
             <Card>
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -243,40 +245,50 @@ async function Dashboard() {
                 </Link>
               )}
             </div>
-            <ul className="mt-6 grid gap-x-10 gap-y-4 md:grid-cols-2">
-              {sortedSkills.map((s, i) => (
-                <li key={s.category}>
-                  <div className="mb-1.5 flex items-baseline justify-between gap-3 text-sm">
-                    <span className="font-semibold">
-                      {s.label}
-                      {stats.weakest?.category === s.category && (
-                        <span className="ml-2 rounded-full bg-bad/15 px-2 py-0.5 text-[10px] font-normal text-bad-text">
-                          {t("punto débil", "weak spot")}
-                        </span>
-                      )}
-                    </span>
-                    <span className="tabular-nums text-fog">
-                      {s.total ? `${s.pct}% · ${s.found}/${s.total}` : t("sin datos", "no data")}
-                    </span>
-                  </div>
-                  <div className="h-2.5 overflow-hidden rounded-full bg-desk">
-                    {s.total > 0 && (
-                      <div
-                        className="bar-fill h-full rounded-full bg-hl"
-                        style={{ width: `${Math.max(s.pct, 2)}%`, "--i": i } as CSSProperties}
-                      />
-                    )}
-                  </div>
-                  <p className="mt-1 text-xs text-fog/80">{L[s.category].hint}</p>
-                </li>
-              ))}
-            </ul>
+            <div className="mt-4">
+              <SkillRadar
+                skills={stats.skills}
+                weakest={stats.weakest?.category ?? null}
+                noData={t("sin datos", "no data")}
+                ariaLabel={t(
+                  `Radar de habilidades: ${stats.skills.map((s) => `${s.label} ${s.total ? `${s.pct}%` : "sin datos"}`).join(", ")}`,
+                  `Skills radar: ${stats.skills.map((s) => `${s.label} ${s.total ? `${s.pct}%` : "no data"}`).join(", ")}`,
+                )}
+              />
+            </div>
+            {/* Detalle: de la más fuerte a la más débil, con lo que significa cada una */}
+            <details className="group mt-2 rounded-2xl border border-desk-line">
+              <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-chalk marker:hidden">
+                {t("Ver detalle por tipo de señal", "See detail by type of sign")} <span className="text-fog group-open:hidden">▾</span>
+                <span className="hidden text-fog group-open:inline">▴</span>
+              </summary>
+              <ul className="grid gap-x-8 gap-y-3 border-t border-desk-line px-4 py-4 sm:grid-cols-2">
+                {sortedSkills.map((s) => (
+                  <li key={s.category} className="min-w-0">
+                    <p className="flex items-baseline justify-between gap-3 text-sm">
+                      <span className="font-semibold">
+                        {s.label}
+                        {stats.weakest?.category === s.category && (
+                          <span className="ml-2 rounded-full bg-bad/15 px-2 py-0.5 text-[10px] font-normal text-bad-text">
+                            {t("punto débil", "weak spot")}
+                          </span>
+                        )}
+                      </span>
+                      <span className="shrink-0 tabular-nums text-fog">
+                        {s.total ? `${s.pct}% · ${s.found}/${s.total}` : t("sin datos", "no data")}
+                      </span>
+                    </p>
+                    <p className="mt-0.5 text-xs text-fog/80">{L[s.category].hint}</p>
+                  </li>
+                ))}
+              </ul>
+            </details>
           </Card>
         </>
       )}
 
       {/* Modos */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {modes.map((m) => {
           const locked = m.pro && !user.isPro;
           return (
@@ -306,7 +318,7 @@ async function Dashboard() {
       </div>
 
       {stats.runs > 0 && (
-        <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.4fr_1fr]">
           <Card className="relative">
             <h2 className="font-display text-xl font-semibold">{t("Evolución", "Progress over time")}</h2>
             <p className="mb-4 mt-1 text-sm text-fog">
@@ -385,7 +397,7 @@ async function Dashboard() {
       </Card>
 
       {/* Certificado + cuenta */}
-      <div className="grid gap-5 md:grid-cols-[1.4fr_1fr]">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-[1.4fr_1fr]">
         <Card className="relative">
           <h2 className="font-display text-xl font-semibold">{t("Certificado de finalización", "Certificate of completion")}</h2>
           <p className="mt-1 text-sm text-fog">

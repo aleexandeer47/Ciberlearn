@@ -13,6 +13,8 @@ interface Point {
 /** Línea de puntajes por ronda (0-100). Una sola serie: el título la nombra, no hace falta leyenda. */
 export function HistoryChart({ points }: { points: Point[] }) {
   const wrap = useRef<HTMLDivElement>(null);
+  // Ancho medido del contenedor. El SVG usa viewBox + width 100 %: aunque el primer dibujo use 600,
+  // nunca ensancha la página (antes, en celular, empujaba las tarjetas fuera de la pantalla).
   const [w, setW] = useState(600);
   const [hover, setHover] = useState<number | null>(null);
   const lang = useLang();
@@ -27,7 +29,7 @@ export function HistoryChart({ points }: { points: Point[] }) {
   useEffect(() => {
     const el = wrap.current;
     if (!el) return;
-    const ro = new ResizeObserver(([e]) => setW(Math.max(260, e.contentRect.width)));
+    const ro = new ResizeObserver(([e]) => setW(Math.max(240, Math.round(e.contentRect.width))));
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
@@ -52,10 +54,12 @@ export function HistoryChart({ points }: { points: Point[] }) {
   const hp = hover !== null ? points[hover] : null;
 
   return (
-    <div ref={wrap} className="relative select-none">
+    <div ref={wrap} className="relative w-full min-w-0 select-none">
       <svg
-        width={w}
+        viewBox={`0 0 ${w} ${H}`}
+        width="100%"
         height={H}
+        preserveAspectRatio="none"
         role="img"
         aria-label={t(`Puntaje de tus últimas ${n} rondas`, `Score of your last ${n} rounds`)}
         onPointerMove={(e) => onMove(e.clientX)}
