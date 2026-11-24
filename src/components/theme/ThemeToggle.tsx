@@ -84,7 +84,7 @@ export function ThemeToggle() {
       onClick={onClick}
       aria-label={t(`Tema: ${LABEL[pref]}. Cambiar a ${LABEL[next]}`, `Theme: ${LABEL[pref]}. Switch to ${LABEL[next]}`)}
       title={t(`Tema: ${LABEL[pref]}`, `Theme: ${LABEL[pref]}`)}
-      className="grid h-10 w-10 place-items-center rounded-full text-fog transition-[color,background-color,transform] duration-150 hover:bg-desk-3 hover:text-chalk active:scale-95"
+      className="grid h-9 w-9 shrink-0 place-items-center rounded-full sm:h-10 sm:w-10 text-fog transition-[color,background-color,transform] duration-150 hover:bg-desk-3 hover:text-chalk active:scale-95"
     >
       <Icon pref={pref} />
     </button>

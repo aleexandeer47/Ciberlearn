@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { CookiePrefsLink } from "@/components/analytics/Analytics";
+import { AccountFallback, AccountPill, GuestLinks } from "@/components/auth/HeaderAccount";
 import { LangSwitch } from "@/components/i18n/LangProvider";
 import { InstallApp } from "@/components/pwa/Pwa";
 import { SimpleModeToggle } from "@/components/theme/SimpleMode";
@@ -37,39 +38,11 @@ export function Logo() {
   );
 }
 
-async function GuestNav() {
-  const { t } = await getT();
-  return (
-    <>
-      <Link href="/entrar" className="rounded-lg px-2 py-2 font-medium text-chalk transition-colors hover:text-brand">
-        {t("Entrar", "Log in")}
-      </Link>
-      <Link href="/registro" className="btn btn-primary h-10 whitespace-nowrap px-4 text-sm sm:px-5">
-        <span className="sm:hidden">{t("Crear cuenta", "Sign up")}</span>
-        <span className="hidden sm:inline">{t("Crear cuenta gratis", "Sign up free")}</span>
-      </Link>
-    </>
-  );
-}
-
+/** Sesión confirmada por el servidor; además actualiza lo que el navegador recuerda (ver HeaderAccount). */
 async function UserNav() {
-  const [user, { t }] = await Promise.all([getCurrentUser(), getT()]);
-  if (!user) return <GuestNav />;
-  return (
-    <Link
-      href="/progreso"
-      className="group flex items-center gap-2.5 rounded-full border border-desk-line py-1 pl-1 pr-3.5 transition-colors hover:border-fog/60"
-    >
-      <span className="grid h-8 w-8 place-items-center rounded-full bg-brand text-xs font-semibold text-white">
-        {user.name.slice(0, 1).toUpperCase()}
-      </span>
-      {/* Con el menú completo (lg) no cabe el texto hasta pantallas anchas (xl) */}
-      <span className="hidden whitespace-nowrap text-chalk sm:inline lg:hidden xl:inline">{t("Mi progreso", "My progress")}</span>
-      {user.isPro && (
-        <span className="rounded-full bg-brand px-1.5 py-0.5 font-mono text-[10px] font-semibold text-white">Pro</span>
-      )}
-    </Link>
-  );
+  const user = await getCurrentUser();
+  if (!user) return <GuestLinks forget />;
+  return <AccountPill initial={user.name.slice(0, 1).toUpperCase()} pro={user.isPro} remember />;
 }
 
 export async function SiteHeader() {
@@ -78,9 +51,10 @@ export async function SiteHeader() {
   return (
     <header className="sticky top-0 z-30 border-b border-desk-line/70 bg-desk/85 backdrop-blur-md">
       <div className="mx-auto grid h-16 max-w-[1200px] grid-cols-[1fr_auto] items-center px-4 sm:px-6 lg:grid-cols-[1fr_auto_1fr]">
-        <Link href="/" className="flex items-center gap-2 text-[17px] font-semibold tracking-tight">
+        <Link href="/" aria-label={SITE.name} className="flex min-w-0 items-center gap-2 text-[17px] font-semibold tracking-tight">
           <Logo />
-          {SITE.name}
+          {/* En celulares muy angostos (menos de 360 px) solo el escudo, para que quepan los botones */}
+          <span className="max-[359px]:hidden">{SITE.name}</span>
         </Link>
         {/* Enlaces al centro (escritorio) */}
         <nav className="hidden items-center gap-0.5 text-[15px] font-medium lg:flex" aria-label={t("Principal", "Main")}>
@@ -93,12 +67,12 @@ export async function SiteHeader() {
         <div className="flex items-center justify-end gap-1 text-[15px] sm:gap-2">
           <LangSwitch />
           <SimpleModeToggle />
-          {/* En celular no cabe todo: el tema sigue al del sistema y el botón aparece desde tableta */}
+          {/* El tema se puede cambiar en cualquier pantalla; el sonido, en celular, desde el pie de página */}
           <span className="hidden sm:flex">
             <SoundToggle />
-            <ThemeToggle />
           </span>
-          <Suspense fallback={<GuestNav />}>
+          <ThemeToggle />
+          <Suspense fallback={<AccountFallback />}>
             <UserNav />
           </Suspense>
         </div>

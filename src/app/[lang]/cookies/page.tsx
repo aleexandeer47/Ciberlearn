@@ -29,6 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
  *  - sessionStorage ciberlearn:pendingRun src/components/simulator/Summary.tsx
  *  - localStorage ciberlearn-analytics    src/components/analytics/Analytics.tsx (permiso del aviso)
  *  - localStorage ciberlearn-sound        src/lib/sfx.ts (sonidos activados o silenciados)
+ *  - localStorage ciberlearn-account      src/components/auth/HeaderAccount.tsx (inicial y si es Pro, para el encabezado)
  *  - cookies _ga / _ga_*                  Google Analytics, SOLO si la persona acepta en el aviso
  * Cualquier otra herramienta de terceros necesita pasar por el mismo aviso y actualizar esta página.
  */
@@ -87,6 +88,7 @@ const COPY: Record<
       { name: "ciberlearn:pendingRun", kind: "Almacenamiento de sesión", purpose: "Si juegas sin cuenta, guarda el resultado de tu ronda para sumarlo a tu progreso si te registras.", duration: "Hasta que cierres la pestaña", type: "Funcional" },
       { name: "ciberlearn-analytics", kind: "Almacenamiento local", purpose: "Recuerda si aceptaste o rechazaste la analítica en el aviso de cookies.", duration: "Hasta que la borres o cambies tu decisión", type: "Necesaria" },
       { name: "ciberlearn-sound", kind: "Almacenamiento local", purpose: "Recuerda si silenciaste los efectos de sonido.", duration: "Hasta que la borres", type: "Preferencia" },
+      { name: "ciberlearn-account", kind: "Almacenamiento local", purpose: "Si tienes la sesión iniciada, guarda la inicial de tu nombre y si eres Pro, para mostrar tu botón de perfil sin parpadeos al cambiar de página. Se borra al cerrar sesión.", duration: "Hasta que cierres sesión", type: "Funcional" },
       { name: "_ga, _ga_*", kind: "Cookies de Google Analytics", purpose: "Solo si aceptas: distinguen visitas para contar, de forma agregada, cuántas personas usan el sitio y qué páginas ven.", duration: "Hasta 2 años", type: "Analítica (opcional)" },
     ],
     fonts: "Las fuentes tipográficas se sirven desde nuestro propio dominio, así que cargar el sitio no envía tus datos a otras empresas.",
@@ -133,6 +135,7 @@ const COPY: Record<
       { name: "ciberlearn:pendingRun", kind: "Session storage", purpose: "If you play without an account, it keeps your round's result so it can be added to your progress if you sign up.", duration: "Until you close the tab", type: "Functional" },
       { name: "ciberlearn-analytics", kind: "Local storage", purpose: "Remembers whether you accepted or rejected analytics in the cookie notice.", duration: "Until you delete it or change your choice", type: "Necessary" },
       { name: "ciberlearn-sound", kind: "Local storage", purpose: "Remembers whether you muted the sound effects.", duration: "Until you delete it", type: "Preference" },
+      { name: "ciberlearn-account", kind: "Local storage", purpose: "If you’re logged in, it keeps your name’s initial and whether you’re Pro, so your profile button shows without flicker when you change pages. It’s deleted when you log out.", duration: "Until you log out", type: "Functional" },
       { name: "_ga, _ga_*", kind: "Google Analytics cookies", purpose: "Only if you accept: they tell visits apart to count, in aggregate, how many people use the site and which pages they view.", duration: "Up to 2 years", type: "Analytics (optional)" },
     ],
     fonts: "Fonts are served from our own domain, so loading the site doesn't send your data to other companies.",
