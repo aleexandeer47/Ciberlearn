@@ -1,4 +1,4 @@
-import { Megaphone, ShieldAlert, Users } from "lucide-react";
+import { Eye, EyeOff, Megaphone, ShieldAlert, Users } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
@@ -29,6 +29,15 @@ async function Feed({ searchParams }: { searchParams: PageProps<"/[lang]/alertas
   await connection();
   const sp = await searchParams;
   const channel = REPORT_CHANNELS.find((c) => c === sp.canal);
+  // ?reales=1: oculta las alertas con mensajes de ejemplo y deja solo los mensajes reales
+  const onlyReal = sp.reales === "1";
+  const href = (c: string | undefined, real: boolean) => {
+    const q = new URLSearchParams();
+    if (c) q.set("canal", c);
+    if (real) q.set("reales", "1");
+    const s = q.toString();
+    return s ? `/alertas?${s}` : "/alertas";
+  };
   const user = await getCurrentUser();
   const { lang, t } = await getT();
   const fmt = (d: Date) => d.toLocaleDateString(LOCALE[lang], { day: "numeric", month: "short" });
@@ -37,7 +46,10 @@ async function Feed({ searchParams }: { searchParams: PageProps<"/[lang]/alertas
   // Cada idioma ve las alertas reportadas en su idioma (las antiguas, sin idioma, son en español)
   const langFilter = lang === "en" ? { lang: "en" as const } : { lang: { $ne: "en" as const } };
   const items = await scamReports
-    .find({ status: "approved", ...langFilter, ...(channel ? { channel } : {}) }, { projection: { userId: 0 } })
+    .find(
+      { status: "approved", ...langFilter, ...(channel ? { channel } : {}), ...(onlyReal ? { example: { $ne: true } } : {}) },
+      { projection: { userId: 0 } },
+    )
     .sort({ createdAt: -1 })
     .limit(40)
     .toArray();
@@ -45,17 +57,37 @@ async function Feed({ searchParams }: { searchParams: PageProps<"/[lang]/alertas
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
       <div>
-        <nav aria-label={t("Filtrar por canal", "Filter by channel")} className="mb-5 flex flex-wrap gap-2 text-sm">
+        <nav aria-label={t("Filtrar por canal", "Filter by channel")} className="mb-3 flex flex-wrap gap-2 text-sm">
           {[undefined, ...REPORT_CHANNELS].map((c) => (
             <Link
               key={c ?? "todos"}
-              href={c ? `/alertas?canal=${encodeURIComponent(c)}` : "/alertas"}
+              href={href(c, onlyReal)}
               className={`rounded-full border px-3 py-1.5 ${c === channel ? "border-brand bg-brand text-white" : "border-desk-line hover:border-fog/60"}`}
             >
               {c ? L[c] : t("Todas", "All")}
             </Link>
           ))}
         </nav>
+        <p className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-fog">
+          <Link
+            href={href(channel, !onlyReal)}
+            aria-pressed={onlyReal}
+            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 font-medium ${
+              onlyReal ? "border-brand bg-field text-brand" : "border-desk-line text-chalk hover:border-fog/60"
+            }`}
+          >
+            {onlyReal ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
+            {onlyReal ? t("Mostrar también los ejemplos", "Show examples too") : t("Ocultar ejemplos", "Hide examples")}
+          </Link>
+          <span>
+            {onlyReal
+              ? t("Solo mensajes reales reportados.", "Only real reported messages.")
+              : t(
+                  "Las alertas marcadas como “Ejemplo” muestran cómo se ve la estafa según un aviso oficial, no el mensaje exacto.",
+                  "Alerts marked “Example” show what the scam looks like based on an official warning, not the exact message.",
+                )}
+          </span>
+        </p>
 
         {items.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-desk-line p-10 text-center text-fog">
@@ -73,6 +105,14 @@ async function Feed({ searchParams }: { searchParams: PageProps<"/[lang]/alertas
                   <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                     <span className="flex items-center gap-2">
                       <span className="rounded-full bg-bad/15 px-2.5 py-0.5 text-xs font-semibold text-bad-text">{L[r.channel] ?? r.channel}</span>
+                      {r.example && (
+                        <span
+                          title={t("Mensaje reconstruido a partir de un aviso oficial, no el texto exacto", "Message rebuilt from an official warning, not the exact text")}
+                          className="rounded-full bg-desk-3 px-2.5 py-0.5 text-xs font-semibold text-fog"
+                        >
+                          {t("Ejemplo", "Example")}
+                        </span>
+                      )}
                       <span className="text-fog">{fmt(r.createdAt)}</span>
                     </span>
                     {r.sender && <span className="break-all font-mono text-xs text-fog">{defang(r.sender)}</span>}

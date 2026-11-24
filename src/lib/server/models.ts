@@ -88,6 +88,8 @@ export interface ScamReportDoc {
   meToo: ObjectId[];
   /** Idioma en que se reportó (los antiguos no lo tienen: español) */
   lang?: "es" | "en";
+  /** Alerta con un mensaje de EJEMPLO (reconstruido de un aviso oficial), no el texto real recibido. Se puede ocultar en /alertas. */
+  example?: boolean;
 }
 
 /** Empresa con plan Empresa. El encargado (owner) también ocupa un puesto. */
