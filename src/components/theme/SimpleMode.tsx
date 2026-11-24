@@ -3,6 +3,7 @@
 import { Volume2, VolumeX } from "lucide-react";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { useLang, useT } from "@/components/i18n/LangProvider";
+import { canSpeak, speak, stopSpeaking } from "@/lib/voice";
 import { SIMPLE_KEY } from "./theme";
 
 const EVENT = "ciberlearn-simple-change";
@@ -66,46 +67,46 @@ export function SimpleModeButton() {
   );
 }
 
-const canSpeak = () => typeof window !== "undefined" && "speechSynthesis" in window;
-
-/** Lee un texto en voz alta con la voz del propio navegador (no se envía a ningún servidor). */
+/** Lee un texto en voz alta con la mejor voz del dispositivo en el idioma de la página (src/lib/voice.ts). */
 export function ListenButton({ text, className = "" }: { text: string; className?: string }) {
   const supported = useSyncExternalStore(subscribe, canSpeak, () => false);
   const [speaking, setSpeaking] = useState(false);
+  const [noVoice, setNoVoice] = useState(false);
   const lang = useLang();
   const t = useT();
 
-  useEffect(() => () => {
-    if (canSpeak()) window.speechSynthesis.cancel();
-  }, []);
+  useEffect(() => () => stopSpeaking(), []);
 
   if (!supported) return null;
   return (
-    <button
-      type="button"
-      onClick={() => {
-        const synth = window.speechSynthesis;
-        if (speaking) {
-          synth.cancel();
-          setSpeaking(false);
-          return;
-        }
-        synth.cancel();
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = lang === "en" ? "en-US" : "es-US";
-        const voice = synth.getVoices().find((v) => v.lang.toLowerCase().startsWith(lang));
-        if (voice) u.voice = voice;
-        u.rate = 0.95;
-        u.onend = () => setSpeaking(false);
-        u.onerror = () => setSpeaking(false);
-        setSpeaking(true);
-        synth.speak(u);
-      }}
-      aria-pressed={speaking}
-      className={`inline-flex items-center gap-1.5 rounded-full border border-current/20 px-3 py-1 text-xs font-semibold ${className}`}
-    >
-      {speaking ? <VolumeX className="h-3.5 w-3.5" aria-hidden /> : <Volume2 className="h-3.5 w-3.5" aria-hidden />}
-      {speaking ? t("Detener", "Stop") : t("Escuchar", "Listen")}
-    </button>
+    <span className="inline-flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        onClick={async () => {
+          if (speaking) {
+            stopSpeaking();
+            setSpeaking(false);
+            return;
+          }
+          setSpeaking(true);
+          const ok = await speak(text, lang, { rate: 0.95, onEnd: () => setSpeaking(false) });
+          setNoVoice(!ok);
+          if (!ok) setSpeaking(false);
+        }}
+        aria-pressed={speaking}
+        className={`inline-flex items-center gap-1.5 rounded-full border border-current/20 px-3 py-1 text-xs font-semibold ${className}`}
+      >
+        {speaking ? <VolumeX className="h-3.5 w-3.5" aria-hidden /> : <Volume2 className="h-3.5 w-3.5" aria-hidden />}
+        {speaking ? t("Detener", "Stop") : t("Escuchar", "Listen")}
+      </button>
+      {noVoice && (
+        <span role="status" className="text-xs text-fog">
+          {t(
+            "Tu dispositivo no tiene una voz en español. Puedes agregarla en los ajustes de idioma o voz del sistema.",
+            "Your device has no English voice. You can add one in your system’s language or speech settings.",
+          )}
+        </span>
+      )}
+    </span>
   );
 }

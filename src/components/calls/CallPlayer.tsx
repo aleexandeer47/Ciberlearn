@@ -7,6 +7,7 @@ import { finishCall } from "@/app/actions/calls";
 import { useLang, useT } from "@/components/i18n/LangProvider";
 import type { CallEnd, CallScenario } from "@/lib/calls";
 import { sfx } from "@/lib/sfx";
+import { speak as speakText, stopSpeaking } from "@/lib/voice";
 
 type Phase = "pick" | "ringing" | "talking" | "end";
 
@@ -23,27 +24,21 @@ export function CallPlayer({ calls, unlocked, loggedIn }: { calls: CallScenario[
   const [speaking, setSpeaking] = useState(false);
   const bottom = useRef<HTMLDivElement>(null);
 
+  const [noVoice, setNoVoice] = useState(false);
   const speak = useCallback(
     (text: string) => {
-      if (muted || typeof window === "undefined" || !("speechSynthesis" in window)) return;
-      const synth = window.speechSynthesis;
-      synth.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = lang === "en" ? "en-US" : "es-US";
-      const voice = synth.getVoices().find((v) => v.lang.toLowerCase().startsWith(lang));
-      if (voice) u.voice = voice;
-      u.rate = 1;
-      u.pitch = 0.9;
-      u.onstart = () => setSpeaking(true);
-      u.onend = u.onerror = () => setSpeaking(false);
-      synth.speak(u);
+      if (muted) return;
+      // Voz del idioma de la página, la más natural del dispositivo (src/lib/voice.ts)
+      void speakText(text, lang, { pitch: 0.9, onStart: () => setSpeaking(true), onEnd: () => setSpeaking(false) }).then((ok) =>
+        setNoVoice(!ok),
+      );
     },
     [lang, muted],
   );
 
   useEffect(() => {
     return () => {
-      window.speechSynthesis?.cancel();
+      stopSpeaking();
       sfx.stopRing();
     };
   }, []);
@@ -72,7 +67,7 @@ export function CallPlayer({ calls, unlocked, loggedIn }: { calls: CallScenario[
   };
 
   const finish = async (outcome: CallEnd, note: string) => {
-    window.speechSynthesis?.cancel();
+    stopSpeaking();
     setSpeaking(false);
     // Se corta la llamada (tono de colgado) y luego suena si esquivaste o picaste el anzuelo.
     sfx.hangup();
@@ -193,6 +188,14 @@ export function CallPlayer({ calls, unlocked, loggedIn }: { calls: CallScenario[
                 {ch.label[lang]}
               </button>
             ))}
+          {phase === "talking" && noVoice && !muted && (
+            <p role="status" className="text-xs text-white/60">
+              {t(
+                "Tu dispositivo no tiene una voz en español: lee la conversación en pantalla. Puedes agregar una voz en los ajustes del sistema.",
+                "Your device has no English voice: read the conversation on screen. You can add a voice in your system settings.",
+              )}
+            </p>
+          )}
           {phase === "talking" && (
             <div className="flex justify-between pt-1">
               <button type="button" onClick={() => setMuted((m) => !m)} className="inline-flex items-center gap-1.5 text-xs text-white/60 hover:text-white">
