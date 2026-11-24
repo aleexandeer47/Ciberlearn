@@ -7,7 +7,9 @@ import type { Lang } from "@/lib/i18n";
  * reportado. Sirve en el servidor (lista de alertas) y en el navegador (después de reportar).
  */
 export function AlertSignals({ text, sender = "", lang, compact = false }: { text: string; sender?: string; lang: Lang; compact?: boolean }) {
-  const res = checkMessage(`${sender}\n${text}`);
+  // Solo el mensaje: los consejos que agrega la moderación ("Qué hacer: no des tu tarjeta…") no son parte de la estafa
+  const message = text.split(/\n\s*(?:Qué hacer|What to do|Fuente|Source):/)[0];
+  const res = checkMessage(`${sender}\n${message}`);
   const L = FLAG_TEXT[lang];
   const en = lang === "en";
   if (res.flags.length === 0)
