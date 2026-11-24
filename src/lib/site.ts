@@ -22,12 +22,14 @@ export const SITE = {
   /**
    * Identificación del proveedor que exige la Ley de Protección al Consumidor de El Salvador
    * (art. 4 letra q) para vender en línea. Se muestra en /terminos; los campos vacíos no aparecen.
-   * COMPLÉTALOS antes de vender: nombre o razón social, NIT, dirección y teléfono.
+   * Son datos personales: NO van aquí (el repositorio es público). Se leen de las variables de
+   * entorno PROVIDER_LEGAL_NAME, PROVIDER_NIT, PROVIDER_ADDRESS y PROVIDER_PHONE
+   * (.env.local en tu computadora y Environment Variables en Vercel).
    */
   provider: {
-    legalName: "",
-    nit: "",
-    address: "",
-    phone: "",
+    legalName: process.env.PROVIDER_LEGAL_NAME ?? "",
+    nit: process.env.PROVIDER_NIT ?? "",
+    address: process.env.PROVIDER_ADDRESS ?? "",
+    phone: process.env.PROVIDER_PHONE ?? "",
   },
 } as const;
