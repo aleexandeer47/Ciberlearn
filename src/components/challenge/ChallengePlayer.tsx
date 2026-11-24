@@ -7,6 +7,7 @@ import { submitChallenge, type ChallengeResult } from "@/app/actions/challenge";
 import { useT } from "@/components/i18n/LangProvider";
 import { MessageCard, type MessageChannel } from "@/components/MessageCard";
 import { ShareButtons } from "@/components/share/ShareButtons";
+import { sfx } from "@/lib/sfx";
 import { SITE } from "@/lib/site";
 
 export interface PublicChallengeItem {
@@ -50,10 +51,16 @@ export function ChallengePlayer({
   async function choose(a: "phishing" | "legit") {
     const next = [...answers, a];
     setAnswers(next);
-    if (next.length < total) return setI(i + 1);
+    // Las respuestas se califican al final (en el servidor): mientras tanto, solo el ping de "anotado".
+    if (next.length < total) {
+      sfx.mark();
+      return setI(i + 1);
+    }
     setPhase("sending");
     const r = await submitChallenge(code, next, name);
     if (r.ok) {
+      if (r.outcome === "perdiste" || r.score < total / 2) sfx.wrong();
+      else sfx.complete();
       setRes(r);
       setPhase("done");
     } else {

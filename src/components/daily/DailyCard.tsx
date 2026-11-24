@@ -8,6 +8,7 @@ import { useT } from "@/components/i18n/LangProvider";
 import { MessageCard } from "@/components/MessageCard";
 import { ShareButtons } from "@/components/share/ShareButtons";
 import type { PublicDailyCase } from "@/lib/daily";
+import { sfx } from "@/lib/sfx";
 import { SITE } from "@/lib/site";
 
 type Done = Extract<DailyResult, { ok: true }> & { choice?: string };
@@ -50,8 +51,11 @@ export function DailyCard({
     setBusy(true);
     const r = await answerDaily(choice);
     setBusy(false);
-    if (r.ok) setDone({ ...r, choice });
-    else setError(r.error);
+    if (r.ok) {
+      if (r.correct) sfx.correct(r.streak ?? 0);
+      else sfx.wrong();
+      setDone({ ...r, choice });
+    } else setError(r.error);
   }
 
   const shownStreak = done?.streak ?? streak;

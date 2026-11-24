@@ -4,6 +4,7 @@ import { CookiePrefsLink } from "@/components/analytics/Analytics";
 import { LangSwitch } from "@/components/i18n/LangProvider";
 import { InstallApp } from "@/components/pwa/Pwa";
 import { SimpleModeToggle } from "@/components/theme/SimpleMode";
+import { SoundFooterLink, SoundToggle } from "@/components/theme/SoundToggle";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import type { T } from "@/lib/i18n";
 import { getT } from "@/lib/i18n-server";
@@ -93,7 +94,8 @@ export async function SiteHeader() {
           <LangSwitch />
           <SimpleModeToggle />
           {/* En celular no cabe todo: el tema sigue al del sistema y el botón aparece desde tableta */}
-          <span className="hidden sm:block">
+          <span className="hidden sm:flex">
+            <SoundToggle />
             <ThemeToggle />
           </span>
           <Suspense fallback={<GuestNav />}>
@@ -143,6 +145,7 @@ export async function SiteFooter() {
             {t("Contacto", "Contact")}
           </a>
           <CookiePrefsLink />
+          <SoundFooterLink />
           <InstallApp />
         </nav>
         <div className="flex flex-col gap-1 sm:flex-row sm:justify-between">

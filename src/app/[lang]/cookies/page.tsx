@@ -28,6 +28,7 @@ export async function generateMetadata(): Promise<Metadata> {
  *  - localStorage ciberlearn-visit-day    src/components/VisitBeacon.tsx
  *  - sessionStorage ciberlearn:pendingRun src/components/simulator/Summary.tsx
  *  - localStorage ciberlearn-analytics    src/components/analytics/Analytics.tsx (permiso del aviso)
+ *  - localStorage ciberlearn-sound        src/lib/sfx.ts (sonidos activados o silenciados)
  *  - cookies _ga / _ga_*                  Google Analytics, SOLO si la persona acepta en el aviso
  * Cualquier otra herramienta de terceros necesita pasar por el mismo aviso y actualizar esta página.
  */
@@ -85,6 +86,7 @@ const COPY: Record<
       { name: "ciberlearn-visit-day", kind: "Almacenamiento local", purpose: "Guarda solo la fecha de hoy, para contar tu visita una sola vez al día en el total de visitas. No te identifica.", duration: "Se reemplaza cada día", type: "Funcional" },
       { name: "ciberlearn:pendingRun", kind: "Almacenamiento de sesión", purpose: "Si juegas sin cuenta, guarda el resultado de tu ronda para sumarlo a tu progreso si te registras.", duration: "Hasta que cierres la pestaña", type: "Funcional" },
       { name: "ciberlearn-analytics", kind: "Almacenamiento local", purpose: "Recuerda si aceptaste o rechazaste la analítica en el aviso de cookies.", duration: "Hasta que la borres o cambies tu decisión", type: "Necesaria" },
+      { name: "ciberlearn-sound", kind: "Almacenamiento local", purpose: "Recuerda si silenciaste los efectos de sonido.", duration: "Hasta que la borres", type: "Preferencia" },
       { name: "_ga, _ga_*", kind: "Cookies de Google Analytics", purpose: "Solo si aceptas: distinguen visitas para contar, de forma agregada, cuántas personas usan el sitio y qué páginas ven.", duration: "Hasta 2 años", type: "Analítica (opcional)" },
     ],
     fonts: "Las fuentes tipográficas se sirven desde nuestro propio dominio, así que cargar el sitio no envía tus datos a otras empresas.",
@@ -130,6 +132,7 @@ const COPY: Record<
       { name: "ciberlearn-visit-day", kind: "Local storage", purpose: "Stores only today's date, so your visit is counted once a day in the total visits. It doesn't identify you.", duration: "Replaced every day", type: "Functional" },
       { name: "ciberlearn:pendingRun", kind: "Session storage", purpose: "If you play without an account, it keeps your round's result so it can be added to your progress if you sign up.", duration: "Until you close the tab", type: "Functional" },
       { name: "ciberlearn-analytics", kind: "Local storage", purpose: "Remembers whether you accepted or rejected analytics in the cookie notice.", duration: "Until you delete it or change your choice", type: "Necessary" },
+      { name: "ciberlearn-sound", kind: "Local storage", purpose: "Remembers whether you muted the sound effects.", duration: "Until you delete it", type: "Preference" },
       { name: "_ga, _ga_*", kind: "Google Analytics cookies", purpose: "Only if you accept: they tell visits apart to count, in aggregate, how many people use the site and which pages they view.", duration: "Up to 2 years", type: "Analytics (optional)" },
     ],
     fonts: "Fonts are served from our own domain, so loading the site doesn't send your data to other companies.",

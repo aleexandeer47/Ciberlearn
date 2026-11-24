@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { aiCheck, type AiCheckResult } from "@/app/actions/check";
 import { useLang, useT } from "@/components/i18n/LangProvider";
 import { checkMessage, FLAG_TEXT, type CheckResult } from "@/lib/checker";
+import { sfx } from "@/lib/sfx";
 
 const SAMPLES = {
   es: "Banco Izalco: su cuenta será bloqueada HOY. Verifique sus datos aquí: bancoizalco.verificar-cuenta.top y díctenos el código que le llegó por SMS.",
@@ -40,7 +41,9 @@ export function CheckerTool({ aiReady, isPro, loggedIn }: { aiReady: boolean; is
 
   const run = () => {
     setAi(null);
-    setRes(text.trim().length >= 10 ? checkMessage(text) : null);
+    const r = text.trim().length >= 10 ? checkMessage(text) : null;
+    if (r) sfx.alert(r.risk);
+    setRes(r);
   };
 
   const askAi = async () => {
@@ -78,7 +81,9 @@ export function CheckerTool({ aiReady, isPro, loggedIn }: { aiReady: boolean; is
             type="button"
             onClick={() => {
               setText(SAMPLES[lang]);
-              setRes(checkMessage(SAMPLES[lang]));
+              const r = checkMessage(SAMPLES[lang]);
+              sfx.alert(r.risk);
+              setRes(r);
               setAi(null);
             }}
             className="btn btn-ghost h-12 px-5 text-sm"

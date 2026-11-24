@@ -5,6 +5,7 @@ import { useState } from "react";
 import { finishInbox, startInbox, type FinishInbox } from "@/app/actions/inbox";
 import { useT } from "@/components/i18n/LangProvider";
 import type { InboxAction, Outcome, PublicInboxEmail } from "@/lib/inbox";
+import { sfx } from "@/lib/sfx";
 
 const ACTION_TONE: Record<InboxAction, string> = {
   reportar: "bg-[#f97316]/15 text-[#c2410c] dark:text-[#fdba74]",
@@ -69,6 +70,8 @@ export function InboxTrainer() {
   function act(a: InboxAction) {
     if (!sel) return;
     const next = { ...acts, [sel]: a };
+    if (a === "abrir") sfx.unmark();
+    else sfx.mark();
     setActs(next);
     setHoverUrl("");
     // Pasa al siguiente correo sin decidir
@@ -80,6 +83,9 @@ export function InboxTrainer() {
     setPhase("sending");
     const r = await finishInbox(session, acts);
     if (r.ok) {
+      // Si abrió algún enlace peligroso, picó el anzuelo; si no, ronda limpia.
+      if (r.clicked > 0) sfx.wrong();
+      else sfx.complete();
       setResult(r);
       setPhase("done");
     } else {

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { finishCall } from "@/app/actions/calls";
 import { useLang, useT } from "@/components/i18n/LangProvider";
 import type { CallEnd, CallScenario } from "@/lib/calls";
+import { sfx } from "@/lib/sfx";
 
 type Phase = "pick" | "ringing" | "talking" | "end";
 
@@ -43,6 +44,7 @@ export function CallPlayer({ calls, unlocked, loggedIn }: { calls: CallScenario[
   useEffect(() => {
     return () => {
       window.speechSynthesis?.cancel();
+      sfx.stopRing();
     };
   }, []);
   // Con llaves: en Chrome reciente scrollIntoView devuelve una promesa, y un efecto no puede devolver eso
@@ -56,11 +58,13 @@ export function CallPlayer({ calls, unlocked, loggedIn }: { calls: CallScenario[
     setLines([]);
     setEnd(null);
     setPhase("ringing");
+    sfx.ring();
     if ("vibrate" in navigator) navigator.vibrate?.([300, 200, 300]);
   };
 
   const answer = () => {
     if (!call) return;
+    sfx.stopRing();
     const say = call.steps.start.say[lang];
     setLines([{ who: "them", text: say }]);
     setPhase("talking");
@@ -70,6 +74,9 @@ export function CallPlayer({ calls, unlocked, loggedIn }: { calls: CallScenario[
   const finish = async (outcome: CallEnd, note: string) => {
     window.speechSynthesis?.cancel();
     setSpeaking(false);
+    // Se corta la llamada (tono de colgado) y luego suena si esquivaste o picaste el anzuelo.
+    sfx.hangup();
+    setTimeout(() => (outcome === "safe" ? sfx.correct() : sfx.wrong()), 1050);
     setPhase("end");
     setEnd({ outcome, note, xp: 0 });
     if (loggedIn && call) {

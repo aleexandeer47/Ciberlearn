@@ -6,9 +6,11 @@ import { useCallback, useEffect, useState } from "react";
 import { answerExercise, completeLesson, startLesson, type AnswerResult, type CompleteResult } from "@/app/actions/path";
 import { useLang, useT } from "@/components/i18n/LangProvider";
 import { ListenButton } from "@/components/theme/SimpleMode";
+import { SoundToggle } from "@/components/theme/SoundToggle";
 import type { T } from "@/lib/i18n";
 import type { PublicExercise } from "@/lib/path/content";
 import { fmtWait, type LivesView } from "@/lib/lives";
+import { sfx } from "@/lib/sfx";
 import { useCountUp } from "@/lib/useCountUp";
 import { Hearts } from "./Hearts";
 
@@ -65,6 +67,8 @@ export function LessonPlayer({ lesson, initialLives }: Props) {
         } else setPhase("error");
         return;
       }
+      if (r.correct) sfx.correct();
+      else sfx.wrong();
       setFb(r);
       setLives(r.lives);
       setPhase("feedback");
@@ -89,6 +93,7 @@ export function LessonPlayer({ lesson, initialLives }: Props) {
     const r = await completeLesson(lesson.id);
     setBusy(false);
     if (r.ok) {
+      sfx.complete();
       setResult(r);
       setPhase("done");
     } else setPhase("error");
@@ -181,6 +186,7 @@ export function LessonPlayer({ lesson, initialLives }: Props) {
         <div className="h-3 flex-1 overflow-hidden rounded-full bg-desk-3" role="progressbar" aria-valuenow={Math.round(progress)} aria-valuemin={0} aria-valuemax={100}>
           <div className="h-full rounded-full bg-ok transition-[width] duration-500 ease-[var(--ease-out)]" style={{ width: `${progress}%` }} />
         </div>
+        <SoundToggle />
         <Hearts lives={lives} compact />
       </div>
 

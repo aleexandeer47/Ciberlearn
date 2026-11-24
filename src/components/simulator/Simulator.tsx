@@ -9,6 +9,7 @@ import { segmentScenario } from "@/lib/scenarios/segment";
 import type { Inline, Scenario, Verdict } from "@/lib/scenarios/types";
 import { scoreScenario, type ScenarioResult } from "@/lib/scoring";
 import type { RunMode } from "@/lib/server/models";
+import { sfx } from "@/lib/sfx";
 import { useCountUp } from "@/lib/useCountUp";
 import { MessageView } from "./MessageView";
 import { ResultPanel } from "./ResultPanel";
@@ -56,6 +57,8 @@ export function Simulator({ scenarios, mode = "clasico", seconds }: Props) {
 
   const toggle = (key: string) => {
     if (revealed) return;
+    if (marked.has(key)) sfx.unmark();
+    else sfx.mark();
     setMarks((prev) => {
       const copy = [...prev];
       const next = new Set(copy[view] ?? []);
@@ -69,11 +72,14 @@ export function Simulator({ scenarios, mode = "clasico", seconds }: Props) {
   const decide = useCallback(
     (verdict: Verdict | null) => {
       if (revealed || view !== active) return;
-      setResults((prev) => [...prev, scoreScenario(scenario, segmented, marked, verdict)]);
+      const r = scoreScenario(scenario, segmented, marked, verdict);
+      if (r.verdictCorrect) sfx.correct(streak + 1);
+      else sfx.wrong();
+      setResults((prev) => [...prev, r]);
       setVerdicts((prev) => [...prev, verdict]);
       setTimes((prev) => [...prev, Math.round(performance.now() - startedAt.current)]);
     },
-    [revealed, view, active, scenario, segmented, marked],
+    [revealed, view, active, scenario, segmented, marked, streak],
   );
 
   // El reloj llama siempre a la versión más reciente de decide (con las marcas actuales).
@@ -99,8 +105,10 @@ export function Simulator({ scenarios, mode = "clasico", seconds }: Props) {
   }, [view, active, revealed, seconds]);
 
   const next = useCallback(() => {
-    if (view === scenarios.length - 1) setShowSummary(true);
-    else {
+    if (view === scenarios.length - 1) {
+      sfx.complete();
+      setShowSummary(true);
+    } else {
       setView(active);
       if (seconds) setRemaining(seconds);
     }
