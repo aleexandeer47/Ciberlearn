@@ -75,8 +75,15 @@ export function PushToggle() {
     } catch (e) {
       console.error("[push]", e);
       setState("off");
+      // Brave bloquea el servicio de notificaciones push por defecto, aunque el sitio tenga permiso
+      const brave = "brave" in navigator;
       setError(
-        t(
+        brave
+          ? t(
+              "Brave bloquea estas notificaciones por defecto. Abre brave://settings/privacy, activa “Usar los servicios de Google para mensajes push”, reinicia Brave y vuelve a tocar Activar.",
+              "Brave blocks these notifications by default. Open brave://settings/privacy, turn on “Use Google services for push messaging”, restart Brave and tap Turn on again.",
+            )
+          : t(
           "Tu navegador no permitió activar las notificaciones. Revisa que no estés en modo incógnito y que el sitio tenga permiso de notificaciones.",
           "Your browser didn't allow notifications. Make sure you're not in private mode and that the site has notification permission.",
         ),
