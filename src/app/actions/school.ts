@@ -55,7 +55,7 @@ export async function joinClass(_prev: JoinClassState, form: FormData): Promise<
     return { error: t(`Puedes estar en ${SCHOOL.classesPerStudent} clases como máximo.`, `You can be in up to ${SCHOOL.classesPerStudent} classes.`) };
 
   try {
-    await classMembers.insertOne({ _id: new ObjectId(), classId: cls._id, userId: user._id, joinedAt: new Date() });
+    await classMembers.insertOne({ _id: new ObjectId(), classId: cls._id, userId: user._id, joinedAt: new Date(), profileConsent: true });
   } catch (e) {
     if (e instanceof MongoServerError && e.code === 11000) redirect("/clase?unido=1");
     throw e;
@@ -68,6 +68,20 @@ export async function joinClass(_prev: JoinClassState, form: FormData): Promise<
     throw e;
   }
   redirect("/clase?unido=1");
+}
+
+/** Quien ya estaba en una clase autoriza que su docente vea su perfil completo (texto nuevo, se guarda). */
+export async function allowClassProfile(form: FormData) {
+  const user = await getCurrentUser();
+  const id = String(form.get("classId") ?? "");
+  if (!user || !ObjectId.isValid(id) || form.get(CLASS_CONSENT_FIELD) !== "si") return;
+  const { classes, classMembers } = await collections();
+  const cls = await classes.findOne({ _id: new ObjectId(id) }, { projection: { name: 1 } });
+  const member = cls && (await classMembers.findOne({ classId: cls._id, userId: user._id }));
+  if (!cls || !member) return;
+  await recordClassConsent({ userId: user._id, email: user.email, classId: cls._id, className: cls.name });
+  await classMembers.updateOne({ _id: member._id }, { $set: { profileConsent: true } });
+  refresh();
 }
 
 export async function leaveClass(form: FormData) {

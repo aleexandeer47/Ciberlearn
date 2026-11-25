@@ -3,11 +3,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
-import { createClass, leaveClass } from "@/app/actions/school";
+import { allowClassProfile, createClass, leaveClass } from "@/app/actions/school";
 import { JoinClassForm } from "@/components/school/JoinClassForm";
 import { PageShell } from "@/components/SiteHeader";
 import type { T } from "@/lib/i18n";
 import { getT } from "@/lib/i18n-server";
+import { CLASS_CONSENT_FIELD, CLASS_CONSENT_LABEL } from "@/lib/legal";
 import { SCHOOL } from "@/lib/school";
 import { collections } from "@/lib/server/db";
 import { getCurrentUser } from "@/lib/server/session";
@@ -26,7 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const messages = (t: T): Record<string, [string, "ok" | "bad"]> => ({
-  unido: [t("¡Listo! Ya estás en la clase. Tu docente verá tu avance.", "Done! You're in the class. Your teacher will see your progress."), "ok"],
+  unido: [t("¡Listo! Ya estás en la clase. Tu docente verá tu perfil.", "Done! You're in the class. Your teacher will see your profile."), "ok"],
   borrada: [t("La clase fue eliminada.", "The class was deleted."), "ok"],
   nombre: [t("Escribe un nombre para la clase (2 a 60 caracteres).", "Enter a class name (2 to 60 characters)."), "bad"],
   "limite-clases": [t(`Puedes tener hasta ${SCHOOL.classesPerTeacher} clases.`, `You can have up to ${SCHOOL.classesPerTeacher} classes.`), "bad"],
@@ -40,14 +41,14 @@ function Card({ children, className = "" }: { children: ReactNode; className?: s
 async function Content({ searchParams }: { searchParams: PageProps<"/[lang]/clase">["searchParams"] }) {
   await connection();
   const sp = await searchParams;
-  const [user, { t }] = await Promise.all([getCurrentUser(), getT()]);
+  const [user, { lang, t }] = await Promise.all([getCurrentUser(), getT()]);
   const MSG = messages(t);
   const key = ["unido", "borrada"].find((k) => sp[k] === "1") ?? (typeof sp.error === "string" ? sp.error : undefined);
   const notice = key ? MSG[key] : undefined;
   const code = typeof sp.codigo === "string" ? sp.codigo.slice(0, 9) : "";
 
   let teaching: { id: string; name: string; code: string; n: number }[] = [];
-  let studying: { id: string; name: string }[] = [];
+  let studying: { id: string; name: string; full: boolean }[] = [];
   if (user) {
     const { classes, classMembers } = await collections();
     const [mine, memberships] = await Promise.all([
@@ -60,7 +61,8 @@ async function Content({ searchParams }: { searchParams: PageProps<"/[lang]/clas
     const countBy = new Map(counts.map((c) => [String(c._id), c.n]));
     teaching = mine.map((c) => ({ id: c._id.toHexString(), name: c.name, code: c.code, n: countBy.get(String(c._id)) ?? 0 }));
     const joined = await classes.find({ _id: { $in: memberships.map((m) => m.classId) } }, { projection: { name: 1 } }).toArray();
-    studying = joined.map((c) => ({ id: c._id.toHexString(), name: c.name }));
+    const fullBy = new Set(memberships.filter((m) => m.profileConsent).map((m) => String(m.classId)));
+    studying = joined.map((c) => ({ id: c._id.toHexString(), name: c.name, full: fullBy.has(String(c._id)) }));
   }
 
   return (
@@ -87,14 +89,33 @@ async function Content({ searchParams }: { searchParams: PageProps<"/[lang]/clas
           {studying.length > 0 && (
             <ul className="mt-6 divide-y divide-desk-line rounded-2xl border border-desk-line">
               {studying.map((c) => (
-                <li key={c.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
-                  <span className="font-medium">{c.name}</span>
-                  <form action={leaveClass}>
-                    <input type="hidden" name="classId" value={c.id} />
-                    <button type="submit" className="text-fog hover:text-bad-text">
-                      {t("Salir", "Leave")}
-                    </button>
-                  </form>
+                <li key={c.id} className="px-4 py-3 text-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-medium">{c.name}</span>
+                    <form action={leaveClass}>
+                      <input type="hidden" name="classId" value={c.id} />
+                      <button type="submit" className="text-fog hover:text-bad-text">
+                        {t("Salir", "Leave")}
+                      </button>
+                    </form>
+                  </div>
+                  {!c.full && (
+                    // Se unió con el permiso anterior (solo nombre, lecciones, XP y racha): se le pide el nuevo
+                    <form action={allowClassProfile} className="mt-3 rounded-xl bg-field p-3 text-graphite">
+                      <input type="hidden" name="classId" value={c.id} />
+                      <p className="font-semibold text-chalk">{t("Tu docente ahora puede ver tu perfil completo", "Your teacher can now see your full profile")}</p>
+                      <label className="mt-2 flex gap-2.5 leading-snug">
+                        <input type="checkbox" name={CLASS_CONSENT_FIELD} value="si" required className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--brand)]" />
+                        <span>{CLASS_CONSENT_LABEL[lang]}</span>
+                      </label>
+                      <button type="submit" className="btn btn-primary mt-3 h-9 px-4 text-xs">
+                        {t("Autorizar", "Authorize")}
+                      </button>
+                      <p className="mt-2 text-xs text-fog">
+                        {t("Si no autorizas, tu docente solo ve tu nombre, lecciones, XP y racha.", "If you don't, your teacher only sees your name, lessons, XP and streak.")}
+                      </p>
+                    </form>
+                  )}
                 </li>
               ))}
             </ul>

@@ -156,6 +156,11 @@ export interface ClassMemberDoc {
   classId: ObjectId;
   userId: ObjectId;
   joinedAt: Date;
+  /**
+   * Autorizó que el docente vea su perfil completo (nivel, habilidades, insignias, rondas).
+   * Los que se unieron antes de 2026-11-25 aceptaron solo nombre/lecciones/XP/racha: sin esto, no se muestra.
+   */
+  profileConsent?: boolean;
 }
 
 /** Correo sospechoso que un empleado reportó y que no era un simulacro: le llega al encargado. */

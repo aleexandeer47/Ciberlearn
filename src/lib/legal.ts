@@ -18,8 +18,8 @@ export const LEGAL = {
   privacidad: {
     path: "/privacidad",
     title: { es: "Política de privacidad", en: "Privacy policy" } as L,
-    version: "2026-11-22.4",
-    updated: { es: "22 de noviembre de 2026", en: "November 22, 2026" } as L,
+    version: "2026-11-25",
+    updated: { es: "25 de noviembre de 2026", en: "November 25, 2026" } as L,
   },
   cookies: {
     path: "/cookies",
@@ -50,8 +50,8 @@ export const CLASS_CONSENT_FIELD = "acepta_clase";
 
 /** Casilla que marca un estudiante al unirse a una clase (texto exacto que ve). */
 export const CLASS_CONSENT_LABEL: L = {
-  es: "Autorizo a mi docente de esta clase a ver mi avance (nombre, lecciones, XP y racha). Puedo salir cuando quiera.",
-  en: "I allow the teacher of this class to see my progress (name, lessons, XP and streak). I can leave whenever I want.",
+  es: "Autorizo a mi docente de esta clase a ver mi perfil: nombre, nivel, XP, racha, lecciones, habilidades, insignias y mis rondas del simulador. Puedo salir cuando quiera.",
+  en: "I allow the teacher of this class to see my profile: name, level, XP, streak, lessons, skills, badges and my simulator rounds. I can leave whenever I want.",
 };
 /** Lo que se guarda: el texto de la casilla y a qué clase se refiere. */
 export const classConsentText = (clase: string, lang: Lang = "es") =>

@@ -24,10 +24,20 @@ export function JoinClassForm({ defaultCode = "" }: { defaultCode?: string }) {
           className="field text-center font-mono text-2xl uppercase tracking-[0.3em]"
         />
       </label>
-      <label className="flex gap-2.5 text-sm leading-snug text-graphite">
-        <input type="checkbox" name={CLASS_CONSENT_FIELD} value="si" required className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--brand)]" />
-        <span>{CLASS_CONSENT_LABEL[lang]}</span>
-      </label>
+      {/* Aviso de consentimiento antes de entrar: qué verá el docente */}
+      <div className="rounded-2xl border border-brand/30 bg-field p-4 text-sm leading-snug text-graphite">
+        <p className="font-semibold text-chalk">{t("Antes de unirte", "Before you join")}</p>
+        <p className="mt-1">
+          {t(
+            "Tu docente podrá entrar a tu perfil y ver tu avance. Si eres menor de edad, hazlo con permiso de tu madre, padre o tutor.",
+            "Your teacher will be able to open your profile and see your progress. If you're a minor, do it with permission from your parent or guardian.",
+          )}
+        </p>
+        <label className="mt-3 flex gap-2.5">
+          <input type="checkbox" name={CLASS_CONSENT_FIELD} value="si" required className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--brand)]" />
+          <span>{CLASS_CONSENT_LABEL[lang]}</span>
+        </label>
+      </div>
       {state.error && (
         <p role="alert" className="text-sm text-bad-text">
           {state.error}

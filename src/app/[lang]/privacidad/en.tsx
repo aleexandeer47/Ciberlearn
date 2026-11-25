@@ -185,8 +185,9 @@ export function PrivacyEn() {
           </li>
           <li>
             <strong className="text-chalk">Classes (class mode):</strong> if you join a class with its code, you allow your
-            teacher to see your name, your lessons, your XP, your streak and when you last logged in. If you’re a minor, do it
-            with permission from your parent or guardian. You can leave the class whenever you want.
+            teacher to see your profile: your name, level, XP, streak, lessons, skills, badges, your simulator rounds and when
+            you last logged in. We tell you before you join and keep a record of your permission. If you’re a minor, do it with
+            permission from your parent or guardian. You can leave the class whenever you want and your teacher stops seeing it.
           </li>
           <li>Both authorizations are recorded with the date, like all other acceptances.</li>
         </ul>

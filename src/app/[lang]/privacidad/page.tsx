@@ -216,8 +216,9 @@ export default async function PrivacidadPage() {
           </li>
           <li>
             <strong className="text-chalk">Clases (modo colegio):</strong> si te unes a una clase con su código, autorizas que
-            tu docente vea tu nombre, tus lecciones, tu XP, tu racha y cuándo entraste por última vez. Si eres menor de edad,
-            hazlo con permiso de tu madre, padre o tutor. Puedes salir de la clase cuando quieras.
+            tu docente vea tu perfil: tu nombre, nivel, XP, racha, lecciones, habilidades, insignias, tus rondas del simulador y
+            cuándo entraste por última vez. Te lo avisamos antes de unirte y guardamos tu autorización. Si eres menor de edad,
+            hazlo con permiso de tu madre, padre o tutor. Puedes salir de la clase cuando quieras y tu docente deja de verlo.
           </li>
           <li>Ambas autorizaciones quedan registradas con la fecha, como las demás aceptaciones.</li>
         </ul>

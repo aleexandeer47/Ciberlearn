@@ -40,6 +40,7 @@ async function Panel({ params }: { params: Promise<{ id: string }> }) {
     .toArray();
   const today = dayKey();
   const joinedBy = new Map(members.map((m) => [m.userId.toHexString(), m.joinedAt]));
+  const consented = new Set(members.filter((m) => m.profileConsent).map((m) => m.userId.toHexString()));
   const rows = docs
     .map((u) => ({
       id: u._id.toHexString(),
@@ -49,6 +50,7 @@ async function Panel({ params }: { params: Promise<{ id: string }> }) {
       streak: currentStreak(u.daily, today),
       last: u.lastLoginAt ?? null,
       joined: joinedBy.get(u._id.toHexString()) ?? null,
+      full: consented.has(u._id.toHexString()),
     }))
     .sort((a, b) => b.xp - a.xp);
   const avg = rows.length ? Math.round(rows.reduce((a, r) => a + (r.lessons / LESSONS.length) * 100, 0) / rows.length) : 0;
@@ -98,7 +100,7 @@ async function Panel({ params }: { params: Promise<{ id: string }> }) {
               <thead className="border-y border-desk-line bg-desk-3 text-xs text-fog">
                 <tr>
                   <th className="px-6 py-2.5 font-medium">#</th>
-                  <th className="px-3 py-2.5 font-medium">{t("Estudiante", "Student")}</th>
+                  <th className="px-3 py-2.5 font-medium">{t("Estudiante (toca para ver su perfil)", "Student (tap to see profile)")}</th>
                   <th className="px-3 py-2.5 font-medium">{t("Lecciones", "Lessons")}</th>
                   <th className="px-3 py-2.5 font-medium">XP</th>
                   <th className="px-3 py-2.5 font-medium">{t("Racha", "Streak")}</th>
@@ -110,7 +112,16 @@ async function Panel({ params }: { params: Promise<{ id: string }> }) {
                 {rows.map((r, n) => (
                   <tr key={r.id}>
                     <td className="px-6 py-3 tabular-nums text-fog">{n + 1}</td>
-                    <td className="px-3 py-3 font-medium">{r.name}</td>
+                    <td className="px-3 py-3 font-medium">
+                      <Link href={`/clase/${id}/estudiante/${r.id}`} className="hover:text-brand hover:underline">
+                        {r.name}
+                      </Link>
+                      {!r.full && (
+                        <span className="ml-2 rounded-full bg-desk-3 px-2 py-0.5 text-[10px] font-normal text-fog" title={t("Aún no autoriza que veas su perfil completo", "Hasn't authorized their full profile yet")}>
+                          {t("perfil sin autorizar", "profile not authorized")}
+                        </span>
+                      )}
+                    </td>
                     <td className="px-3 py-3 tabular-nums">
                       {r.lessons}/{LESSONS.length}
                     </td>
