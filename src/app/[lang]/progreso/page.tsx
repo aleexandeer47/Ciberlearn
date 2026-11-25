@@ -208,7 +208,8 @@ async function Dashboard() {
               {[
                 {
                   v: stats.streak,
-                  l: stats.streak === 1 ? t("día seguido", "day in a row") : t("días seguidos", "days in a row"),
+                  // Racha del SIMULADOR (días seguidos con al menos una ronda); la de la estafa del día va arriba
+                  l: stats.streak === 1 ? t("día seguido jugando el simulador", "day in a row on the simulator") : t("días seguidos jugando el simulador", "days in a row on the simulator"),
                   accent: stats.streak > 0,
                 },
                 { v: `${stats.accuracy}%`, l: t("veredictos acertados", "correct verdicts") },
@@ -217,7 +218,7 @@ async function Dashboard() {
               ].map((x) => (
                 <div key={x.l} className="rounded-2xl border border-desk-line bg-desk-2 p-4">
                   <p className="flex items-center gap-1.5 font-display text-3xl tabular-nums">
-                    {x.accent && <Flame className="h-5 w-5 text-brand" strokeWidth={1.75} aria-hidden />}
+                    {x.accent && <Crosshair className="h-5 w-5 text-brand" strokeWidth={1.75} aria-hidden />}
                     {x.v}
                   </p>
                   <p className="mt-1 text-xs text-fog">{x.l}</p>

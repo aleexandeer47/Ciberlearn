@@ -123,7 +123,7 @@ async function Profile({ params }: { params: Promise<{ id: string; uid: string }
           {[
             { v: `${lessonsDone}/${LESSONS.length}`, l: t("lecciones de la ruta", "path lessons"), icon: BookOpen },
             { v: (student.xp ?? 0).toLocaleString(loc), l: t("XP total (ranking)", "total XP (leaderboard)"), icon: Award },
-            { v: streak, l: t("días de racha", "day streak"), icon: Flame },
+            { v: streak, l: t("días de racha en la estafa del día", "day streak on the scam of the day"), icon: Flame },
             { v: stats.runs ? `${stats.accuracy}%` : "—", l: t("veredictos acertados", "correct verdicts"), icon: ShieldCheck },
           ].map((x) => (
             <div key={x.l} className="rounded-2xl border border-desk-line bg-desk-2 p-4">
