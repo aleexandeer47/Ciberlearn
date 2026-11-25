@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
-import { Simulator } from "@/components/simulator/Simulator";
+import { ClassicRound } from "@/components/simulator/ClassicRound";
 import { getT } from "@/lib/i18n-server";
-import { getScenarios } from "@/lib/scenarios/data";
+import { freeScenarios } from "@/lib/scenarios/packs";
 import { alternatesFor } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -23,7 +23,7 @@ export default async function SimuladorPage() {
     <>
       <SiteHeader />
       <main className="flex-1 px-4 py-8 sm:px-6 sm:py-12">
-        <Simulator scenarios={getScenarios(lang)} />
+        <ClassicRound pool={freeScenarios(lang)} />
       </main>
       <SiteFooter />
     </>

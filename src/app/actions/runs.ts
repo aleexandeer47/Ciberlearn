@@ -2,8 +2,7 @@
 
 import { ObjectId } from "mongodb";
 import { requestT } from "@/lib/i18n-server";
-import { MODE_INFO, scenarioById } from "@/lib/scenarios/packs";
-import { SCENARIOS } from "@/lib/scenarios/data";
+import { freeScenarios, MODE_INFO, scenarioById } from "@/lib/scenarios/packs";
 import { segmentScenario } from "@/lib/scenarios/segment";
 import type { Verdict } from "@/lib/scenarios/types";
 import { scoreScenario } from "@/lib/scoring";
@@ -20,7 +19,8 @@ export interface RunInput {
 /** isPro: para que el resumen ofrezca los modos difíciles (Pro) o el plan (gratis). */
 export type SaveRunResult = { ok: true; score: number; isPro: boolean } | { ok: false; error: string; isPro?: boolean };
 
-const FREE_IDS = new Set(SCENARIOS.map((s) => s.id));
+// Todo el banco gratuito (las rondas clásicas eligen al azar de aquí)
+const FREE_IDS = new Set(freeScenarios("es").map((s) => s.id));
 
 /**
  * Guarda una ronda. El servidor recalcula todo a partir de lo que la persona

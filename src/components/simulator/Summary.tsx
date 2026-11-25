@@ -172,7 +172,7 @@ export function Summary({
           </p>
           <div className="mt-6 flex flex-col gap-2 sm:flex-row">
             <button type="button" onClick={onRestart} className="btn btn-primary px-6 py-3">
-              {t("Repetir la prueba", "Retake the test")}
+              {t("Jugar otra ronda", "Play another round")}
             </button>
             <button type="button" onClick={share} className="btn btn-ghost px-6 py-3">
               {copied ? t("Enlace copiado", "Link copied") : t("Compartir resultado", "Share result")}

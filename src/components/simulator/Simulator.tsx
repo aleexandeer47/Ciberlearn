@@ -24,9 +24,11 @@ interface Props {
   mode?: RunMode;
   /** Segundos por mensaje (modo contrarreloj) */
   seconds?: number;
+  /** Clásico: “Jugar otra vez” arma una ronda nueva con otros mensajes */
+  onNewRound?: () => void;
 }
 
-export function Simulator({ scenarios, mode = "clasico", seconds }: Props) {
+export function Simulator({ scenarios, mode = "clasico", seconds, onNewRound }: Props) {
   const lang = useLang();
   const t = useT();
   const DIFFICULTY = ["", t("Fácil", "Easy"), t("Media", "Medium"), t("Difícil", "Hard")];
@@ -116,6 +118,7 @@ export function Simulator({ scenarios, mode = "clasico", seconds }: Props) {
   }, [view, active, scenarios.length, seconds]);
 
   const restart = () => {
+    if (onNewRound) return onNewRound();
     setResults([]);
     setVerdicts([]);
     setTimes([]);

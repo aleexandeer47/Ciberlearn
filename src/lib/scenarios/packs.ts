@@ -1,15 +1,24 @@
 import type { Lang } from "@/lib/i18n";
 import type { RunMode } from "@/lib/server/models";
 import { getScenarios } from "./data";
+import { EXTRA_SCENARIOS } from "./extra";
+import { EXTRA_SCENARIOS_EN } from "./extra.en";
 import { PRO_SCENARIOS } from "./pro";
 import { PRO_SCENARIOS_EN } from "./pro.en";
 import type { Scenario, SignalCategory } from "./types";
 
 export const getProScenarios = (lang: Lang) => (lang === "en" ? PRO_SCENARIOS_EN : PRO_SCENARIOS);
 
+/** Banco gratuito: los 10 clásicos + los extra. Cada ronda clásica elige 10 al azar (round.ts). */
+const FREE: Record<Lang, Scenario[]> = {
+  es: [...getScenarios("es"), ...EXTRA_SCENARIOS],
+  en: [...getScenarios("en"), ...EXTRA_SCENARIOS_EN],
+};
+export const freeScenarios = (lang: Lang) => FREE[lang];
+
 const ALL: Record<Lang, Scenario[]> = {
-  es: [...getScenarios("es"), ...PRO_SCENARIOS],
-  en: [...getScenarios("en"), ...PRO_SCENARIOS_EN],
+  es: [...FREE.es, ...PRO_SCENARIOS],
+  en: [...FREE.en, ...PRO_SCENARIOS_EN],
 };
 const BY_ID: Record<Lang, Map<string, Scenario>> = {
   es: new Map(ALL.es.map((s) => [s.id, s])),
@@ -45,7 +54,7 @@ export function scenariosFor(mode: RunMode, weakest?: SignalCategory | null, lan
       return getProScenarios(lang);
     case "contrarreloj":
       // Mezcla de los dos packs, ordenada por dificultad.
-      return [...ALL[lang]].sort((a, b) => a.difficulty - b.difficulty).filter((_, i) => i % 2 === 0);
+      return [...ALL[lang]].sort((a, b) => a.difficulty - b.difficulty).filter((_, i) => i % 3 === 0).slice(0, 10);
     case "entrenamiento":
       return trainingSet(weakest ?? "enlace", 6, lang);
   }
