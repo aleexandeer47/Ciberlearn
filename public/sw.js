@@ -1,13 +1,13 @@
 // Service worker de Unhooked (los nombres de caché conservan el prefijo anterior a propósito).
-// - Sin conexión: muestra la página /offline en lugar del error del navegador.
+// - Sin conexión: muestra /offline.html (un solo archivo con sus estilos dentro, para que siempre se vea bien).
 // - Archivos estáticos de Next (/_next/static, nombres con hash): se guardan para cargar más rápido.
 // - Nunca guarda páginas con datos de la persona, ni respuestas de la API o de formularios.
 // - Notificaciones: muestra el recordatorio diario y al tocarlo abre la estafa del día.
 
-const VERSION = "v2";
+const VERSION = "v3";
 const STATIC = `ciberlearn-static-${VERSION}`;
 const PAGES = `ciberlearn-pages-${VERSION}`;
-const OFFLINE = "/offline";
+const OFFLINE = "/offline.html";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(PAGES).then((c) => c.add(new Request(OFFLINE, { cache: "reload" }))));
