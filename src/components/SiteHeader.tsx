@@ -4,9 +4,7 @@ import { CookiePrefsLink } from "@/components/analytics/Analytics";
 import { AccountFallback, AccountPill, GuestLinks } from "@/components/auth/HeaderAccount";
 import { LangSwitch } from "@/components/i18n/LangProvider";
 import { InstallApp } from "@/components/pwa/Pwa";
-import { SimpleModeToggle } from "@/components/theme/SimpleMode";
-import { SoundFooterLink, SoundToggle } from "@/components/theme/SoundToggle";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { SettingsMenu } from "@/components/settings/SettingsMenu";
 import type { T } from "@/lib/i18n";
 import { getT } from "@/lib/i18n-server";
 import { LEGAL } from "@/lib/legal";
@@ -65,13 +63,9 @@ export async function SiteHeader() {
           ))}
         </nav>
         <div className="flex items-center justify-end gap-1 text-[15px] sm:gap-2">
+          {/* El idioma queda a la vista (quien llega de otro país lo busca primero); lo demás, en la tuerca */}
           <LangSwitch />
-          <SimpleModeToggle />
-          {/* El tema se puede cambiar en cualquier pantalla; el sonido, en celular, desde el pie de página */}
-          <span className="hidden sm:flex">
-            <SoundToggle />
-          </span>
-          <ThemeToggle />
+          <SettingsMenu />
           <Suspense fallback={<AccountFallback />}>
             <UserNav />
           </Suspense>
@@ -119,7 +113,6 @@ export async function SiteFooter() {
             {t("Contacto", "Contact")}
           </a>
           <CookiePrefsLink />
-          <SoundFooterLink />
           <InstallApp />
         </nav>
         <div className="flex flex-col gap-1 sm:flex-row sm:justify-between">

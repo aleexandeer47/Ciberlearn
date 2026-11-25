@@ -1,13 +1,17 @@
 /*
- * Llamadas simuladas (vishing): el “estafador” habla con la voz del navegador y la persona
- * elige qué responder. Colgar siempre está disponible y siempre es una buena respuesta.
- * Todos los nombres, bancos y números son ficticios. Gratis: la llamada del día. Pro: todas.
+ * Llamadas simuladas (vishing). Cada llamada puede ser una ESTAFA o una llamada REAL, y la persona
+ * no sabe cuál le toca hasta el final: escucha, responde y, al terminar, decide qué era.
+ * La experiencia depende de juzgar bien (ver callXp): colgar siempre ya no da puntos gratis.
+ * Todos los nombres, bancos y números son ficticios. Gratis: la llamada del día. Pro: aleatorias.
  */
 
 import type { Lang } from "./i18n";
 
 type L = Record<Lang, string>;
-export type CallEnd = "fell" | "safe";
+/** fell: cayó en la estafa · safe: se negó o colgó · ok: siguió una llamada real con normalidad · declined: ni contestó */
+export type CallEnd = "fell" | "safe" | "ok" | "declined";
+/** Lo que la persona cree que era la llamada */
+export type CallVerdict = "estafa" | "real";
 
 export interface CallChoice {
   label: L;
@@ -24,7 +28,11 @@ export interface CallStep {
 
 export interface CallScenario {
   id: string;
+  /** true: es una estafa · false: es una llamada real */
+  scam: boolean;
   title: L;
+  /** Lo que la persona sabe antes de contestar (para poder juzgar) */
+  context: L;
   caller: L;
   number: string;
   /** Qué se aprende (se muestra al final) */
@@ -37,6 +45,8 @@ const l = (es: string, en: string): L => ({ es, en });
 export const CALLS: CallScenario[] = [
   {
     id: "fraudes-banco",
+    scam: true,
+    context: l("Tienes una tarjeta de Banco Izalco.", "You have an Izalco Bank card."),
     title: l("“Departamento de fraudes” del banco", "The bank's “fraud department”"),
     caller: l("Banco Izalco · Fraudes", "Izalco Bank · Fraud"),
     number: "2200-1234",
@@ -96,6 +106,8 @@ export const CALLS: CallScenario[] = [
   },
   {
     id: "nieto",
+    scam: true,
+    context: l("Tienes un nieto que vive en otra ciudad. El número no está en tus contactos.", "You have a grandson who lives in another city. The number isn't in your contacts."),
     title: l("Tu nieto en problemas", "Your grandson in trouble"),
     caller: l("Número desconocido", "Unknown number"),
     number: "+1 (713) 555-0144",
@@ -155,6 +167,8 @@ export const CALLS: CallScenario[] = [
   },
   {
     id: "soporte-tecnico",
+    scam: true,
+    context: l("Tienes una computadora en casa y no has pedido ayuda técnica a nadie.", "You have a computer at home and haven't asked anyone for tech help."),
     title: l("Soporte técnico que te llama", "Tech support calling you"),
     caller: l("Soporte técnico", "Tech Support"),
     number: "+1 (800) 555-0199",
@@ -199,6 +213,8 @@ export const CALLS: CallScenario[] = [
   },
   {
     id: "impuestos",
+    scam: true,
+    context: l("Pagas tus impuestos cada año.", "You pay your taxes every year."),
     title: l("Deuda con la agencia de impuestos", "A debt with the tax agency"),
     caller: l("Agencia Tributaria", "Revenue Agency"),
     number: "2244-0000",
@@ -241,15 +257,187 @@ export const CALLS: CallScenario[] = [
       },
     },
   },
+  // ───────── Llamadas REALES: no todo es estafa. Se reconocen porque no piden códigos, claves,
+  // dinero ni secreto, no apuran y encajan con lo que la persona ya sabe. ─────────
+  {
+    id: "cita-clinica",
+    scam: false,
+    context: l("La semana pasada sacaste una cita con la doctora Méndez en la Clínica Los Pinos.", "Last week you booked an appointment with Dr. Méndez at Los Pinos Clinic."),
+    title: l("La clínica confirma tu cita", "The clinic confirms your appointment"),
+    caller: l("Clínica Los Pinos", "Los Pinos Clinic"),
+    number: "2250-3300",
+    lesson: l(
+      "Era real: confirmaba una cita que tú habías sacado, no pidió datos, pagos ni códigos, y no te apuró. Si dudas, igual puedes colgar y llamar tú a la clínica.",
+      "It was real: it confirmed an appointment you had booked, didn't ask for data, payments or codes, and didn't rush you. If in doubt, you can still hang up and call the clinic yourself.",
+    ),
+    steps: {
+      start: {
+        say: l(
+          "Buenos días, le llamamos de la Clínica Los Pinos para confirmar su cita con la doctora Méndez este jueves a las diez de la mañana. ¿Nos confirma su asistencia?",
+          "Good morning, this is Los Pinos Clinic calling to confirm your appointment with Dr. Méndez this Thursday at ten in the morning. Can you confirm you'll attend?",
+        ),
+        choices: [
+          { label: l("Sí, ahí estaré", "Yes, I'll be there"), next: "ok", note: l("Solo confirmaba tu cita: no pidió nada más.", "It only confirmed your appointment: it asked for nothing else.") },
+          { label: l("¿Necesitan algún dato mío?", "Do you need any of my details?"), next: "datos" },
+          {
+            label: l("Cuelgo y llamo yo a la clínica", "I hang up and call the clinic myself"),
+            next: "safe",
+            note: l("Verificar nunca está mal, aunque esta vez no hacía falta.", "Verifying is never wrong, though this time it wasn't needed."),
+          },
+        ],
+      },
+      datos: {
+        say: l(
+          "No, nada más su confirmación. Si quiere cambiar la hora, puede llamarnos al número que aparece en su tarjeta de citas.",
+          "No, just your confirmation. If you want to change the time, you can call us at the number on your appointment card.",
+        ),
+        choices: [
+          { label: l("Perfecto, confirmo", "Perfect, I confirm"), next: "ok", note: l("Te dio una forma de verificar por tu cuenta: señal de llamada real.", "It gave you a way to verify on your own: a sign of a real call.") },
+          { label: l("Igual cuelgo y llamo yo", "I'll still hang up and call myself"), next: "safe", note: l("Está bien ser precavido.", "Being careful is fine.") },
+        ],
+      },
+    },
+  },
+  {
+    id: "paquete-real",
+    scam: false,
+    context: l("Ayer compraste unos audífonos en una tienda en línea, con envío a domicilio.", "Yesterday you bought headphones from an online store, with home delivery."),
+    title: l("El repartidor de tu compra", "The courier with your order"),
+    caller: l("Repartidor · Envíos del Valle", "Courier · Valley Deliveries"),
+    number: "7012-4455",
+    lesson: l(
+      "Era real: esperabas ese paquete, ya estaba pagado y no te pidió datos ni cobros. La estafa del paquete te cobra un “envío” o te pide un código.",
+      "It was real: you were expecting that package, it was already paid for and they didn't ask for data or fees. The package scam charges you “shipping” or asks for a code.",
+    ),
+    steps: {
+      start: {
+        say: l(
+          "Hola, buenas, soy el repartidor de Envíos del Valle. Traigo un paquete a su nombre de una tienda en línea. Ya estoy por su casa, ¿me indica cuál es el portón?",
+          "Hi there, I'm the courier from Valley Deliveries. I have a package in your name from an online store. I'm near your house, which gate is yours?",
+        ),
+        choices: [
+          { label: l("Es el portón negro, ya salgo", "It's the black gate, I'm coming out"), next: "ok", note: l("Era tu compra y no pidió nada raro.", "It was your order and nothing odd was asked.") },
+          { label: l("¿Tengo que pagar algo?", "Do I have to pay anything?"), next: "pago" },
+          {
+            label: l("No me fío. Cuelgo.", "I don't trust it. I'm hanging up."),
+            next: "safe",
+            note: l("Sin riesgo, pero esta vez sí era tu compra.", "No risk, but this time it really was your order."),
+          },
+        ],
+      },
+      pago: {
+        say: l("No, ya está pagado en la tienda. Solo necesito que me firme de recibido.", "No, it's already paid at the store. I just need you to sign for it."),
+        choices: [
+          { label: l("Ya salgo a recibirlo", "I'm coming out to get it"), next: "ok", note: l("Ya pagado y sin códigos: era real.", "Already paid and no codes: it was real.") },
+          { label: l("Mejor cuelgo", "I'd rather hang up"), next: "safe", note: l("Sin riesgo, pero era tu paquete.", "No risk, but it was your package.") },
+        ],
+      },
+    },
+  },
+  {
+    id: "banco-real",
+    scam: false,
+    context: l("Tienes una tarjeta de Banco Izalco. Hace un rato compraste en el supermercado.", "You have an Izalco Bank card. A while ago you shopped at the supermarket."),
+    title: l("Tu banco revisa una compra", "Your bank checks a purchase"),
+    caller: l("Banco Izalco", "Izalco Bank"),
+    number: "2200-1234",
+    lesson: l(
+      "Era real: el número era el mismo que usan los estafadores, pero la diferencia está en lo que piden. El banco real solo preguntó sí o no, no pidió códigos ni PIN y te mandó a sus canales oficiales.",
+      "It was real: the number was the same one scammers use, but the difference is in what they ask. The real bank only asked yes or no, didn't ask for codes or a PIN and sent you to its official channels.",
+    ),
+    steps: {
+      start: {
+        say: l(
+          "Buenas tardes, le saluda Carlos, de Banco Izalco. Vimos una compra de cincuenta y dos dólares en un supermercado con su tarjeta. ¿La reconoce? No necesito ningún dato suyo, solo un sí o un no.",
+          "Good afternoon, this is Carlos from Izalco Bank. We saw a fifty-two-dollar purchase at a supermarket on your card. Do you recognize it? I don't need any of your details, just a yes or no.",
+        ),
+        choices: [
+          { label: l("Sí, fui yo", "Yes, that was me"), next: "ok", note: l("Coincidía con tu compra y no pidió nada.", "It matched your purchase and asked for nothing.") },
+          { label: l("No la reconozco", "I don't recognize it"), next: "bloqueo" },
+          {
+            label: l("Cuelgo y llamo al número de mi tarjeta", "I hang up and call the number on my card"),
+            next: "safe",
+            note: l("La mejor costumbre: el banco te lo habría confirmado.", "The best habit: the bank would have confirmed it."),
+          },
+        ],
+      },
+      bloqueo: {
+        say: l(
+          "Entendido, ya bloqueé la tarjeta. Para la reposición visite una agencia o llame al número de atrás de su tarjeta. Recuerde: nunca le pediremos códigos ni su PIN.",
+          "Understood, I've blocked the card. For a replacement, visit a branch or call the number on the back of your card. Remember: we'll never ask for codes or your PIN.",
+        ),
+        choices: [
+          { label: l("Gracias, iré a la agencia", "Thanks, I'll go to the branch"), next: "ok", note: l("Te mandó a sus canales oficiales: señal de llamada real.", "It sent you to official channels: a sign of a real call.") },
+          { label: l("Cuelgo y llamo yo para confirmar", "I hang up and call to confirm"), next: "safe", note: l("Muy bien hecho, aunque era el banco.", "Well done, even though it was the bank.") },
+        ],
+      },
+    },
+  },
+  {
+    id: "hija-real",
+    scam: false,
+    context: l("Tu hija Ana te llama desde su número de siempre, guardado en tus contactos.", "Your daughter Ana is calling from her usual number, saved in your contacts."),
+    title: l("Tu hija te llama", "Your daughter calls you"),
+    caller: l("Ana (hija)", "Ana (daughter)"),
+    number: "7788-0012",
+    lesson: l(
+      "Era real: llamó desde su número guardado, no pidió dinero ni secreto, y supo la palabra clave de la familia. Desconfiar de todo tampoco ayuda: fíjate en lo que te piden.",
+      "It was real: she called from her saved number, didn't ask for money or secrecy, and knew the family code word. Distrusting everything doesn't help either: look at what they ask for.",
+    ),
+    steps: {
+      start: {
+        say: l(
+          "¡Hola, mamá! Ya voy saliendo del trabajo. ¿Necesitas que pase comprando algo para la cena?",
+          "Hi, mom! I'm just leaving work. Do you need me to pick up anything for dinner?",
+        ),
+        choices: [
+          { label: l("Sí, trae pan y leche, gracias", "Yes, bring bread and milk, thanks"), next: "ok", note: l("Una llamada normal: nada que pedir ni que esconder.", "A normal call: nothing to ask for and nothing to hide.") },
+          { label: l("¿Segura que eres tú?", "Are you sure it's you?"), next: "prueba" },
+          { label: l("Cuelgo y la llamo yo", "I hang up and call her back"), next: "safe", note: l("Sin riesgo: te habría contestado ella.", "No risk: she would have answered.") },
+        ],
+      },
+      prueba: {
+        say: l(
+          "¡Ja, ja, claro, mamá! Te llamo de mi número de siempre. ¿Quieres la palabra de la familia? Es “mango”.",
+          "Ha, of course, mom! I'm calling from my usual number. Want the family code word? It's “mango”.",
+        ),
+        choices: [
+          { label: l("Ah, sí eres tú. Trae pan.", "Oh, it is you. Bring bread."), next: "ok", note: l("Supo la palabra clave: buena costumbre familiar.", "She knew the code word: a good family habit.") },
+          { label: l("Igual cuelgo y te llamo", "I'll still hang up and call you"), next: "safe", note: l("Sin riesgo, aunque era ella.", "No risk, though it was her.") },
+        ],
+      },
+    },
+  },
 ];
 
 export const CALL_BY_ID = new Map(CALLS.map((c) => [c.id, c]));
+
+export const CALL_XP = { right: 20, wrongVerdict: 8, fell: 5, declined: 2, perDay: 3 } as const;
+
+/**
+ * XP de una llamada: lo que se premia es JUZGAR bien, no colgar.
+ *  - Caer en una estafa: 5 · Rechazar sin escuchar: 2
+ *  - Terminar sin caer y adivinar qué era: 20; equivocarse: 8
+ */
+export function callXp(call: Pick<CallScenario, "scam">, outcome: CallEnd, verdict: CallVerdict | null): number {
+  if (outcome === "declined") return CALL_XP.declined;
+  if (outcome === "fell") return CALL_XP.fell;
+  const right = verdict !== null && (verdict === "estafa") === call.scam;
+  return right ? CALL_XP.right : CALL_XP.wrongVerdict;
+}
 
 /** La llamada gratuita del día (la misma para todos ese día). */
 export function callOfDay(day: string) {
   const [y, m, d] = day.split("-").map(Number);
   const n = Math.floor((Date.UTC(y, m - 1, d) - Date.UTC(2026, 0, 1)) / 864e5);
-  return CALLS[((n % CALLS.length) + CALLS.length) % CALLS.length];
+  // Salto coprimo con el total: recorre todas las llamadas, pero mezclando estafas y reales
+  const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a);
+  const step = [5, 3, 7, 11, 1].find((k) => gcd(k, CALLS.length) === 1)!;
+  return CALLS[(((n * step) % CALLS.length) + CALLS.length) % CALLS.length];
 }
 
-export const CALL_XP = { safe: 20, fell: 5, perDay: 3 } as const;
+/** Una llamada al azar (sin repetir la anterior), para Pro. */
+export function randomCall(ids: string[], last?: string) {
+  const pool = ids.length > 1 ? ids.filter((id) => id !== last) : ids;
+  return CALL_BY_ID.get(pool[Math.floor(Math.random() * pool.length)])!;
+}

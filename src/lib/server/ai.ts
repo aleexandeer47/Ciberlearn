@@ -9,7 +9,8 @@ import { SITE } from "@/lib/site";
 /*
  * Chats con IA: Claude interpreta a un estafador ficticio para que la persona
  * practique a no caer, y en cada turno evalúa si la persona ya cayó o resistió.
- * Modelo configurable con AI_MODEL (por defecto el más capaz disponible).
+ * Modelo configurable con AI_MODEL. Por defecto Haiku: rápido y unas 20 veces más barato que los
+ * modelos grandes, suficiente para interpretar a un estafador y calificar respuestas.
  */
 
 /**
@@ -17,7 +18,7 @@ import { SITE } from "@/lib/site";
  * Mientras tanto la página muestra los escenarios con el aviso de "próximamente".
  */
 export const aiEnabled = () => process.env.AI_CHAT_ENABLED === "true" && !!process.env.ANTHROPIC_API_KEY;
-const model = () => process.env.AI_MODEL || "claude-opus-5-5";
+const model = () => process.env.AI_MODEL || "claude-haiku-5-5";
 
 let client: Anthropic | null = null;
 const getClient = () => (client ??= new Anthropic());

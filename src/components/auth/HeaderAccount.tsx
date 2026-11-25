@@ -87,6 +87,13 @@ export function AccountPill({ initial, pro, remember = false }: Hint & { remembe
   );
 }
 
+/** Lo que este navegador recuerda de la sesión (null en el servidor, false si no hay sesión). */
+export function useAccountHint(): Hint | false | null {
+  const raw = useSyncExternalStore(noop, readRaw, () => null);
+  if (raw === null) return null;
+  return parse(raw) ?? false;
+}
+
 /** Lo que se ve mientras el servidor confirma la sesión. */
 export function AccountFallback() {
   // null en el servidor (no conoce el navegador): un espacio vacío, nunca "Entrar"

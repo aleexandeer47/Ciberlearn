@@ -15,8 +15,8 @@ export async function generateMetadata(): Promise<Metadata> {
     alternates: await alternatesFor("/llamadas"),
     title: t("Llamadas simuladas", "Simulated calls"),
     description: t(
-      "Recibe una llamada de un estafador (de mentira) y practica qué decir. Con voz, sin riesgo.",
-      "Get a call from a (pretend) scammer and practice what to say. With a real voice, risk-free.",
+      "Recibe una llamada que puede ser una estafa o real, practica qué decir y aprende a distinguirlas. Con voz, sin riesgo.",
+      "Get a call that may be a scam or real, practice what to say and learn to tell them apart. With a real voice, risk-free.",
     ),
   };
 }
@@ -26,7 +26,7 @@ async function Player() {
   await connection();
   const user = await getCurrentUser();
   const unlocked = user?.isPro ? CALLS.map((c) => c.id) : [callOfDay(dayKey()).id];
-  return <CallPlayer calls={CALLS} unlocked={unlocked} loggedIn={!!user} />;
+  return <CallPlayer unlocked={unlocked} loggedIn={!!user} isPro={!!user?.isPro} />;
 }
 
 export default async function LlamadasPage() {
@@ -38,8 +38,8 @@ export default async function LlamadasPage() {
         <h1 className="mt-2 font-display text-4xl sm:text-5xl">{t("¿Qué harías si te llaman?", "What would you do if they called?")}</h1>
         <p className="mb-10 mt-3 max-w-2xl text-lg text-fog">
           {t(
-            "Muchas estafas llegan por teléfono. Contesta, escucha al “estafador” y elige qué responder. Puedes colgar cuando quieras: casi siempre es lo mejor. Gratis: una llamada distinta cada día; con Pro, todas.",
-            "Many scams arrive by phone. Answer, listen to the “scammer” and choose what to reply. You can hang up anytime: it's almost always the best move. Free: a different call every day; with Pro, all of them.",
+            "Muchas estafas llegan por teléfono, pero no toda llamada es una estafa. Contesta, escucha y elige qué responder. Al terminar, decide si era una estafa o una llamada real: el XP depende de que aciertes. Gratis: una llamada distinta cada día; con Pro, llamadas aleatorias.",
+            "Many scams arrive by phone, but not every call is a scam. Answer, listen and choose what to reply. When it ends, decide whether it was a scam or a real call: your XP depends on getting it right. Free: a different call every day; with Pro, random calls.",
           )}
         </p>
         <Suspense fallback={<div className="h-72 animate-pulse rounded-3xl bg-desk-3" />}>

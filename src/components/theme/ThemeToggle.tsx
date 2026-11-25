@@ -62,6 +62,19 @@ function Icon({ pref }: { pref: ThemePref }) {
   );
 }
 
+/** Tema elegido (para el menú de configuración). */
+export const useThemePref = () => useSyncExternalStore(subscribe, read, () => "system" as ThemePref);
+
+/** Guarda y aplica el tema. */
+export function setThemePref(pref: ThemePref) {
+  try {
+    if (pref === "system") localStorage.removeItem(THEME_KEY);
+    else localStorage.setItem(THEME_KEY, pref);
+  } catch {}
+  apply(pref);
+  window.dispatchEvent(new Event(EVENT));
+}
+
 /** Botón que cambia entre Sistema → Claro → Oscuro. */
 export function ThemeToggle() {
   const pref = useSyncExternalStore(subscribe, read, () => "system" as ThemePref);
