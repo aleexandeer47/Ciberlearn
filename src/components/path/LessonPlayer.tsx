@@ -8,7 +8,7 @@ import { useLang, useT } from "@/components/i18n/LangProvider";
 import { ListenButton } from "@/components/theme/SimpleMode";
 import { SoundToggle } from "@/components/theme/SoundToggle";
 import type { T } from "@/lib/i18n";
-import type { PublicExercise } from "@/lib/path/content";
+import type { ExerciseChoice, PublicExercise } from "@/lib/path/content";
 import { fmtWait, type LivesView } from "@/lib/lives";
 import { sfx } from "@/lib/sfx";
 import { useCountUp } from "@/lib/useCountUp";
@@ -31,7 +31,9 @@ export function LessonPlayer({ lesson, initialLives }: Props) {
   const [phase, setPhase] = useState<Phase>("loading");
   const [i, setI] = useState(0);
   const [lives, setLives] = useState(initialLives);
-  const [choice, setChoice] = useState<string | number | null>(null);
+  const [choice, setChoice] = useState<ExerciseChoice | null>(null);
+  // Selección en curso de los ejercicios interactivos (partes tocadas / pasos en orden)
+  const [picks, setPicks] = useState<number[]>([]);
   const [fb, setFb] = useState<AnswerResult | null>(null);
   const [result, setResult] = useState<CompleteResult | null>(null);
   const [busy, setBusy] = useState(false);
@@ -54,7 +56,7 @@ export function LessonPlayer({ lesson, initialLives }: Props) {
   }, [lesson.id]);
 
   const submit = useCallback(
-    async (c: string | number) => {
+    async (c: ExerciseChoice) => {
       if (busy || phase !== "playing") return;
       setBusy(true);
       setChoice(c);
@@ -85,6 +87,7 @@ export function LessonPlayer({ lesson, initialLives }: Props) {
     if (i + 1 < total) {
       setI(i + 1);
       setChoice(null);
+      setPicks([]);
       setFb(null);
       setPhase("playing");
       return;
@@ -110,6 +113,15 @@ export function LessonPlayer({ lesson, initialLives }: Props) {
         if (ex.kind === "veredicto") {
           if (e.key.toLowerCase() === "p") submit("phishing");
           if (e.key.toLowerCase() === "l") submit("legit");
+        } else if (ex.kind === "senales" || ex.kind === "ordenar") {
+          // Los números tocan/eligen; Enter comprueba
+          const n = Number(e.key) - 1;
+          const len = ex.kind === "senales" ? ex.parts.length : ex.items.length;
+          if (n >= 0 && n < len) setPicks((p) => (p.includes(n) ? p.filter((x) => x !== n) : [...p, n]));
+          if (e.key === "Enter" && (ex.kind === "senales" || picks.length === ex.items.length)) {
+            e.preventDefault();
+            submit(picks);
+          }
         } else {
           const n = Number(e.key) - 1;
           if (n >= 0 && n < ex.options.length) submit(n);
@@ -118,7 +130,7 @@ export function LessonPlayer({ lesson, initialLives }: Props) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [phase, ex, next, submit]);
+  }, [phase, ex, next, submit, picks]);
 
   if (phase === "no-lives") return <NoLives lives={lives} t={t} />;
   if (phase === "error")
@@ -229,6 +241,27 @@ export function LessonPlayer({ lesson, initialLives }: Props) {
                 ))}
               </div>
             </>
+          ) : ex.kind === "senales" ? (
+            <SignalsExercise
+              ex={ex}
+              picks={picks}
+              answer={Array.isArray(fb?.answer) ? fb.answer : null}
+              disabled={phase !== "playing" || busy}
+              onToggle={(n) => setPicks((p) => (p.includes(n) ? p.filter((x) => x !== n) : [...p, n]))}
+              onCheck={() => submit(picks)}
+              t={t}
+              channelLabel={CHANNEL_LABEL[lang][ex.channel]}
+            />
+          ) : ex.kind === "ordenar" ? (
+            <OrderExercise
+              ex={ex}
+              picks={picks}
+              answer={Array.isArray(fb?.answer) ? fb.answer : null}
+              disabled={phase !== "playing" || busy}
+              onToggle={(n) => setPicks((p) => (p.includes(n) ? p.filter((x) => x !== n) : [...p, n]))}
+              onCheck={() => submit(picks)}
+              t={t}
+            />
           ) : (
             <>
               <p className="eyebrow">{ex.kind === "enlace" ? t("Lee el enlace", "Read the link") : t("Elige la respuesta", "Choose the answer")}</p>
@@ -288,7 +321,157 @@ export function LessonPlayer({ lesson, initialLives }: Props) {
 
 type ChoiceState = "idle" | "picked-right" | "picked-wrong" | "was-right";
 
-function stateOf(value: string | number, choice: string | number | null, fb: AnswerResult | null): ChoiceState {
+/** "Toca las señales": el mensaje viene en partes y se tocan todas las sospechosas (o ninguna). */
+function SignalsExercise({
+  ex,
+  picks,
+  answer,
+  disabled,
+  onToggle,
+  onCheck,
+  t,
+  channelLabel,
+}: {
+  ex: Extract<PublicExercise, { kind: "senales" }>;
+  picks: number[];
+  /** Índices correctos (después de responder) */
+  answer: number[] | null;
+  disabled: boolean;
+  onToggle: (n: number) => void;
+  onCheck: () => void;
+  t: T;
+  channelLabel: string;
+}) {
+  const I = CHANNEL_ICON[ex.channel];
+  return (
+    <>
+      <p className="eyebrow">{t("Toca las señales", "Tap the signs")}</p>
+      <h1 className="mt-2 font-display text-2xl leading-snug">{t("Toca todas las partes sospechosas", "Tap every suspicious part")}</h1>
+      <p className="mt-1 text-sm text-fog">{t("Si es un mensaje real, no toques nada.", "If it's a real message, don't tap anything.")}</p>
+      <div className="preview-card mt-6 p-5">
+        <div className="flex items-center justify-between gap-2 text-xs font-semibold text-ink-3">
+          <span className="flex items-center gap-2">
+            <I className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+            {channelLabel}
+          </span>
+          <ListenButton key={ex.id} text={`${channelLabel}. ${ex.from}. ${ex.parts.join(" ")}`} className="text-ink-2" />
+        </div>
+        <p className="mt-2 break-words font-mono text-[13px] text-ink-2">{ex.from}</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {ex.parts.map((part, n) => {
+            const on = picks.includes(n);
+            const bad = answer?.includes(n);
+            // Después de responder: verde = bien marcada, ámbar = se te pasó, rojo = no era sospechosa
+            const cls = answer
+              ? bad && on
+                ? "border-ok bg-ok-soft"
+                : bad
+                  ? "border-[#f59e0b] bg-[#fef3c7] border-dashed"
+                  : on
+                    ? "border-bad bg-bad-soft line-through decoration-bad/60"
+                    : "border-transparent bg-black/5"
+              : on
+                ? "border-[#f59e0b] bg-[#fde68a]"
+                : "border-line bg-white hover:border-brand";
+            return (
+              <button
+                key={n}
+                type="button"
+                aria-pressed={on}
+                disabled={disabled}
+                onClick={() => onToggle(n)}
+                className={`rounded-xl border-2 px-3 py-2 text-left text-[15px] leading-snug text-ink transition-colors disabled:cursor-default ${cls}`}
+              >
+                {part}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      {!answer && (
+        <button type="button" onClick={onCheck} disabled={disabled} className="btn btn-primary mt-6 h-12 w-full">
+          {picks.length === 0
+            ? t("No veo nada sospechoso", "I don't see anything suspicious")
+            : t(`Comprobar (${picks.length} marcadas)`, `Check (${picks.length} marked)`)}
+        </button>
+      )}
+      {answer && (
+        <p className="mt-3 text-xs text-fog">
+          {t("Verde: bien marcada · ámbar con línea: se te pasó · tachada: no era sospechosa.", "Green: correctly marked · dashed amber: you missed it · crossed out: it wasn't suspicious.")}
+        </p>
+      )}
+    </>
+  );
+}
+
+/** "Ordena los pasos": se tocan los pasos en el orden correcto (tocar otra vez lo quita). */
+function OrderExercise({
+  ex,
+  picks,
+  answer,
+  disabled,
+  onToggle,
+  onCheck,
+  t,
+}: {
+  ex: Extract<PublicExercise, { kind: "ordenar" }>;
+  picks: number[];
+  answer: number[] | null;
+  disabled: boolean;
+  onToggle: (n: number) => void;
+  onCheck: () => void;
+  t: T;
+}) {
+  const done = picks.length === ex.items.length;
+  return (
+    <>
+      <p className="eyebrow">{t("Ordena los pasos", "Put the steps in order")}</p>
+      <h1 className="mt-2 font-display text-2xl leading-snug">{ex.prompt}</h1>
+      <p className="mt-1 text-sm text-fog">{t("Toca los pasos en orden. Tócalo otra vez para quitarlo.", "Tap the steps in order. Tap again to remove one.")}</p>
+      <ListenButton key={ex.id} text={`${ex.prompt} ${ex.items.join(". ")}`} className="mt-3 text-fog" />
+      <ul className="mt-6 grid gap-3">
+        {ex.items.map((item, n) => {
+          const pos = picks.indexOf(n);
+          const rightPos = answer ? answer.indexOf(n) : -1;
+          const ok = answer && pos === rightPos;
+          return (
+            <li key={n}>
+              <button
+                type="button"
+                disabled={disabled}
+                onClick={() => onToggle(n)}
+                className={`flex min-h-14 w-full items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left transition-[background-color,border-color,transform] duration-150 active:scale-[0.98] disabled:cursor-default ${
+                  answer ? (ok ? "border-ok bg-ok-soft text-ink" : "border-bad bg-bad-soft text-ink") : pos >= 0 ? "border-brand bg-field" : "border-desk-line bg-desk-2 hover:border-brand"
+                }`}
+              >
+                <span
+                  className={`grid h-8 w-8 shrink-0 place-items-center rounded-full font-display text-sm font-bold ${
+                    pos >= 0 ? "bg-brand text-white" : "border border-current/25 text-fog"
+                  }`}
+                >
+                  {pos >= 0 ? pos + 1 : "·"}
+                </span>
+                <span className="flex-1 font-medium">{item}</span>
+                {answer && !ok && (
+                  <span className="shrink-0 rounded-full bg-ok px-2 py-0.5 text-xs font-bold text-white">
+                    {t("va", "goes")} {rightPos + 1}.º
+                  </span>
+                )}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      {!answer && (
+        <button type="button" onClick={onCheck} disabled={disabled || !done} className="btn btn-primary mt-6 h-12 w-full disabled:opacity-50">
+          {done ? t("Comprobar el orden", "Check the order") : t(`Elige ${ex.items.length - picks.length} más`, `Pick ${ex.items.length - picks.length} more`)}
+        </button>
+      )}
+    </>
+  );
+}
+
+function stateOf(value: string | number, choice: ExerciseChoice | null, fb: AnswerResult | null): ChoiceState {
   if (!fb) return "idle";
   if (value === fb.answer) return value === choice ? "picked-right" : "was-right";
   if (value === choice) return "picked-wrong";

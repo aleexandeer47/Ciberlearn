@@ -2,7 +2,7 @@
 
 import { ObjectId } from "mongodb";
 import { requestLang } from "@/lib/i18n-server";
-import { isUnlocked, LESSON_BY_ID, LESSON_ORDER, localizeExercise, XP } from "@/lib/path/content";
+import { gradeExercise, isUnlocked, LESSON_BY_ID, LESSON_ORDER, localizeExercise, XP, type ExerciseChoice } from "@/lib/path/content";
 import { loseOne, regen, view, type LivesView } from "@/lib/lives";
 import { collections } from "@/lib/server/db";
 import { extraUnlocked, getCurrentUser } from "@/lib/server/session";
@@ -38,13 +38,13 @@ export async function startLesson(lessonId: string): Promise<{ ok: true; lives: 
 export interface AnswerResult {
   ok: true;
   correct: boolean;
-  /** "phishing" | "legit" o el índice de la opción correcta */
-  answer: string | number;
+  /** "phishing" | "legit", el índice de la opción correcta o la lista de índices (señales / orden) */
+  answer: string | number | number[];
   explain: string;
   lives: LivesView;
 }
 
-export async function answerExercise(lessonId: string, exerciseId: string, choice: string | number): Promise<AnswerResult | Fail> {
+export async function answerExercise(lessonId: string, exerciseId: string, choice: ExerciseChoice): Promise<AnswerResult | Fail> {
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: "login" };
   const lesson = LESSON_BY_ID.get(lessonId);
@@ -56,7 +56,9 @@ export async function answerExercise(lessonId: string, exerciseId: string, choic
   if (!attempt) return { ok: false, error: "invalido" };
   const doc = await users.findOne({ _id: user._id }, { projection: { lives: 1 } });
 
-  const correct = ex.kind === "veredicto" ? choice === ex.answer : Number(choice) === ex.answer;
+  // Listas: solo enteros (índices), sin repetir y del tamaño razonable
+  if (Array.isArray(choice) && (choice.length > 12 || choice.some((n) => !Number.isInteger(n) || n < 0 || n > 20))) return { ok: false, error: "invalido" };
+  const correct = gradeExercise(ex, choice);
   const already = exerciseId in attempt.answers;
 
   if (!already) {

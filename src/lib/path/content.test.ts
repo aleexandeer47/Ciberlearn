@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { FEATURES } from "@/lib/plans";
 import {
   EXERCISE_BY_ID,
+  gradeExercise,
   isUnlocked,
   LESSON_ORDER,
   LESSONS,
@@ -15,10 +16,10 @@ import { EXERCISES_EN, LESSONS_EN, UNITS_EN } from "./content.en";
 describe("contenido de la ruta", () => {
   const all = LESSONS.flatMap((l) => l.exercises);
 
-  it("tiene 8 unidades, 24 lecciones y 102 ejercicios con ids únicos", () => {
+  it("tiene 8 unidades, 24 lecciones y 126 ejercicios con ids únicos", () => {
     expect(UNITS).toHaveLength(8);
     expect(LESSONS).toHaveLength(24);
-    expect(all).toHaveLength(102);
+    expect(all).toHaveLength(126);
     expect(new Set(all.map((x) => x.id)).size).toBe(all.length);
     expect(new Set(LESSONS.map((l) => l.id)).size).toBe(LESSONS.length);
   });
@@ -41,14 +42,26 @@ describe("contenido de la ruta", () => {
   });
 
   it("las opciones no se repiten dentro de un ejercicio", () => {
-    for (const x of all) if (x.kind !== "veredicto") expect(new Set(x.options).size).toBe(x.options.length);
+    for (const x of all) {
+      if (x.kind === "opcion" || x.kind === "enlace") expect(new Set(x.options).size).toBe(x.options.length);
+      if (x.kind === "senales") expect(new Set(x.parts).size).toBe(x.parts.length);
+      if (x.kind === "ordenar") expect(new Set(x.items).size).toBe(x.items.length);
+    }
   });
 
   it("cada respuesta apunta a una opción que existe y hay explicación", () => {
     for (const x of all) {
       expect(x.explain.length).toBeGreaterThan(10);
       if (x.kind === "veredicto") expect(["phishing", "legit"]).toContain(x.answer);
-      else {
+      else if (x.kind === "senales") {
+        expect(x.parts.length, x.id).toBeGreaterThanOrEqual(3);
+        expect(new Set(x.answer).size).toBe(x.answer.length);
+        for (const i of x.answer) expect(i >= 0 && i < x.parts.length, x.id).toBe(true);
+      } else if (x.kind === "ordenar") {
+        // Una permutación completa de los pasos, y no ya ordenada (si no, no hay nada que hacer)
+        expect([...x.answer].sort(), x.id).toEqual(x.items.map((_, i) => i));
+        expect(x.answer.some((v, i) => v !== i), x.id).toBe(true);
+      } else {
         expect(x.options.length).toBeGreaterThanOrEqual(2);
         expect(x.answer).toBeGreaterThanOrEqual(0);
         expect(x.answer).toBeLessThan(x.options.length);
@@ -85,12 +98,39 @@ describe("versión en inglés", () => {
       if (ex.kind === "veredicto" && en.kind === "veredicto") {
         expect(en.text).not.toBe(ex.text);
         expect(en.channel).toBe(ex.channel);
-      } else if (ex.kind !== "veredicto" && en.kind !== "veredicto") {
+      } else if (ex.kind === "senales" && en.kind === "senales") {
+        expect(en.parts.length, ex.id).toBe(ex.parts.length);
+        expect(en.parts.join(" ")).not.toBe(ex.parts.join(" "));
+      } else if (ex.kind === "ordenar" && en.kind === "ordenar") {
+        expect(en.items.length, ex.id).toBe(ex.items.length);
+        expect(en.prompt).not.toBe(ex.prompt);
+      } else if ((ex.kind === "opcion" || ex.kind === "enlace") && (en.kind === "opcion" || en.kind === "enlace")) {
         expect(en.options.length, ex.id).toBe(ex.options.length);
         expect(en.prompt).not.toBe(ex.prompt);
         expect(!!en.context, `${ex.id} context`).toBe(!!ex.context);
       }
     }
     expect(unitsFor("en")[0].title).toBe("Who's writing to you?");
+  });
+});
+
+describe("ejercicios interactivos", () => {
+  const all = LESSONS.flatMap((l) => l.exercises);
+  it("cada lección tiene al menos un ejercicio de señales u ordenar", () => {
+    for (const l of LESSONS) expect(l.exercises.some((x) => x.kind === "senales" || x.kind === "ordenar"), l.id).toBe(true);
+  });
+  it("hay mensajes reales en “toca las señales” (respuesta: nada sospechoso)", () => {
+    expect(all.some((x) => x.kind === "senales" && x.answer.length === 0)).toBe(true);
+  });
+  it("califica señales sin importar el orden y exige el orden exacto al ordenar", () => {
+    const s = all.find((x) => x.kind === "senales" && x.answer.length > 1)!;
+    const o = all.find((x) => x.kind === "ordenar")!;
+    if (s.kind !== "senales" || o.kind !== "ordenar") throw new Error("tipos");
+    expect(gradeExercise(s, [...s.answer].reverse())).toBe(true);
+    expect(gradeExercise(s, s.answer.slice(1))).toBe(false);
+    expect(gradeExercise(s, [...s.answer, 99])).toBe(false);
+    expect(gradeExercise(o, o.answer)).toBe(true);
+    expect(gradeExercise(o, [...o.answer].reverse())).toBe(false);
+    expect(gradeExercise(o, "0")).toBe(false);
   });
 });
