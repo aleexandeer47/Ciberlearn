@@ -13,9 +13,49 @@ import { money, shortUserAgent, withinRetract } from "@/lib/adminStats";
 import { RETRACT_DAYS } from "@/lib/legal";
 import { PLANS, isPlanId } from "@/lib/plans";
 import { getAdminStats, searchAdmin } from "@/lib/server/admin";
+import { aiEnabled } from "@/lib/server/ai";
+import { emailConfigured } from "@/lib/server/email";
+import { pushEnabled } from "@/lib/server/push";
 import { collections } from "@/lib/server/db";
 import { getCurrentUser } from "@/lib/server/session";
 import { SITE } from "@/lib/site";
+
+/** Estado de la configuración del servidor (variables de entorno). Muestra nombres, nunca valores. */
+async function ServiceStatus() {
+  const { pushSubs } = await collections();
+  const subs = await pushSubs.estimatedDocumentCount();
+  const mark = (ok: boolean) => (ok ? "✓" : "✗");
+  const has = (k: string) => !!process.env[k];
+  const list = (keys: string[]) => keys.map((k) => `${k} ${mark(has(k))}`).join(" · ");
+  const rows: { name: string; ok: boolean; detail: string }[] = [
+    { name: "Correos", ok: emailConfigured(), detail: "MAILJET_API_KEY + MAILJET_SECRET_KEY (o RESEND_API_KEY) y EMAIL_FROM" },
+    {
+      name: "Recordatorio diario",
+      ok: pushEnabled() && has("CRON_SECRET"),
+      detail: `${list(["NEXT_PUBLIC_VAPID_PUBLIC_KEY", "VAPID_PRIVATE_KEY", "VAPID_SUBJECT", "CRON_SECRET"])} · ${subs} suscripciones`,
+    },
+    {
+      name: "Chats con IA",
+      ok: aiEnabled(),
+      detail: `${list(["ANTHROPIC_API_KEY"])} · AI_CHAT_ENABLED=true ${mark(process.env.AI_CHAT_ENABLED === "true")}`,
+    },
+  ];
+  return (
+    <section className="rounded-3xl border border-desk-line bg-desk-2 p-5">
+      <p className="text-sm font-semibold">Configuración del servidor</p>
+      <ul className="mt-3 grid gap-2 text-sm md:grid-cols-3">
+        {rows.map((r) => (
+          <li key={r.name} className={`rounded-2xl px-4 py-3 ${r.ok ? "bg-ok/10" : "bg-bad/10"}`}>
+            <p className={`font-semibold ${r.ok ? "text-ok" : "text-bad-text"}`}>
+              {mark(r.ok)} {r.name}
+            </p>
+            <p className="mt-1 break-words font-mono text-[11px] text-fog">{r.detail}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 export const metadata: Metadata = { title: "Administración", robots: { index: false, follow: false } };
 
@@ -108,6 +148,9 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/[lang]/ad
             {s.countingSince ? `Visitas contadas desde el ${fmtDay(s.countingSince)}` : "Aún no hay visitas contadas"}
           </p>
         </div>
+
+        {/* Servicios: si cada uno tiene su configuración en el servidor (solo sí/no, nunca los valores) */}
+        <ServiceStatus />
 
         {/* Cifras principales */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
