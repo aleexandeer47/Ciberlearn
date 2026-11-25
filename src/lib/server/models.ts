@@ -8,6 +8,8 @@ export interface UserDoc {
   email: string;
   name: string;
   passwordHash: string;
+  /** Fechas de los últimos cambios de contraseña (máximo 3 por día, ver PASSWORD_CHANGES en password.ts) */
+  passwordChanges?: Date[];
   createdAt: Date;
   /** Fin del periodo Pro pagado. null = plan gratis. */
   proUntil: Date | null;
