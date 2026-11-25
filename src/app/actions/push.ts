@@ -21,8 +21,10 @@ const valid = (s: PushSubInput) =>
   s.keys.auth.length < 100;
 
 /** Guarda la suscripción del navegador para el recordatorio diario (con o sin cuenta). */
-export async function savePushSub(sub: PushSubInput): Promise<{ ok: boolean }> {
-  if (!pushEnabled() || !valid(sub)) return { ok: false };
+/** reason: "config" = faltan las claves VAPID en el servidor · "invalid" = suscripción mal formada */
+export async function savePushSub(sub: PushSubInput): Promise<{ ok: boolean; reason?: "config" | "invalid" }> {
+  if (!pushEnabled()) return { ok: false, reason: "config" };
+  if (!valid(sub)) return { ok: false, reason: "invalid" };
   const [lang, user] = await Promise.all([requestLang(), getCurrentUser()]);
   const { pushSubs } = await collections();
   await pushSubs.updateOne(
