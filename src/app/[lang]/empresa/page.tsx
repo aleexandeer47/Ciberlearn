@@ -18,6 +18,7 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
 import { leaveOrg, rotateInvite } from "@/app/actions/org";
+import { SalesSoon } from "@/components/billing/SalesSoon";
 import { AddSeats, SeatCheckout } from "@/components/business/SeatCheckout";
 import { ReadinessGauge, ReadinessHistory, ReadinessParts } from "@/components/business/Readiness";
 import { AreaSelect, CopyLink, InviteForm, RemoveMemberButton, ReportSuspiciousForm, SimLauncher } from "@/components/business/TeamTools";
@@ -37,10 +38,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
     alternates: await alternatesFor("/empresa"),
-    title: t("Plan Empresa", "Business plan"),
+    title: t("Capacitación contra phishing para empresas", "Phishing awareness training for businesses"),
     description: t(
-      "Entrena a tu equipo contra el phishing: plan Pro para cada empleado, panel de avance, informes y simulacros.",
-      "Train your team against phishing: Pro for every employee, a progress dashboard, reports and drills.",
+      "Simulacros de phishing, capacitación contra correos falsos y suplantación de identidad, panel de avance e informes para tu equipo.",
+      "Phishing drills, training against fake emails and impersonation, a progress dashboard and reports for your team.",
     ),
   };
 }
@@ -147,6 +148,7 @@ async function Pitch({ user, error }: { user: CurrentUser | null; error?: string
                     "Create your account (or log in) to register your company. You'll be the manager and take one of the seats.",
                   )}
                 </p>
+                <SalesSoon />
                 <Link href="/registro?next=/empresa" className="btn btn-primary w-full px-6 py-3.5">
                   {t("Crear cuenta y continuar", "Sign up and continue")}
                 </Link>

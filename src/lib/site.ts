@@ -4,13 +4,15 @@ export const SITE = {
   /** Dominio oficial (sin "/" final). Es la dirección que ve Google: canónicas, sitemap y robots.txt. */
   url: "https://www.unhooked.website",
   // Título y descripción que muestra Google para la página principal ("Unhooked | <tagline>").
+  // Palabras clave principales (investigación SEO, nov. 2026): phishing, estafas por internet, estafas por WhatsApp,
+  // smishing (SMS), vishing (llamadas), correos falsos, enlaces falsos, suplantación de identidad, fraude bancario.
   tagline: {
-    es: "Aprende a detectar phishing y estafas digitales",
+    es: "Aprende a detectar phishing y estafas por internet",
     en: "Learn to spot phishing and online scams",
   },
   description: {
-    es: "Aprende a identificar correos fraudulentos, mensajes falsos, estafas por WhatsApp y ataques de phishing. Practica gratis con el simulador interactivo de Unhooked.",
-    en: "Learn to spot fraudulent emails, fake messages, WhatsApp scams and phishing attacks. Practice for free with Unhooked’s interactive simulator.",
+    es: "Aprende a detectar phishing y estafas por internet: correos falsos, estafas por WhatsApp, SMS y llamadas. Practica gratis con el simulador de Unhooked.",
+    en: "Learn to spot phishing and online scams: fake emails, WhatsApp scams, texts and calls. Practice for free with Unhooked’s interactive simulator.",
   },
   // Correo de contacto para empresas. Vacío = el botón muestra "Próximamente".
   contactEmail: "",

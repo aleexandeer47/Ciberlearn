@@ -4,6 +4,7 @@ import { MongoServerError, ObjectId } from "mongodb";
 import { BUSINESS, FAMILY } from "@/lib/business";
 import { requestLang } from "@/lib/i18n-server";
 import { PLANS, type PlanId } from "@/lib/plans";
+import { hasLaunchDiscount, LAUNCH_DISCOUNT, launchDiscountActive, salesClosedMessage, salesOpen, withLaunchDiscount } from "@/lib/sales";
 import { SITE } from "@/lib/site";
 import { collections } from "./db";
 import { env } from "./env";
@@ -28,19 +29,34 @@ async function openOrder(
 ): Promise<string> {
   const reference = `anz_${randomBytes(9).toString("hex")}`;
   const useMock = mockPaymentsEnabled();
-  const en = (await requestLang()) === "en";
+  const lang = await requestLang();
+  const en = lang === "en";
+  // Nadie paga antes de la apertura de ventas (src/lib/sales.ts)
+  if (!salesOpen()) throw new CheckoutError(salesClosedMessage(lang));
   if (!useMock && !wompiConfigured())
     throw new CheckoutError(en ? "Payments aren't set up yet." : "Los pagos todavía no están configurados.");
 
-  const { orders } = await collections();
+  const { orders, users } = await collections();
+  // Descuento de lanzamiento (src/lib/sales.ts): se calcula aquí, con el XP guardado, nunca con lo que mande el navegador
+  let amount = input.amount;
+  let title = input.title;
+  let enTitle = input.en.title;
+  if (launchDiscountActive()) {
+    const u = await users.findOne({ _id: input.userId }, { projection: { xp: 1 } });
+    if (hasLaunchDiscount(u?.xp)) {
+      amount = withLaunchDiscount(input.amount);
+      title = `${input.title} · ${LAUNCH_DISCOUNT.percent}% de lanzamiento`;
+      enTitle = `${input.en.title} · ${LAUNCH_DISCOUNT.percent}% launch discount`;
+    }
+  }
   const order: OrderDoc = {
     _id: new ObjectId(),
     reference,
     userId: input.userId,
     planId: input.planId,
-    amount: input.amount,
+    amount,
     days: input.days,
-    title: input.title,
+    title,
     ...(input.business ? { business: input.business } : {}),
     status: "pending",
     provider: useMock ? "mock" : "wompi",
@@ -53,8 +69,8 @@ async function openOrder(
 
   const link = await createPaymentLink({
     reference,
-    amount: input.amount,
-    productName: `${SITE.name} ${en ? input.en.title : input.title}`,
+    amount,
+    productName: `${SITE.name} ${en ? enTitle : title}`,
     description: en ? input.en.description : input.description,
     redirectUrl: `${env.appUrl}/pago/resultado?ref=${reference}`,
     webhookUrl: `${env.appUrl}/api/wompi/webhook`,

@@ -1,11 +1,13 @@
 import { Check } from "lucide-react";
 import type { Metadata } from "next";
+import { io } from "next/cache";
 import { Suspense } from "react";
 import { PlanPicker } from "@/components/billing/PlanPicker";
 import { PageShell } from "@/components/SiteHeader";
 import { LOCALE, type Lang } from "@/lib/i18n";
 import { getT } from "@/lib/i18n-server";
 import { FEATURES } from "@/lib/plans";
+import { hasLaunchDiscount } from "@/lib/sales";
 import { getCurrentUser } from "@/lib/server/session";
 import { alternatesFor } from "@/lib/seo";
 
@@ -29,6 +31,7 @@ function Cell({ v, lang }: { v: boolean | Record<Lang, string>; lang: Lang }) {
 
 async function CurrentPlan() {
   const [user, { lang, t }] = await Promise.all([getCurrentUser(), getT()]);
+  await io(); // el descuento de lanzamiento depende de la fecha de hoy
   return (
     <>
       {user?.isPro && (
@@ -38,7 +41,7 @@ async function CurrentPlan() {
           {user.org?.active && ` · ${t("por", "via")} ${user.org.name}`}
         </p>
       )}
-      <PlanPicker proUntil={user?.proUntil?.toISOString() ?? null} />
+      <PlanPicker proUntil={user?.proUntil?.toISOString() ?? null} discount={hasLaunchDiscount(user?.xp)} />
     </>
   );
 }

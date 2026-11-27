@@ -17,10 +17,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
     alternates: await alternatesFor("/diaria"),
-    title: t("La estafa del día", "Scam of the day"),
+    title: t("La estafa del día: ¿sabrías si este mensaje es estafa?", "Scam of the day: could you tell if this message is a scam?"),
     description: t(
-      "Un mensaje nuevo cada día: ¿es trampa o es real? Responde en 30 segundos y mantén tu racha.",
-      "A new message every day: scam or real? Answer in 30 seconds and keep your streak.",
+      "Un mensaje nuevo cada día por SMS, WhatsApp o correo: descubre si es estafa o real en 30 segundos y aprende a detectar el phishing. Gratis.",
+      "A new message every day by text, WhatsApp or email: find out if it's a scam or real in 30 seconds and learn to spot phishing. Free.",
     ),
   };
 }

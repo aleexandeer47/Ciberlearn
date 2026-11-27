@@ -12,6 +12,7 @@ import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
 import { getT } from "@/lib/i18n-server";
 import { getScenarios } from "@/lib/scenarios/data";
 import { alternatesFor } from "@/lib/seo";
+import { SITE } from "@/lib/site";
 
 const i = (n: number) => ({ "--i": n }) as CSSProperties;
 
@@ -88,8 +89,89 @@ export default async function Home() {
     },
   ];
 
+  const FAQ: [string, string][] = [
+    [
+      t("¿Qué es el phishing?", "What is phishing?"),
+      t(
+        "Es un engaño en el que alguien se hace pasar por tu banco, una empresa o un conocido para robarte contraseñas, códigos o dinero. Llega por correo, SMS, WhatsApp, redes sociales o llamadas, y casi siempre te mete prisa para que no lo pienses.",
+        "It's a trick where someone poses as your bank, a company or someone you know to steal your passwords, codes or money. It arrives by email, text, WhatsApp, social media or calls, and almost always rushes you so you don't think it through.",
+      ),
+    ],
+    [
+      t("¿Cómo saber si un mensaje es estafa?", "How can I tell if a message is a scam?"),
+      t(
+        "Desconfía si te apura, te pide códigos o claves, trae un enlace raro o te ofrece un premio que no buscaste. Revisa el dominio real del enlace (lo que va justo antes de la primera “/”) y, ante la duda, entra tú a la app o llama al número oficial. También puedes pegar el mensaje en “¿Es estafa?” y ver qué señales tiene.",
+        "Be wary if it rushes you, asks for codes or passwords, has an odd link or offers a prize you didn't look for. Check the link's real domain (right before the first “/”) and, when in doubt, open the official app yourself or call the official number. You can also paste the message into “Is it a scam?” to see its warning signs.",
+      ),
+    ],
+    [
+      t("¿Qué es el smishing y el vishing?", "What are smishing and vishing?"),
+      t(
+        "Son phishing por otros canales: el smishing llega por SMS (por ejemplo, un paquete retenido o una multa falsa) y el vishing por llamada, como el falso “gerente del banco” que te pide el código que te acaba de llegar. En Unhooked puedes practicar ambos.",
+        "They're phishing through other channels: smishing comes by text (say, a parcel on hold or a fake fine) and vishing by phone, like the fake “bank manager” asking for the code you just received. You can practice both on Unhooked.",
+      ),
+    ],
+    [
+      t("¿Cuáles son las estafas por WhatsApp más comunes?", "What are the most common WhatsApp scams?"),
+      t(
+        "El familiar con “número nuevo” que pide dinero urgente, el depósito o la remesa “por error” que quieren que devuelvas, los trabajos que cobran inscripción y el robo de cuenta pidiéndote el código de verificación. Ninguna empresa ni familiar de verdad necesita ese código.",
+        "The relative with a “new number” asking for urgent money, the deposit or remittance sent “by mistake” that they want back, jobs that charge a sign-up fee and account takeovers that ask for your verification code. No real company or relative needs that code.",
+      ),
+    ],
+    [
+      t("¿Cómo evitar el fraude bancario y la suplantación de identidad?", "How do I avoid bank fraud and identity theft?"),
+      t(
+        "Tu banco nunca te pedirá tu clave, PIN ni códigos por llamada, SMS o correo. No compartas fotos de tu documento por chat, activa la verificación en dos pasos y revisa tus movimientos desde la app oficial, no desde enlaces que te manden.",
+        "Your bank will never ask for your password, PIN or codes by phone, text or email. Don't share photos of your ID over chat, turn on two-step verification and check your activity in the official app, not through links you're sent.",
+      ),
+    ],
+    [
+      t("¿Qué hago si ya caí en una estafa?", "What should I do if I fell for a scam?"),
+      t(
+        "Llama de inmediato a tu banco para bloquear tarjetas o transferencias, cambia tus contraseñas desde el sitio oficial, avisa a tus contactos si te robaron una cuenta y presenta la denuncia ante las autoridades. Cuanto antes actúes, más fácil es frenar el daño.",
+        "Call your bank right away to block cards or transfers, change your passwords on the official site, warn your contacts if an account was stolen and report it to the authorities. The sooner you act, the easier it is to limit the damage.",
+      ),
+    ],
+  ];
+
+  // Datos estructurados (schema.org) para que Google entienda qué es Unhooked
+  const home = `${SITE.url}/${lang}`;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${SITE.url}/#organization`,
+        name: SITE.name,
+        url: SITE.url,
+        logo: `${SITE.url}/icon.svg`,
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${SITE.url}/#website`,
+        name: SITE.name,
+        url: home,
+        inLanguage: lang === "en" ? "en" : "es",
+        description: SITE.description[lang],
+        publisher: { "@id": `${SITE.url}/#organization` },
+      },
+      {
+        "@type": "WebApplication",
+        name: SITE.name,
+        url: home,
+        applicationCategory: "EducationalApplication",
+        operatingSystem: "Web",
+        inLanguage: lang === "en" ? "en" : "es",
+        description: SITE.description[lang],
+        offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+        publisher: { "@id": `${SITE.url}/#organization` },
+      },
+    ],
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <SiteHeader />
       <main className="flex-1">
         {/* Hero: pila centrada + área de producto con orbes */}
@@ -111,7 +193,7 @@ export default async function Home() {
               </h1>
               <p style={i(2)} className="mx-auto mt-6 max-w-[600px] text-lg leading-relaxed text-fog">
                 {t(
-                  `El “banco” que te bloquea la cuenta, el paquete retenido, tu hijo con número nuevo por WhatsApp. Aprende a detectar phishing e identificar correos falsos con ${SCENARIOS.length} mensajes ficticios, antes de que te pase de verdad.`,
+                  `El “banco” que te bloquea la cuenta, el paquete retenido, tu hijo con número nuevo por WhatsApp. Aprende a detectar phishing, correos falsos y estafas por internet con ${SCENARIOS.length} mensajes ficticios, antes de que te pase de verdad.`,
                   `The “bank” locking your account, the parcel on hold, your kid texting from a new number on WhatsApp. Learn to spot phishing and fake emails with ${SCENARIOS.length} fictional messages before it happens for real.`,
                 )}
               </p>
@@ -165,7 +247,7 @@ export default async function Home() {
             <div className="lg:sticky lg:top-28">
               <span className="eyebrow">{t("Herramienta gratis", "Free tool")}</span>
               <h2 className="mt-4 font-display text-4xl leading-[1.1] sm:text-5xl">
-                {t("Lee un enlace como lo leería un experto", "Read a link the way an expert would")}
+                {t("Detecta enlaces falsos como un experto", "Spot fake links like an expert")}
               </h2>
               <p className="mt-5 max-w-md text-lg leading-relaxed text-fog">
                 {t(
@@ -184,7 +266,7 @@ export default async function Home() {
             <div>
               <span className="eyebrow">{t("Lo que vas a aprender", "What you'll learn")}</span>
               <h2 className="mt-4 font-display text-4xl leading-[1.1] sm:text-5xl">
-                {t("Las 8 señales de una estafa", "The 8 signs of a scam")}
+                {t("Las 8 señales de una estafa por internet", "The 8 signs of an online scam")}
               </h2>
               <p className="mt-5 max-w-sm text-lg leading-relaxed text-fog">
                 {t(
@@ -205,12 +287,12 @@ export default async function Home() {
             <div className="mx-auto mb-12 max-w-[720px] text-center">
               <span className="eyebrow">{t("Muro de estafas", "Scam wall")}</span>
               <h2 className="mt-4 font-display text-4xl leading-[1.1] sm:text-5xl">
-                {t("Mensajes que llegan todos los días", "Messages that arrive every day")}
+                {t("Mensajes de estafa que llegan todos los días", "Scam messages that arrive every day")}
               </h2>
               <p className="mt-5 text-lg leading-relaxed text-fog">
                 {t(
-                  "Algunos son trampas y otros son reales. ¿Sabrías cuál es cuál?",
-                  "Some are traps and some are real. Could you tell which is which?",
+                  "Por WhatsApp, SMS y correo. Algunos son trampas y otros son reales. ¿Sabrías cuál es cuál?",
+                  "Over WhatsApp, text and email. Some are traps and some are real. Could you tell which is which?",
                 )}
               </p>
             </div>
@@ -260,7 +342,7 @@ export default async function Home() {
             <div>
               <p className="text-lg leading-relaxed text-graphite">
                 {t(
-                  "Capacita a tu equipo completo en español o inglés, con casos reales. Pensado para pymes, instituciones educativas y cooperativas.",
+                  "Capacitación contra el phishing y la suplantación de identidad para todo tu equipo, en español o inglés y con casos reales. Pensado para pymes, instituciones educativas y cooperativas.",
                   "Train your whole team in English or Spanish, with real-world cases. Built for small businesses, schools and nonprofits.",
                 )}
               </p>
@@ -276,6 +358,31 @@ export default async function Home() {
                 {t("Ver plan Empresa", "See Business plan")}
                 <Arrow />
               </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Preguntas frecuentes: responden a búsquedas reales sobre phishing y estafas */}
+        <section id="preguntas" className="scroll-mt-20 bg-desk-3">
+          <div className="mx-auto max-w-[900px] px-4 py-20 sm:px-6">
+            <div className="mb-10 text-center">
+              <span className="eyebrow">{t("Preguntas frecuentes", "FAQ")}</span>
+              <h2 className="mt-4 font-display text-4xl leading-[1.1] sm:text-5xl">
+                {t("Phishing y estafas por internet, explicados", "Phishing and online scams, explained")}
+              </h2>
+            </div>
+            <div className="space-y-3">
+              {FAQ.map(([q, a]) => (
+                <details key={q} className="group rounded-2xl border border-desk-line bg-desk-2 p-5 open:border-fog/40">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">
+                    <h3 className="text-base">{q}</h3>
+                    <span className="text-fog transition-transform duration-200 group-open:rotate-45" aria-hidden>
+                      +
+                    </span>
+                  </summary>
+                  <p className="mt-3 leading-relaxed text-fog">{a}</p>
+                </details>
+              ))}
             </div>
           </div>
         </section>

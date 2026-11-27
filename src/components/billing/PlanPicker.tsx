@@ -8,10 +8,12 @@ import { useFormStatus } from "react-dom";
 import { checkout } from "@/app/actions/billing";
 import { useT } from "@/components/i18n/LangProvider";
 import { ConsentChecks } from "@/components/legal/ConsentChecks";
+import { SalesSoon, useClosedLabel, useSalesOpen } from "./SalesSoon";
 import type { T } from "@/lib/i18n";
 import { BUSINESS, FAMILY } from "@/lib/business";
 import { LEGAL, RETRACT_DAYS } from "@/lib/legal";
 import { PLANS, type PlanId } from "@/lib/plans";
+import { LAUNCH_DISCOUNT, withLaunchDiscount } from "@/lib/sales";
 
 const perks = (t: T) => ({
   pro: [
@@ -35,14 +37,17 @@ const perks = (t: T) => ({
 function PayButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
   const t = useT();
+  const open = useSalesOpen();
+  const closedLabel = useClosedLabel();
   return (
-    <button type="submit" disabled={pending} className="btn btn-primary w-full px-6 py-3.5 disabled:opacity-60">
-      {pending ? t("Preparando el pago…", "Preparing payment…") : label}
+    <button type="submit" disabled={pending || !open} className="btn btn-primary w-full px-6 py-3.5 disabled:opacity-60">
+      {!open ? closedLabel : pending ? t("Preparando el pago…", "Preparing payment…") : label}
     </button>
   );
 }
 
-export function PlanPicker({ proUntil }: { proUntil: string | null }) {
+/** `discount`: la cuenta tiene hoy el descuento de lanzamiento (lo calcula el servidor; el cobro también). */
+export function PlanPicker({ proUntil, discount = false }: { proUntil: string | null; discount?: boolean }) {
   const [period, setPeriod] = useState<PlanId>("pro-anual");
   const plan = PLANS[period];
   const monthly = PLANS["pro-mensual"];
@@ -54,6 +59,7 @@ export function PlanPicker({ proUntil }: { proUntil: string | null }) {
 
   return (
     <div>
+      <SalesSoon className="mx-auto mb-6 max-w-xl" />
       {error && (
         <p role="alert" className="mx-auto mb-6 max-w-xl rounded-xl bg-bad/15 px-4 py-3 text-center text-sm text-bad-text">
           {error}
@@ -101,11 +107,14 @@ export function PlanPicker({ proUntil }: { proUntil: string | null }) {
           <h2 className="font-display text-xl font-semibold">Pro</h2>
           <p className="mt-1 text-sm text-ink-2">{t("Para quien quiere no caer nunca.", "For anyone who never wants to fall for it.")}</p>
           <p key={period} className="pop-in mt-6 flex items-end gap-1">
-            <span className="font-display text-5xl font-semibold">${plan.price}</span>
+            {discount && <span className="pb-1.5 pr-1 text-xl text-ink-3 line-through">${plan.price}</span>}
+            <span className="font-display text-5xl font-semibold">${discount ? withLaunchDiscount(plan.price).toFixed(2) : plan.price}</span>
             <span className="pb-1.5 text-ink-2">/{per(period)}</span>
           </p>
           <p className="mt-1 h-5 text-sm text-ok">
-            {period === "pro-anual" &&
+            {discount
+              ? t(`¡Tienes ${LAUNCH_DISCOUNT.percent}% de descuento de lanzamiento!`, `You get a ${LAUNCH_DISCOUNT.percent}% launch discount!`)
+              : period === "pro-anual" &&
               t(
                 `Equivale a $${(plan.price / 12).toFixed(2)} al mes en vez de $${monthly.price}`,
                 `That's $${(plan.price / 12).toFixed(2)} a month instead of $${monthly.price}`,

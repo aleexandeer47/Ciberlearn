@@ -55,6 +55,8 @@ export interface CurrentUser {
   /** Hasta cuándo tiene Pro, por la vía que dure más; null si no tiene */
   proEnds: Date | null;
   isAdmin: boolean;
+  /** XP total (para el descuento de lanzamiento) */
+  xp: number;
   org: {
     _id: ObjectId;
     kind: OrgKind;
@@ -111,6 +113,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     isPro: ends.length > 0,
     proEnds: ends.length ? new Date(Math.max(...ends.map((d) => d.getTime()))) : null,
     isAdmin: user.role === "admin",
+    xp: user.xp ?? 0,
     org,
   };
 });

@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { requestT } from "@/lib/i18n-server";
 import { isPlanId } from "@/lib/plans";
+import { salesClosedMessage, salesOpen } from "@/lib/sales";
 import { CheckoutError, failOrder, fulfillOrder, mockPaymentsEnabled, startCheckout } from "@/lib/server/billing";
 import { consentError, readConsent, recordConsents } from "@/lib/server/consent";
 import { collections } from "@/lib/server/db";
@@ -16,6 +17,7 @@ export async function checkout(form: FormData) {
 
   // Antes de cobrar: aceptación expresa de términos (con reembolsos) y privacidad, cada una por separado.
   const { lang, t } = await requestT();
+  if (!salesOpen()) redirect(`/planes?error=${encodeURIComponent(salesClosedMessage(lang))}`);
   const missing = consentError(readConsent(form), lang);
   if (missing) redirect(`/planes?error=${encodeURIComponent(missing)}`);
 

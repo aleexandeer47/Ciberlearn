@@ -18,10 +18,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
     alternates: await alternatesFor("/clase"),
-    title: t("Modo colegio", "Class mode"),
+    title: t("Modo colegio: enseña a prevenir estafas por internet", "Class mode: teach students to avoid online scams"),
     description: t(
-      "Gratis para docentes: crea tu clase, comparte un código y mira el avance de tus estudiantes.",
-      "Free for teachers: create your class, share a code and see your students' progress.",
+      "Gratis para docentes: crea tu clase, comparte un código y enseña a tus estudiantes a reconocer el phishing y las estafas por internet. Mira el avance de cada uno.",
+      "Free for teachers: create your class, share a code and teach your students to recognize phishing and online scams. See each student's progress.",
     ),
   };
 }

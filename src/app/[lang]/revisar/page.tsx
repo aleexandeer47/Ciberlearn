@@ -11,9 +11,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
     alternates: await alternatesFor("/revisar"),
-    title: t("¿Es estafa? Cómo reconocer mensajes fraudulentos", "Is it a scam? How to recognize fraudulent messages"),
+    title: t("¿Es estafa? Cómo saber si un mensaje es falso", "Is it a scam? How to tell if a message is fake"),
     description: t(
-      "Pega un correo, SMS o mensaje de WhatsApp sospechoso y descubre al instante si es fraudulento y qué señales de estafa tiene. Gratis y sin enviar tus datos.",
+      "Pega un correo, SMS o mensaje de WhatsApp sospechoso y descubre al instante si es phishing o smishing y qué señales de estafa tiene. Gratis y sin enviar tus datos.",
       "Paste a suspicious email, text or WhatsApp message and instantly see whether it’s fraudulent and which scam signs it has. Free, and your data stays with you.",
     ),
   };

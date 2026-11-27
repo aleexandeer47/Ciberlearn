@@ -13,10 +13,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
     alternates: await alternatesFor("/llamadas"),
-    title: t("Llamadas simuladas", "Simulated calls"),
+    title: t("Llamadas de estafa (vishing): practica qué responder", "Scam calls (vishing): practice what to say"),
     description: t(
-      "Recibe una llamada que puede ser una estafa o real, practica qué decir y aprende a distinguirlas. Con voz, sin riesgo.",
-      "Get a call that may be a scam or real, practice what to say and learn to tell them apart. With a real voice, risk-free.",
+      "Simulador de vishing con voz: recibe una llamada que puede ser estafa o real, practica qué decir y aprende a frenar el fraude bancario por teléfono. Sin riesgo.",
+      "A voice vishing simulator: get a call that may be a scam or real, practice what to say and learn to stop bank fraud over the phone. Risk-free.",
     ),
   };
 }

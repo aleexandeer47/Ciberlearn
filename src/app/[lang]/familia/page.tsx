@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
 import { leaveOrg, rotateInvite } from "@/app/actions/org";
+import { SalesSoon } from "@/components/billing/SalesSoon";
 import { FamilyCheckout } from "@/components/business/SeatCheckout";
 import { CopyLink, InviteForm, RemoveMemberButton } from "@/components/business/TeamTools";
 import { PageShell } from "@/components/SiteHeader";
@@ -21,9 +22,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
     alternates: await alternatesFor("/familia"),
-    title: t("Pro Familiar", "Family plan"),
+    title: t("Plan familiar: protege a tu familia de las estafas", "Family plan: protect your family from scams"),
     description: t(
-      `Protege a tu familia de las estafas: Pro para ${FAMILY.seats} personas por US$${FAMILY.price} al año, y ve su avance.`,
+      `Protege a tu familia de las estafas por WhatsApp, SMS y llamadas: Pro para ${FAMILY.seats} personas por US$${FAMILY.price} al año, y ve su avance.`,
       `Protect your family from scams: Pro for ${FAMILY.seats} people for US$${FAMILY.price} a year, and see their progress.`,
     ),
   };
@@ -118,6 +119,7 @@ async function Pitch({ user, error }: { user: CurrentUser | null; error?: string
           )}
           {!user ? (
             <>
+              <SalesSoon />
               <Link href="/registro?next=/familia" className="btn btn-primary w-full px-6 py-3.5">
                 {t("Crear cuenta y continuar", "Sign up and continue")}
               </Link>

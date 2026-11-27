@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT();
   return {
     alternates: await alternatesFor("/reto"),
-    title: t("Reta a un amigo", "Challenge a friend"),
+    title: t("Reta a un amigo: ¿quién detecta más estafas?", "Challenge a friend: who spots more scams?"),
     description: t(
       `Crea un reto de ${CHALLENGE_SIZE} mensajes, mándalo por WhatsApp y mira quién detecta más estafas.`,
       `Create a ${CHALLENGE_SIZE}-message challenge, send it over WhatsApp and see who spots the most scams.`,

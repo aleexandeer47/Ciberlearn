@@ -20,6 +20,7 @@ import { dayKey } from "@/lib/dayKey";
 import { inviteEmail, simulationEmail } from "@/lib/emails/business";
 import { requestT } from "@/lib/i18n-server";
 import { ORG_CONSENT_FIELD } from "@/lib/legal";
+import { salesClosedMessage, salesOpen } from "@/lib/sales";
 import { CheckoutError, startBusinessCheckout, startFamilyCheckout } from "@/lib/server/billing";
 import { consentError, readConsent, recordConsents, recordOrgConsent } from "@/lib/server/consent";
 import { collections } from "@/lib/server/db";
@@ -53,6 +54,8 @@ async function inBatches<T>(items: T[], size: number, fn: (x: T) => Promise<void
 export async function orgCheckout(form: FormData) {
   const [user, { lang, t }] = await Promise.all([getCurrentUser(), requestT()]);
   if (!user) redirect(`/registro?next=${encodeURIComponent("/empresa")}`);
+  // Antes de crear la empresa: si aún no abren las ventas no se crea nada
+  if (!salesOpen()) back(salesClosedMessage(lang));
   if (user.org && user.org.role !== "owner")
     back(t(`Ya eres parte de ${user.org.name}. Sal de ahí para crear tu empresa.`, `You're already part of ${user.org.name}. Leave it to create your company.`));
   if (user.org?.kind === "familia")
@@ -123,6 +126,7 @@ export async function addSeatsCheckout(form: FormData) {
   if (!owner) redirect("/empresa");
   const { user, org } = owner;
   const { lang, t } = await requestT();
+  if (!salesOpen()) back(salesClosedMessage(lang));
   if (!orgActive(org.paidUntil)) back(t("Tu plan venció: renuévalo para agregar puestos.", "Your plan expired: renew it to add seats."));
   const add = Number(form.get("add"));
   if (!Number.isInteger(add) || add < 1 || org.seats + add > BUSINESS.maxSeats)
@@ -245,6 +249,8 @@ export async function familyCheckout(form: FormData) {
   const [user, { lang, t }] = await Promise.all([getCurrentUser(), requestT()]);
   if (!user) redirect(`/registro?next=${encodeURIComponent("/familia")}`);
   const fail = (msg: string): never => redirect(`/familia?error=${encodeURIComponent(msg)}#comprar`);
+  // Antes de crear la familia: si aún no abren las ventas no se crea nada
+  if (!salesOpen()) fail(salesClosedMessage(lang));
   if (user.org && (user.org.role !== "owner" || user.org.kind !== "familia"))
     fail(t(`Ya eres parte de ${user.org.name}. Sal de ahí para crear tu plan familiar.`, `You're already part of ${user.org.name}. Leave it to create your family plan.`));
   const missing = consentError(readConsent(form), lang);

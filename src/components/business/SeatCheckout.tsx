@@ -5,18 +5,25 @@ import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { addSeatsCheckout, familyCheckout, orgCheckout } from "@/app/actions/org";
 import { useT } from "@/components/i18n/LangProvider";
+import { SalesSoon, useClosedLabel, useSalesOpen } from "@/components/billing/SalesSoon";
 import { ConsentChecks } from "@/components/legal/ConsentChecks";
 import { addSeatsPrice, BUSINESS, FAMILY, yearPrice } from "@/lib/business";
 
 const usd = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
+/** Botón de pago; mientras las ventas están cerradas muestra el anuncio y queda desactivado. */
 function PayButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
   const t = useT();
+  const open = useSalesOpen();
+  const closedLabel = useClosedLabel();
   return (
-    <button type="submit" disabled={pending} className="btn btn-primary w-full px-6 py-3.5 disabled:opacity-60">
-      {pending ? t("Preparando el pago…", "Preparing payment…") : label}
-    </button>
+    <>
+      <SalesSoon />
+      <button type="submit" disabled={pending || !open} className="btn btn-primary w-full px-6 py-3.5 disabled:opacity-60">
+        {!open ? closedLabel : pending ? t("Preparando el pago…", "Preparing payment…") : label}
+      </button>
+    </>
   );
 }
 
