@@ -156,8 +156,8 @@ function Cinematic({ mode, from, to, onClose, progress }: { mode: Mode; from: nu
   const played = useRef(new Set<string>());
   const aspect = useSyncExternalStore(subscribeResize, () => window.innerWidth / window.innerHeight, () => 1.6);
   // Desplazamiento lateral al arrastrar (en unidades del mundo)
-  const [pan, setPan] = useState(0);
-  const drag = useRef<{ x: number; pan: number } | null>(null);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const drag = useRef<{ x: number; y: number; pan: { x: number; y: number } } | null>(null);
 
   // Reloj de la animación (con “prefers-reduced-motion” se salta al final)
   useEffect(() => {
@@ -213,18 +213,27 @@ function Cinematic({ mode, from, to, onClose, progress }: { mode: Mode; from: nu
   const out = seg(time, ...tl.zoomOut);
   const inn = seg(time, ...tl.zoomIn);
   const ZIN = 4.2;
-  // Pantalla vertical (celular): el corte llena el alto y se recorre deslizando de lado
+  // Pantalla vertical (celular): el corte llena el alto. En el recorrido la cámara queda centrada en tu pez,
+  // un poco más cerca, y se explora arrastrando en cualquier dirección.
   const portrait = aspect < 1;
-  const visW = portrait ? H * aspect : W;
-  const clampX = (x: number) => (portrait ? clamp(x, visW / 2 - 40, W - visW / 2 + 40) : W / 2);
-  const focus = mode === "recorrido" ? fx : mode === "final" ? PTS[last][0] : (fx + tx) / 2;
-  const overCx = portrait ? clampX(focus + pan) : W / 2;
+  const tour = portrait && mode === "recorrido";
+  const overZoom = tour ? 1.7 : 1;
+  const halfW = (portrait ? H * aspect : W) / 2 / overZoom;
+  const halfH = H / 2 / overZoom;
+  const clampX = (x: number) => (portrait ? clamp(x, halfW - 60, W - halfW + 60) : W / 2);
+  // Se puede bajar un poco más allá del fondo para que la caja de abajo nunca tape al pez
+  const clampY = (y: number) => (tour ? clamp(y, halfH - 40, H - halfH + 140) : H / 2 + 10);
+  const focusX = mode === "recorrido" ? fx : mode === "final" ? PTS[last][0] : (fx + tx) / 2;
+  // El pez queda un poco arriba del centro (abajo está la caja con tu avance)
+  const focusY = tour ? fy + halfH * 0.3 : H / 2 + 10;
+  const overCx = portrait ? clampX(focusX + pan.x) : W / 2;
+  const overCy = clampY(focusY + pan.y);
   // Del acercamiento en `from` a la vista completa, y de ahí al acercamiento en `to`
-  const zoom = inn > 0 ? lerp(1, ZIN, inn) : lerp(ZIN, 1, out);
+  const zoom = inn > 0 ? lerp(1, ZIN, inn) : lerp(ZIN, overZoom, out);
   const cx = inn > 0 ? lerp(overCx, tx, inn) : lerp(fx, overCx, out);
-  const cy = inn > 0 ? lerp(H / 2 + 10, ty - 20, inn) : lerp(fy - 20, H / 2 + 10, out);
+  const cy = inn > 0 ? lerp(overCy, ty - 20, inn) : lerp(fy - 20, overCy, out);
   const camera = `translate(${W / 2} ${H / 2}) scale(${zoom}) translate(${-cx} ${-cy})`;
-  const canPan = portrait && mode === "recorrido" && time >= tl.zoomOut[1];
+  const canPan = tour && time >= tl.zoomOut[1];
 
   const depthNow = Math.round(lerp(ZONES[from].depth, ZONES[to].depth, travel));
   const overview = out > 0.6 && inn < 0.4 ? clamp((out - 0.6) / 0.3) * (1 - clamp(inn / 0.4)) : 0;
@@ -245,22 +254,28 @@ function Cinematic({ mode, from, to, onClose, progress }: { mode: Mode; from: nu
 
   return (
     <div
-      className={`fixed inset-0 z-[100] overflow-hidden bg-black text-white ${canPan ? "cursor-grab touch-none active:cursor-grabbing" : ""}`}
+      className={`fixed inset-0 z-[100] select-none overflow-hidden bg-black text-white ${canPan ? "cursor-grab touch-none active:cursor-grabbing" : ""}`}
       role="dialog"
       aria-modal="true"
       aria-label={t("Inmersión", "Deep dive")}
       onPointerDown={(e) => {
-        if (canPan) drag.current = { x: e.clientX, pan };
+        if (canPan) drag.current = { x: e.clientX, y: e.clientY, pan };
       }}
       onPointerMove={(e) => {
         if (!drag.current) return;
         // Píxeles a unidades del mundo (en vertical el alto del corte llena la pantalla)
-        const k = H / window.innerHeight;
-        setPan(drag.current.pan - (e.clientX - drag.current.x) * k);
+        const k = H / window.innerHeight / overZoom;
+        const d = drag.current;
+        setPan({
+          x: clampX(focusX + d.pan.x - (e.clientX - d.x) * k) - focusX,
+          y: clampY(focusY + d.pan.y - (e.clientY - d.y) * k) - focusY,
+        });
       }}
       onPointerUp={() => {
         drag.current = null;
-        setPan((p) => clampX(focus + p) - focus);
+      }}
+      onPointerCancel={() => {
+        drag.current = null;
       }}
     >
       {/* Mundo. Horizontal: siempre se ve el corte completo ("meet"). Vertical: llena el alto y se desliza ("slice") */}
@@ -345,7 +360,15 @@ function Cinematic({ mode, from, to, onClose, progress }: { mode: Mode; from: nu
           {PTS.map(([x, y], i) => (
             <g key={i}>
               <circle cx={x} cy={y} r={i <= Math.max(from, to) ? 3.4 : 2.4} fill={i === last ? "#ef4444" : i <= Math.max(from, to) ? "#fde68a" : "#78716c"} />
-              <text x={x} y={y + 15} textAnchor="middle" fontSize="8" fill="#e7e5e4" opacity={overview * (i === to || i === from || i === 7 || i === last ? 1 : 0.55)}>
+              {/* Tonga y Marianas están casi juntas: una etiqueta va a la izquierda y la otra a la derecha */}
+              <text
+                x={i === last - 1 ? x - 6 : i === last ? x + 6 : x}
+                y={y + 15}
+                textAnchor={i === last - 1 ? "end" : i === last ? "start" : "middle"}
+                fontSize="8"
+                fill="#e7e5e4"
+                opacity={overview * (i === to || i === from || i === 7 || i === last ? 1 : 0.55)}
+              >
                 {ZONES[i].name[lang]} · {fmtDepth(ZONES[i].depth)}
               </text>
             </g>
@@ -420,7 +443,7 @@ function Cinematic({ mode, from, to, onClose, progress }: { mode: Mode; from: nu
       {mode === "recorrido" && (
         <div
           className={`pointer-events-none absolute rounded-2xl border border-white/10 bg-black/70 backdrop-blur-sm ${
-            portrait ? "inset-x-3 top-14 p-3" : "bottom-6 left-6 max-w-[340px] p-4"
+            portrait ? "inset-x-3 bottom-4 p-3" : "bottom-6 left-6 max-w-[340px] p-4"
           }`}
           style={{ opacity: clamp((time - 1.2) / 0.8) }}
         >
@@ -510,8 +533,8 @@ function Cinematic({ mode, from, to, onClose, progress }: { mode: Mode; from: nu
         {done ? t("Cerrar", "Close") : t("Saltar", "Skip")}
       </button>
       {canPan && (
-        <p className="pointer-events-none absolute inset-x-0 top-5 text-center text-sm font-semibold text-white/80 drop-shadow">
-          {t("← Desliza para explorar →", "← Swipe to explore →")}
+        <p className="pointer-events-none absolute left-4 top-5 max-w-[55%] rounded-full bg-black/55 px-3 py-1.5 text-xs font-semibold text-white/85">
+          {t("Arrastra para explorar el océano", "Drag to explore the ocean")}
         </p>
       )}
       {done && mode !== "recorrido" && (
