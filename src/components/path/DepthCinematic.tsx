@@ -1,7 +1,8 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
 import { useLang, useT } from "@/components/i18n/LangProvider";
 import { sfx } from "@/lib/sfx";
 import { CREATURES, creatureFor, LEVIATHAN, type Creature } from "./Creatures";
@@ -40,15 +41,37 @@ function xAtDepth(m: number) {
   return PTS[PTS.length - 1][0];
 }
 
+/** Punto del fondo entre la zona `i` y la siguiente, a la fracción `f` (misma curva que el borde del fondo). */
+function seabedAt(i: number, f: number): [number, number] {
+  const [x0, y0] = PTS[i];
+  const [x1, y1] = i + 1 < PTS.length ? PTS[i + 1] : [975, yOf(9000)];
+  if (i + 1 >= PTS.length) return [x0 + (x1 - x0) * f * 0.6, y0 + (y1 - y0) * f * 0.6];
+  // Curva cúbica con controles (mx, y0) y (mx, y1)
+  const mx = (x0 + x1) / 2;
+  const u = 1 - f;
+  const x = u ** 3 * x0 + 3 * u * u * f * mx + 3 * u * f * f * mx + f ** 3 * x1;
+  const y = u ** 3 * y0 + 3 * u * u * f * y0 + 3 * u * f * f * y1 + f ** 3 * y1;
+  return [x, y];
+}
+
+/** Estado de cada lección por zona, para dibujarlas sobre el fondo. */
+export type LessonDot = "done" | "current" | "locked";
+export interface DiveProgress {
+  /** zonas -> lecciones */
+  zones: { state: LessonDot; boss?: boolean }[][];
+}
+
 function seabedPath() {
-  let d = `M 0 ${SURFACE - 6} L ${PTS[0][0]} ${PTS[0][1]}`;
+  // Empieza en tierra firme mucho más a la izquierda (en pantallas anchas se ve más allá del corte)
+  let d = `M -2000 ${SURFACE - 6} L 0 ${SURFACE - 6} L ${PTS[0][0]} ${PTS[0][1]}`;
   for (let i = 1; i < PTS.length; i++) {
     const [x0, y0] = PTS[i - 1];
     const [x1, y1] = PTS[i];
     const mx = (x0 + x1) / 2;
     d += ` C ${mx} ${y0} ${mx} ${y1} ${x1} ${y1}`;
   }
-  return d + ` L 975 ${yOf(9000)} L ${W} ${yOf(6000)}`;
+  // Al otro lado de la fosa el fondo vuelve a subir y sigue
+  return d + ` L 975 ${yOf(9000)} L ${W} ${yOf(6000)} C 1060 ${yOf(4500)} 1120 ${yOf(4200)} 1200 ${yOf(4300)} L 3000 ${yOf(4300)}`;
 }
 const SEABED = seabedPath();
 
@@ -79,6 +102,11 @@ const LANDMARKS = [
 
 const EVEREST = "M0 100 L30 70 L48 76 L80 30 L96 6 L104 0 L116 18 L140 40 L160 34 L200 100";
 
+const subscribeResize = (cb: () => void) => {
+  window.addEventListener("resize", cb);
+  return () => window.removeEventListener("resize", cb);
+};
+
 // ---------- Utilidades de animación ----------
 const clamp = (x: number, a = 0, b = 1) => Math.min(b, Math.max(a, x));
 const ease = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2);
@@ -103,7 +131,22 @@ function timeline(mode: Mode, mariana: boolean): Timeline {
   return { zoomOut: [0.5, 2.6], travel: [2.8, 4.6], zoomIn: [4.7, 5.9], morph: 6.1, end: 8.9 };
 }
 
-export function DepthCinematic({ mode, from, to, onClose }: { mode: Mode; from: number; to: number; onClose: () => void }) {
+export function DepthCinematic(props: { mode: Mode; from: number; to: number; onClose: () => void; progress?: DiveProgress }) {
+  // Se dibuja en su propia capa encima de toda la página (dentro de otro contenedor quedaría atrapada)
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setReady(true));
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      cancelAnimationFrame(id);
+      document.body.style.overflow = prev;
+    };
+  }, []);
+  return ready ? createPortal(<Cinematic {...props} />, document.body) : null;
+}
+
+function Cinematic({ mode, from, to, onClose, progress }: { mode: Mode; from: number; to: number; onClose: () => void; progress?: DiveProgress }) {
   const lang = useLang();
   const t = useT();
   const last = ZONES.length - 1;
@@ -111,6 +154,10 @@ export function DepthCinematic({ mode, from, to, onClose }: { mode: Mode; from: 
   const tl = timeline(mode, mariana);
   const [time, setTime] = useState(0);
   const played = useRef(new Set<string>());
+  const aspect = useSyncExternalStore(subscribeResize, () => window.innerWidth / window.innerHeight, () => 1.6);
+  // Desplazamiento lateral al arrastrar (en unidades del mundo)
+  const [pan, setPan] = useState(0);
+  const drag = useRef<{ x: number; pan: number } | null>(null);
 
   // Reloj de la animación (con “prefers-reduced-motion” se salta al final)
   useEffect(() => {
@@ -150,8 +197,15 @@ export function DepthCinematic({ mode, from, to, onClose }: { mode: Mode; from: 
 
   // ---------- Cámara ----------
   const P = (i: number) => PTS[Math.max(0, Math.min(last, i))];
-  const [fx, fy] = P(from);
-  const [tx, ty] = P(to);
+  // Lecciones sobre el fondo: cada zona reparte las suyas por su tramo de pendiente
+  const dots = (progress?.zones ?? []).flatMap((ls, z) =>
+    ls.map((l, k) => ({ ...l, z, k, p: seabedAt(z, (k + 1) / (ls.length + 1)) })),
+  );
+  const current = dots.find((d) => d.state === "current");
+  const doneCount = dots.filter((d) => d.state === "done").length;
+  // En el recorrido el pez está en la lección donde vas
+  const [fx, fy] = mode === "recorrido" && current ? current.p : P(from);
+  const [tx, ty] = mode === "recorrido" && current ? current.p : P(to);
   const travel = seg(time, ...tl.travel);
   // El pez baja por el fondo de una zona a la otra
   const fishX = lerp(fx, tx, travel);
@@ -159,11 +213,18 @@ export function DepthCinematic({ mode, from, to, onClose }: { mode: Mode; from: 
   const out = seg(time, ...tl.zoomOut);
   const inn = seg(time, ...tl.zoomIn);
   const ZIN = 4.2;
+  // Pantalla vertical (celular): el corte llena el alto y se recorre deslizando de lado
+  const portrait = aspect < 1;
+  const visW = portrait ? H * aspect : W;
+  const clampX = (x: number) => (portrait ? clamp(x, visW / 2 - 40, W - visW / 2 + 40) : W / 2);
+  const focus = mode === "recorrido" ? fx : mode === "final" ? PTS[last][0] : (fx + tx) / 2;
+  const overCx = portrait ? clampX(focus + pan) : W / 2;
   // Del acercamiento en `from` a la vista completa, y de ahí al acercamiento en `to`
   const zoom = inn > 0 ? lerp(1, ZIN, inn) : lerp(ZIN, 1, out);
-  const cx = inn > 0 ? lerp(W / 2, tx, inn) : lerp(fx, W / 2, out);
+  const cx = inn > 0 ? lerp(overCx, tx, inn) : lerp(fx, overCx, out);
   const cy = inn > 0 ? lerp(H / 2 + 10, ty - 20, inn) : lerp(fy - 20, H / 2 + 10, out);
   const camera = `translate(${W / 2} ${H / 2}) scale(${zoom}) translate(${-cx} ${-cy})`;
+  const canPan = portrait && mode === "recorrido" && time >= tl.zoomOut[1];
 
   const depthNow = Math.round(lerp(ZONES[from].depth, ZONES[to].depth, travel));
   const overview = out > 0.6 && inn < 0.4 ? clamp((out - 0.6) / 0.3) * (1 - clamp(inn / 0.4)) : 0;
@@ -183,9 +244,27 @@ export function DepthCinematic({ mode, from, to, onClose }: { mode: Mode; from: 
   const crossesSections = mode === "zona" && from === CREATURES.findIndex((c) => c.name.es === "Kraken");
 
   return (
-    <div className="fixed inset-0 z-[100] overflow-hidden bg-black text-white" role="dialog" aria-modal="true" aria-label={t("Inmersión", "Deep dive")}>
-      {/* Mundo */}
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full" aria-hidden>
+    <div
+      className={`fixed inset-0 z-[100] overflow-hidden bg-black text-white ${canPan ? "cursor-grab touch-none active:cursor-grabbing" : ""}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label={t("Inmersión", "Deep dive")}
+      onPointerDown={(e) => {
+        if (canPan) drag.current = { x: e.clientX, pan };
+      }}
+      onPointerMove={(e) => {
+        if (!drag.current) return;
+        // Píxeles a unidades del mundo (en vertical el alto del corte llena la pantalla)
+        const k = H / window.innerHeight;
+        setPan(drag.current.pan - (e.clientX - drag.current.x) * k);
+      }}
+      onPointerUp={() => {
+        drag.current = null;
+        setPan((p) => clampX(focus + p) - focus);
+      }}
+    >
+      {/* Mundo. Horizontal: siempre se ve el corte completo ("meet"). Vertical: llena el alto y se desliza ("slice") */}
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio={portrait ? "xMidYMid slice" : "xMidYMid meet"} className="absolute inset-0 h-full w-full" aria-hidden>
         <defs>
           <linearGradient id="cine-sea" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#1d6fa3" />
@@ -226,7 +305,7 @@ export function DepthCinematic({ mode, from, to, onClose }: { mode: Mode; from: 
             );
           })}
           {/* Fondo del mar con su borde iluminado */}
-          <path d={`${SEABED} V ${H + 2000} H 0 Z`} fill="#050505" />
+          <path d={`${SEABED} V ${H + 2000} H -2000 Z`} fill="#050505" />
           <path d={SEABED} fill="none" stroke="#f59e0b" strokeWidth="2.4" style={{ filter: "drop-shadow(0 0 4px #f59e0b)" }} />
           {/* El Everest cabría dentro de la Fosa de las Marianas (y aún le quedarían 2 km de agua encima) */}
           <g opacity={overview * 0.95}>
@@ -237,6 +316,31 @@ export function DepthCinematic({ mode, from, to, onClose }: { mode: Mode; from: 
               {t("El Everest (8,849 m) cabría aquí", "Mount Everest (8,849 m) would fit here")}
             </text>
           </g>
+          {/* Lecciones: hechas (verde), la actual (late) y las que faltan (apagadas); la batalla, en rojo */}
+          {dots.map((d) => {
+            const [x, y] = d.p;
+            const pulse = 0.5 + 0.5 * Math.sin(time * 4);
+            if (d.boss)
+              return (
+                <g key={`${d.z}-${d.k}`} transform={`translate(${x} ${y - 7})`}>
+                  <circle r={6.5} fill="#1a0505" stroke="#ef4444" strokeWidth={1.3} style={{ filter: "drop-shadow(0 0 4px #ef4444)" }} />
+                  <path d="M-3 -1 Q -1.5 -2.5 0 -1 Q 1.5 -2.5 3 -1 M-2 2 h4" stroke="#ef4444" strokeWidth={1} fill="none" />
+                </g>
+              );
+            return (
+              <g key={`${d.z}-${d.k}`} transform={`translate(${x} ${y - 5})`}>
+                {d.state === "current" && <circle r={5 + pulse * 5} fill="none" stroke="#fff" strokeWidth={0.8} opacity={1 - pulse} />}
+                <circle
+                  r={d.state === "current" ? 4.4 : 3.4}
+                  fill={d.state === "done" ? (d.z >= 8 ? "#8b5cf6" : "#14b8a6") : d.state === "current" ? "#fff" : "#27272a"}
+                  stroke={d.state === "locked" ? "#71717a" : "#fff"}
+                  strokeWidth={0.7}
+                  style={d.state === "done" ? { filter: `drop-shadow(0 0 3px ${d.z >= 8 ? "#a78bfa" : "#2dd4bf"})` } : undefined}
+                />
+                {d.state === "done" && <path d="M-1.6 0 l1.1 1.1 l2.2 -2.4" stroke="#fff" strokeWidth={0.9} fill="none" strokeLinecap="round" />}
+              </g>
+            );
+          })}
           {/* Zonas: una luz por zona; las ya superadas brillan */}
           {PTS.map(([x, y], i) => (
             <g key={i}>
@@ -288,13 +392,8 @@ export function DepthCinematic({ mode, from, to, onClose }: { mode: Mode; from: 
             {crossesSections ? t("¡Sección 1 completada!", "Section 1 complete!") : t("¡Zona superada!", "Zone cleared!")}
           </p>
         )}
-        {mode === "recorrido" && (
-          <p className="font-display text-2xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] sm:text-3xl">{t("Tu inmersión", "Your dive")}</p>
-        )}
-        {(mode === "zona" || mode === "recorrido") && !(mariana && time > (tl.dark ?? 0) + 0.8) && (
-          <p className="mt-2 font-mono text-lg tabular-nums text-[#fde68a] drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
-            {fmtDepth(mode === "recorrido" ? ZONES[to].depth : depthNow)}
-          </p>
+        {mode === "zona" && !(mariana && time > (tl.dark ?? 0) + 0.8) && (
+          <p className="mt-2 font-mono text-lg tabular-nums text-[#fde68a] drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">{fmtDepth(depthNow)}</p>
         )}
         {mariana && time > (tl.dark ?? 0) + 0.8 && time < tl.morph && (
           <div className="mt-8" style={{ opacity: clamp((time - (tl.dark ?? 0) - 0.8) / 0.8) }}>
@@ -316,6 +415,34 @@ export function DepthCinematic({ mode, from, to, onClose }: { mode: Mode; from: 
           </div>
         )}
       </div>
+
+      {/* Recorrido: dónde vas, abajo a la izquierda para no tapar el océano */}
+      {mode === "recorrido" && (
+        <div
+          className={`pointer-events-none absolute rounded-2xl border border-white/10 bg-black/70 backdrop-blur-sm ${
+            portrait ? "inset-x-3 top-14 p-3" : "bottom-6 left-6 max-w-[340px] p-4"
+          }`}
+          style={{ opacity: clamp((time - 1.2) / 0.8) }}
+        >
+          <p className={`font-display ${portrait ? "text-lg" : "text-2xl"}`}>{t("Tu inmersión", "Your dive")}</p>
+          <p className="mt-1 text-sm text-white/75">
+            {ZONES[to].name[lang]} · <span className="font-mono text-[#fde68a]">{fmtDepth(ZONES[to].depth)}</span>
+          </p>
+          {dots.length > 0 && (
+            <>
+              <p className="mt-2 text-sm">
+                {t(`${doneCount} de ${dots.length} lecciones`, `${doneCount} of ${dots.length} lessons`)}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-white/70">
+                <span className="flex items-center gap-1.5"><i className="block h-2.5 w-2.5 rounded-full bg-[#14b8a6]" /> {t("Hecha", "Done")}</span>
+                <span className="flex items-center gap-1.5"><i className="block h-2.5 w-2.5 rounded-full bg-white" /> {t("Vas aquí", "You're here")}</span>
+                <span className="flex items-center gap-1.5"><i className="block h-2.5 w-2.5 rounded-full border border-zinc-500 bg-zinc-800" /> {t("Por hacer", "To do")}</span>
+                <span className="flex items-center gap-1.5"><i className="block h-2.5 w-2.5 rounded-full border border-[#ef4444] bg-[#1a0505]" /> {t("El Leviatán", "The Leviathan")}</span>
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Transformación */}
       {morphOn && (
@@ -382,7 +509,12 @@ export function DepthCinematic({ mode, from, to, onClose }: { mode: Mode; from: 
         {done ? <X className="h-4 w-4" aria-hidden /> : null}
         {done ? t("Cerrar", "Close") : t("Saltar", "Skip")}
       </button>
-      {done && (
+      {canPan && (
+        <p className="pointer-events-none absolute inset-x-0 top-5 text-center text-sm font-semibold text-white/80 drop-shadow">
+          {t("← Desliza para explorar →", "← Swipe to explore →")}
+        </p>
+      )}
+      {done && mode !== "recorrido" && (
         <div className="absolute inset-x-0 bottom-6 flex justify-center">
           <button type="button" onClick={onClose} className={`btn h-12 px-8 text-base ${scary ? "bg-[#dc2626] text-white hover:bg-[#b91c1c]" : "btn-primary"}`}>
             {t("Continuar", "Continue")}

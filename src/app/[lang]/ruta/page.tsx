@@ -89,7 +89,17 @@ async function PathMap() {
           <p className="mt-1.5 text-xs text-white/70">
             {t(`${doneCount} de ${LESSON_ORDER.length} lecciones`, `${doneCount} of ${LESSON_ORDER.length} lessons`)}
           </p>
-          <DiveReplay zone={allDone ? UNITS.length - 1 : zoneIndex} />
+          <DiveReplay
+            zone={allDone ? UNITS.length - 1 : zoneIndex}
+            progress={{
+              zones: UNITS.map((u) =>
+                u.lessons.map((l) => {
+                  const s = lessons.get(l.id)!.state;
+                  return { state: s === "done" ? "done" : s === "current" ? "current" : "locked", ...(l.boss ? { boss: true } : {}) };
+                }),
+              ),
+            }}
+          />
         </div>
         {user ? (
           <>
