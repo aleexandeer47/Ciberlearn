@@ -4,12 +4,13 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { DiveMap, zoneOf, type DiveLesson } from "@/components/path/DiveMap";
+import { DiveReplay } from "@/components/path/DiveReplay";
 import { Hearts } from "@/components/path/Hearts";
 import { ScrollToCurrent } from "@/components/path/ScrollToCurrent";
 import { PageShell } from "@/components/SiteHeader";
 import { view } from "@/lib/lives";
 import { getT } from "@/lib/i18n-server";
-import { isUnlocked, LESSON_ORDER, unitsFor } from "@/lib/path/content";
+import { isUnlocked, LESSON_ORDER, SECTION_2_START, unitsFor } from "@/lib/path/content";
 import { collections } from "@/lib/server/db";
 import { extraUnlocked, getCurrentUser } from "@/lib/server/session";
 import { alternatesFor } from "@/lib/seo";
@@ -51,7 +52,7 @@ async function PathMap() {
     for (const l of unit.lessons) {
       const state = completed.has(l.id) ? "done" : l.id === current ? "current" : areaOpen.has(l.id) ? "area" : "locked";
       const href = state === "locked" ? undefined : user ? `/ruta/${l.id}` : `/registro?next=/ruta/${l.id}`;
-      lessons.set(l.id, { id: l.id, title: l.title, questions: l.exercises.length, state, href });
+      lessons.set(l.id, { id: l.id, title: l.title, questions: l.exercises.length, state, href, ...(l.boss ? { boss: true } : {}) });
     }
 
   // Zona en la que va la persona
@@ -71,7 +72,7 @@ async function PathMap() {
             "Phishing comes from “fishing”. Go down zone by zone: the deeper you go, the harder the hooks. Every mistake costs a life, and lives come back on their own over time.",
           )}
         </p>
-        <DiveMap units={UNITS} lessons={lessons} loggedIn={!!user} lang={lang} />
+        <DiveMap units={UNITS} lessons={lessons} loggedIn={!!user} lang={lang} section2Start={SECTION_2_START} />
       </div>
 
       {/* Panel lateral */}
@@ -88,6 +89,7 @@ async function PathMap() {
           <p className="mt-1.5 text-xs text-white/70">
             {t(`${doneCount} de ${LESSON_ORDER.length} lecciones`, `${doneCount} of ${LESSON_ORDER.length} lessons`)}
           </p>
+          <DiveReplay zone={allDone ? UNITS.length - 1 : zoneIndex} />
         </div>
         {user ? (
           <>

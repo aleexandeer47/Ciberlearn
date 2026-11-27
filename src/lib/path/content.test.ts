@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { FEATURES } from "@/lib/plans";
 import {
+  BOSS,
+  bossTally,
   EXERCISE_BY_ID,
+  SECTION_2_START,
   gradeExercise,
   isUnlocked,
   LESSON_ORDER,
@@ -16,10 +19,11 @@ import { EXERCISES_EN, LESSONS_EN, UNITS_EN } from "./content.en";
 describe("contenido de la ruta", () => {
   const all = LESSONS.flatMap((l) => l.exercises);
 
-  it("tiene 8 unidades, 24 lecciones y 126 ejercicios con ids únicos", () => {
-    expect(UNITS).toHaveLength(8);
-    expect(LESSONS).toHaveLength(24);
-    expect(all).toHaveLength(126);
+  it("tiene 13 unidades (8 + 5 de la sección 2), 39 lecciones y 212 ejercicios con ids únicos", () => {
+    expect(UNITS).toHaveLength(13);
+    expect(SECTION_2_START).toBe(8);
+    expect(LESSONS).toHaveLength(39);
+    expect(all).toHaveLength(212);
     expect(new Set(all.map((x) => x.id)).size).toBe(all.length);
     expect(new Set(LESSONS.map((l) => l.id)).size).toBe(LESSONS.length);
   });
@@ -114,10 +118,46 @@ describe("versión en inglés", () => {
   });
 });
 
+describe("batalla contra el Leviatán", () => {
+  const boss = LESSONS.filter((l) => l.boss);
+
+  it("hay una sola batalla y es la última lección de toda la ruta", () => {
+    expect(boss).toHaveLength(1);
+    expect(LESSON_ORDER[LESSON_ORDER.length - 1]).toBe(boss[0].id);
+  });
+
+  it("sus preguntas se responden en segundos: Real o Trampa, con mezcla de las dos", () => {
+    for (const x of boss[0].exercises) {
+      expect(x.kind, x.id).toBe("enlace");
+      if (x.kind !== "enlace") continue;
+      expect(x.options).toEqual(["Real", "Trampa"]);
+      expect(x.context, x.id).toBeTruthy();
+      expect(x.context!.length, x.id).toBeLessThan(70);
+    }
+    const answers = boss[0].exercises.map((x) => (x.kind === "enlace" ? x.answer : -1));
+    expect(answers).toContain(0);
+    expect(answers).toContain(1);
+  });
+
+  it("alcanzan las preguntas para ganar aunque se fallen las permitidas", () => {
+    expect(boss[0].exercises.length).toBeGreaterThanOrEqual(BOSS.hp + BOSS.hearts - 1);
+  });
+
+  it("se gana con suficientes aciertos y se pierde al fallar todas las vidas", () => {
+    const hits = Object.fromEntries(Array.from({ length: BOSS.hp }, (_, i) => [`a${i}`, true]));
+    expect(bossTally(hits).won).toBe(true);
+    const almost = { ...Object.fromEntries(Array.from({ length: BOSS.hp - 1 }, (_, i) => [`a${i}`, true])), x: false };
+    expect(bossTally(almost)).toMatchObject({ won: false, lost: false });
+    const misses = Object.fromEntries(Array.from({ length: BOSS.hearts }, (_, i) => [`m${i}`, false]));
+    expect(bossTally(misses)).toMatchObject({ won: false, lost: true });
+  });
+});
+
 describe("ejercicios interactivos", () => {
   const all = LESSONS.flatMap((l) => l.exercises);
-  it("cada lección tiene al menos un ejercicio de señales u ordenar", () => {
-    for (const l of LESSONS) expect(l.exercises.some((x) => x.kind === "senales" || x.kind === "ordenar"), l.id).toBe(true);
+  it("cada lección tiene al menos un ejercicio de señales u ordenar (menos la batalla, que es de preguntas rápidas)", () => {
+    for (const l of LESSONS.filter((x) => !x.boss))
+      expect(l.exercises.some((x) => x.kind === "senales" || x.kind === "ordenar"), l.id).toBe(true);
   });
   it("hay mensajes reales en “toca las señales” (respuesta: nada sospechoso)", () => {
     expect(all.some((x) => x.kind === "senales" && x.answer.length === 0)).toBe(true);

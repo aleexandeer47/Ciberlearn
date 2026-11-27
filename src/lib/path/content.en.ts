@@ -3,6 +3,8 @@
 // Tunco Wallet (tuncowallet.com), Ceiba Supermarket, Marketly (marketly.com), Lempa Distributors (lempadist.com),
 // EasyRemit, Revenue Agency (revenue.gov).
 
+import { EXERCISES_S2_EN, LESSONS_S2_EN, UNITS_S2_EN } from "./content.s2.en";
+
 type V = { from: string; text: string; explain: string };
 type O = { prompt: string; options: string[]; explain: string; context?: string };
 type S = { from: string; parts: string[]; explain: string };
@@ -17,6 +19,7 @@ export const UNITS_EN: Record<string, { title: string; description: string }> = 
   u6: { title: "Your accounts and passwords", description: "Strong passwords, two-step verification, your SIM and fake apps." },
   u7: { title: "Scams at work", description: "Boss fraud, invoices with swapped accounts and fake tech support." },
   u8: { title: "Final test: expert level", description: "Almost perfect traps, real messages that look fake and a full case. Here even experts slip up." },
+  ...UNITS_S2_EN,
 };
 
 export const LESSONS_EN: Record<string, string> = {
@@ -44,6 +47,7 @@ export const LESSONS_EN: Record<string, string> = {
   u8l1: "Impossible links",
   u8l2: "Almost perfect messages",
   u8l3: "The full case",
+  ...LESSONS_S2_EN,
 };
 
 export const EXERCISES_EN: Record<string, V | O | S | R> = {
@@ -198,4 +202,5 @@ export const EXERCISES_EN: Record<string, V | O | S | R> = {
   u8l1e7: { from: "ShipNow", parts: ["Your order SN-552910 is held at customs.","To release it, pay $3.20 in duties at","shipnow.com-customs.info/payment","Thanks for shopping with ShipNow."], explain: "The order and the name look real, but the domain is com-customs.info (what comes before the slash) and they charge you through a link. Check your order in the official app." },
   u8l2e7: { from: "Izalco Bank <notices@izalcobank.com>", parts: ["Hi Marta,","Your $250 transfer to Juan Pérez was completed successfully.","If you don't recognize it, call the number on the back of your card.","Izalco Bank will never ask for passwords or codes."], explain: "It's real: official domain, it uses your name, reports something you did and sends you to the number on your card, not to a link. A scary notice isn't always fake." },
   u8l3e7: { prompt: "You fell for it: you entered your card details on a fake page. Put the steps in order:", items: ["Review transactions and dispute any you don't recognize","Call the bank to block the card","Change any passwords you used on that page","Report the site and warn your contacts"], explain: "The urgent part is blocking the card, then changing passwords, reviewing and disputing charges and, last, reporting to protect others. Acting within minutes makes the difference." },
+  ...EXERCISES_S2_EN,
 };

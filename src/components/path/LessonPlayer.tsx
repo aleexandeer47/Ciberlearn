@@ -12,6 +12,7 @@ import type { ExerciseChoice, PublicExercise } from "@/lib/path/content";
 import { fmtWait, type LivesView } from "@/lib/lives";
 import { sfx } from "@/lib/sfx";
 import { useCountUp } from "@/lib/useCountUp";
+import { DepthCinematic } from "./DepthCinematic";
 import { Hearts } from "./Hearts";
 
 const CHANNEL_ICON = { Correo: Mail, SMS: MessageSquare, Chat: Smartphone, Llamada: Phone } as const;
@@ -25,9 +26,13 @@ type Phase = "loading" | "playing" | "feedback" | "no-lives" | "done" | "error";
 interface Props {
   lesson: { id: string; title: string; exercises: PublicExercise[] };
   initialLives: LivesView;
+  /** Si esta lección cierra una zona: su índice (al terminarla se baja a la siguiente con la cinemática) */
+  zone?: number;
 }
 
-export function LessonPlayer({ lesson, initialLives }: Props) {
+export function LessonPlayer({ lesson, initialLives, zone }: Props) {
+  // Cinemática de la inmersión al cerrar una zona por primera vez (y para volver a verla)
+  const [cine, setCine] = useState(false);
   const [phase, setPhase] = useState<Phase>("loading");
   const [i, setI] = useState(0);
   const [lives, setLives] = useState(initialLives);
@@ -99,8 +104,9 @@ export function LessonPlayer({ lesson, initialLives }: Props) {
       sfx.complete();
       setResult(r);
       setPhase("done");
+      if (zone !== undefined && r.firstTime) window.setTimeout(() => setCine(true), 900);
     } else setPhase("error");
-  }, [phase, lives, i, total, lesson.id]);
+  }, [phase, lives, i, total, lesson.id, zone]);
 
   // Teclado: 1-4 elige, P/L en veredictos, Enter continúa
   useEffect(() => {
@@ -144,6 +150,7 @@ export function LessonPlayer({ lesson, initialLives }: Props) {
       </Panel>
     );
   if (phase === "done" && result) {
+    if (cine && zone !== undefined) return <DepthCinematic mode="zona" from={zone} to={zone + 1} onClose={() => setCine(false)} />;
     return (
       <Panel>
         <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-field text-brand">
@@ -182,6 +189,11 @@ export function LessonPlayer({ lesson, initialLives }: Props) {
             {t("Volver a la ruta", "Back to the path")}
           </Link>
         </div>
+        {zone !== undefined && (
+          <button type="button" onClick={() => setCine(true)} className="mt-4 text-sm font-semibold text-brand hover:underline">
+            {t("Ver la inmersión otra vez", "Watch the dive again")}
+          </button>
+        )}
       </Panel>
     );
   }

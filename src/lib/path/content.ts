@@ -7,6 +7,7 @@
 
 import type { Lang } from "@/lib/i18n";
 import { EXERCISES_EN, LESSONS_EN, UNITS_EN } from "./content.en";
+import { UNITS_S2 } from "./content.s2";
 
 export type Exercise =
   | {
@@ -51,6 +52,8 @@ export interface Lesson {
   id: string;
   title: string;
   exercises: Exercise[];
+  /** Batalla contra el Leviatán: preguntas rápidas con tiempo límite (ver BOSS) */
+  boss?: boolean;
 }
 
 export type Level = "Básico" | "Intermedio" | "Avanzado" | "Experto";
@@ -445,7 +448,26 @@ export const UNITS: Unit[] = [
       },
     ],
   },
+  // Sección 2: las fosas, hasta la Fosa de las Marianas y el Leviatán (src/lib/path/content.s2.ts)
+  ...UNITS_S2,
 ];
+
+/** Índice de la primera unidad de la sección 2 (las fosas). */
+export const SECTION_2_START = UNITS.findIndex((u) => u.id === UNITS_S2[0].id);
+
+/**
+ * Batalla contra el Leviatán (lecciones con `boss`): cada pregunta tiene `seconds` para responderse;
+ * acertar esquiva su ataque y le quita 1 de `hp`; fallar o no responder a tiempo quita 1 de `hearts`.
+ * `grace` cubre lo que tarda la respuesta en llegar al servidor.
+ */
+export const BOSS = { hp: 8, hearts: 3, seconds: 5, graceMs: 1500 } as const;
+
+/** Cómo va una batalla según las respuestas guardadas. */
+export function bossTally(answers: Record<string, boolean>) {
+  const hits = Object.values(answers).filter(Boolean).length;
+  const misses = Object.values(answers).length - hits;
+  return { hits, misses, won: hits >= BOSS.hp && misses < BOSS.hearts, lost: misses >= BOSS.hearts };
+}
 
 export const LESSONS = UNITS.flatMap((u) => u.lessons);
 export const LESSON_BY_ID = new Map(LESSONS.map((l) => [l.id, l]));
@@ -490,10 +512,11 @@ export function gradeExercise(ex: Exercise, choice: ExerciseChoice): boolean {
 }
 
 /** La lección sin respuestas, para mandar al navegador. */
-export function publicLesson(lesson: Lesson): { id: string; title: string; exercises: PublicExercise[] } {
+export function publicLesson(lesson: Lesson): { id: string; title: string; boss?: boolean; exercises: PublicExercise[] } {
   return {
     id: lesson.id,
     title: lesson.title,
+    ...(lesson.boss ? { boss: true } : {}),
     exercises: lesson.exercises.map((ex) => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { answer, explain, ...rest } = ex;
@@ -502,7 +525,7 @@ export function publicLesson(lesson: Lesson): { id: string; title: string; exerc
   };
 }
 
-export const XP = { correct: 10, lessonBonus: 20, repeatCorrect: 5 } as const;
+export const XP = { correct: 10, lessonBonus: 20, repeatCorrect: 5, bossBonus: 150 } as const;
 
 // ------------------------------------------------------------------ idiomas
 

@@ -239,6 +239,8 @@ export interface LessonAttemptDoc {
   lessonId: string;
   /** exerciseId -> si la primera respuesta fue correcta */
   answers: Record<string, boolean>;
+  /** Solo en la batalla: exerciseId -> cuándo se mostró la pregunta (el tiempo lo mide el servidor) */
+  served?: Record<string, Date>;
   startedAt: Date;
 }
 

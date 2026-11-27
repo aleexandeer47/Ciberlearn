@@ -236,4 +236,62 @@ export const sfx = {
       tone(c, out, { freq: 620, at: 0.12 + i * 0.32, dur: 0.18, gain: 0.06, attack: 0.01 });
     }
   },
+
+  // ---------- La inmersión y la batalla contra el Leviatán ----------
+
+  /** La cámara se aleja y el pez baja: un “whoosh” de agua que se hunde. */
+  dive() {
+    const a = audio();
+    if (!a) return;
+    const { c, out } = a;
+    noise(c, out, { dur: 1.4, gain: 0.18, band: 500, q: 0.7 });
+    tone(c, out, { freq: 220, to: 55, dur: 1.6, gain: 0.12, attack: 0.2, lowpass: 600 });
+  },
+
+  /** El pez se transforma: un brillo que sube y estalla. */
+  evolve() {
+    const a = audio();
+    if (!a) return;
+    const { c, out } = a;
+    tone(c, out, { freq: 200, to: 1600, type: "triangle", dur: 1.1, gain: 0.1, attack: 0.5 });
+    [784, 988, 1319, 1568].forEach((f, i) => tone(c, out, { freq: f, type: "triangle", at: 1.05 + i * 0.07, dur: 0.6, gain: 0.12 }));
+    noise(c, out, { at: 1.05, dur: 0.5, gain: 0.25, band: 6000, q: 0.8 });
+  },
+
+  /** Gruñido del Leviatán: grave, áspero y largo. */
+  roar() {
+    const a = audio();
+    if (!a) return;
+    const { c, out } = a;
+    tone(c, out, { freq: 70, to: 42, type: "sawtooth", dur: 2.2, gain: 0.22, attack: 0.25, lowpass: 380 });
+    tone(c, out, { freq: 92, to: 50, type: "sawtooth", dur: 2, gain: 0.14, attack: 0.3, lowpass: 300 });
+    noise(c, out, { dur: 1.8, gain: 0.16, band: 160, q: 0.6 });
+  },
+
+  /** Acertaste en la batalla: esquivas y le das un golpe al Leviatán. */
+  strike() {
+    const a = audio();
+    if (!a) return;
+    const { c, out } = a;
+    noise(c, out, { dur: 0.18, gain: 0.3, band: 3500, q: 1.2 });
+    tone(c, out, { freq: 140, to: 60, at: 0.05, dur: 0.3, gain: 0.35 });
+    tone(c, out, { freq: 60, to: 40, type: "sawtooth", at: 0.12, dur: 0.6, gain: 0.12, lowpass: 260 });
+  },
+
+  /** Te alcanzó su ataque. */
+  hurt() {
+    const a = audio();
+    if (!a) return;
+    const { c, out } = a;
+    tone(c, out, { freq: 55, to: 30, dur: 0.6, gain: 0.45 });
+    noise(c, out, { dur: 0.5, gain: 0.35, band: 300, q: 0.5 });
+    tone(c, out, { freq: 400, to: 120, type: "square", dur: 0.35, gain: 0.06, lowpass: 900 });
+  },
+
+  /** Cuenta regresiva de la pregunta (más aguda en el último segundo). */
+  tick(urgent = false) {
+    const a = audio();
+    if (!a) return;
+    tone(a.c, a.out, { freq: urgent ? 1400 : 900, dur: 0.06, gain: urgent ? 0.1 : 0.06 });
+  },
 };

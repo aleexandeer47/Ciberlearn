@@ -2,7 +2,7 @@
 
 import { ObjectId } from "mongodb";
 import { requestLang } from "@/lib/i18n-server";
-import { gradeExercise, isUnlocked, LESSON_BY_ID, LESSON_ORDER, localizeExercise, XP, type ExerciseChoice } from "@/lib/path/content";
+import { BOSS, bossTally, gradeExercise, isUnlocked, LESSON_BY_ID, LESSON_ORDER, localizeExercise, XP, type ExerciseChoice } from "@/lib/path/content";
 import { loseOne, regen, view, type LivesView } from "@/lib/lives";
 import { collections } from "@/lib/server/db";
 import { extraUnlocked, getCurrentUser } from "@/lib/server/session";
@@ -29,10 +29,28 @@ export async function startLesson(lessonId: string): Promise<{ ok: true; lives: 
 
   await lessonAttempts.updateOne(
     { userId: user._id, lessonId },
-    { $set: { answers: {}, startedAt: new Date() }, $setOnInsert: { _id: new ObjectId() } },
+    { $set: { answers: {}, served: {}, startedAt: new Date() }, $setOnInsert: { _id: new ObjectId() } },
     { upsert: true },
   );
   return { ok: true, lives };
+}
+
+/**
+ * Batalla: marca el momento en que se muestra una pregunta. El tiempo límite se cuenta desde aquí,
+ * en el servidor, para que no se pueda ganar tiempo pausando el navegador. Volver a pedirla no lo reinicia.
+ */
+export async function serveBossQuestion(lessonId: string, exerciseId: string): Promise<{ ok: true } | Fail> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, error: "login" };
+  const lesson = LESSON_BY_ID.get(lessonId);
+  if (!lesson?.boss || !lesson.exercises.some((x) => x.id === exerciseId)) return { ok: false, error: "invalido" };
+  const { lessonAttempts } = await collections();
+  const attempt = await lessonAttempts.findOne({ userId: user._id, lessonId });
+  if (!attempt) return { ok: false, error: "invalido" };
+  const tally = bossTally(attempt.answers);
+  if (tally.won || tally.lost || exerciseId in attempt.answers) return { ok: false, error: "invalido" };
+  if (!attempt.served?.[exerciseId]) await lessonAttempts.updateOne({ _id: attempt._id }, { $set: { [`served.${exerciseId}`]: new Date() } });
+  return { ok: true };
 }
 
 export interface AnswerResult {
@@ -42,6 +60,8 @@ export interface AnswerResult {
   answer: string | number | number[];
   explain: string;
   lives: LivesView;
+  /** Batalla: la respuesta llegó fuera de tiempo */
+  timedOut?: boolean;
 }
 
 export async function answerExercise(lessonId: string, exerciseId: string, choice: ExerciseChoice): Promise<AnswerResult | Fail> {
@@ -58,7 +78,19 @@ export async function answerExercise(lessonId: string, exerciseId: string, choic
 
   // Listas: solo enteros (índices), sin repetir y del tamaño razonable
   if (Array.isArray(choice) && (choice.length > 12 || choice.some((n) => !Number.isInteger(n) || n < 0 || n > 20))) return { ok: false, error: "invalido" };
-  const correct = gradeExercise(ex, choice);
+  let correct = gradeExercise(ex, choice);
+  let timedOut = false;
+  if (lesson.boss) {
+    // Batalla terminada: ya no se aceptan respuestas
+    const tally = bossTally(attempt.answers);
+    if (tally.won || tally.lost) return { ok: false, error: "invalido" };
+    // Sin pregunta servida o fuera de tiempo, cuenta como ataque recibido
+    const served = attempt.served?.[exerciseId];
+    if (!served || Date.now() - served.getTime() > BOSS.seconds * 1000 + BOSS.graceMs) {
+      timedOut = true;
+      correct = false;
+    }
+  }
   const already = exerciseId in attempt.answers;
 
   if (!already) {
@@ -74,7 +106,7 @@ export async function answerExercise(lessonId: string, exerciseId: string, choic
 
   const fresh = await users.findOne({ _id: user._id }, { projection: { lives: 1 } });
   const explain = localizeExercise(ex, await requestLang()).explain;
-  return { ok: true, correct, answer: ex.answer, explain, lives: view(fresh?.lives, user.isPro) };
+  return { ok: true, correct, answer: ex.answer, explain, lives: view(fresh?.lives, user.isPro), ...(timedOut ? { timedOut } : {}) };
 }
 
 export interface CompleteResult {
@@ -94,8 +126,14 @@ export async function completeLesson(lessonId: string): Promise<CompleteResult |
 
   const { users, lessonAttempts } = await collections();
   // Se toma y se borra el intento en un paso: no se puede cobrar dos veces el XP.
+  // La batalla se completa al vencer al Leviatán (no hace falta responder todas las preguntas).
   const attempt = await lessonAttempts.findOneAndDelete({ userId: user._id, lessonId });
-  if (!attempt || lesson.exercises.some((x) => !(x.id in attempt.answers))) return { ok: false, error: "invalido" };
+  const finished = lesson.boss ? !!attempt && bossTally(attempt.answers).won : !!attempt && lesson.exercises.every((x) => x.id in attempt.answers);
+  if (!attempt || !finished) {
+    // Si la batalla no se ganó, el intento se conserva para no perder lo respondido
+    if (attempt && lesson.boss) await lessonAttempts.insertOne(attempt);
+    return { ok: false, error: "invalido" };
+  }
 
   const correct = Object.values(attempt.answers).filter(Boolean).length;
   const before = await users.findOneAndUpdate(
@@ -104,8 +142,10 @@ export async function completeLesson(lessonId: string): Promise<CompleteResult |
     { projection: { path: 1 } },
   );
   const firstTime = !(before?.path?.completed ?? []).includes(lessonId);
-  const xp = await addXp(user._id, firstTime ? correct * XP.correct + XP.lessonBonus : correct * XP.repeatCorrect, "ruta");
+  const bonus = lesson.boss ? XP.bossBonus : XP.lessonBonus;
+  const xp = await addXp(user._id, firstTime ? correct * XP.correct + bonus : correct * XP.repeatCorrect, "ruta");
 
   const i = LESSON_ORDER.indexOf(lessonId);
-  return { ok: true, xp, correct, total: lesson.exercises.length, firstTime, nextLessonId: LESSON_ORDER[i + 1] ?? null };
+  const total = lesson.boss ? Object.keys(attempt.answers).length : lesson.exercises.length;
+  return { ok: true, xp, correct, total, firstTime, nextLessonId: LESSON_ORDER[i + 1] ?? null };
 }

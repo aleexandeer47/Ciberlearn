@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
+import { BossFight } from "@/components/path/BossFight";
 import { LessonPlayer } from "@/components/path/LessonPlayer";
 import { SiteHeader } from "@/components/SiteHeader";
 import { view } from "@/lib/lives";
 import { getT } from "@/lib/i18n-server";
-import { isUnlocked, LESSON_BY_ID, LESSON_ORDER, localizeLesson, publicLesson } from "@/lib/path/content";
+import { isUnlocked, LESSON_BY_ID, LESSON_ORDER, localizeLesson, publicLesson, UNITS } from "@/lib/path/content";
 import { collections } from "@/lib/server/db";
 import { extraUnlocked, getCurrentUser } from "@/lib/server/session";
 
@@ -31,7 +32,13 @@ async function Lesson({ params }: { params: Promise<{ leccion: string }> }) {
 
   // Solo se manda la lección sin respuestas
   const { lang } = await getT();
-  return <LessonPlayer lesson={publicLesson(localizeLesson(lesson, lang))} initialLives={view(doc?.lives, user.isPro)} />;
+  const pub = publicLesson(localizeLesson(lesson, lang));
+  const lives = view(doc?.lives, user.isPro);
+  if (lesson.boss) return <BossFight lesson={pub} initialLives={lives} />;
+  // Si es la última lección de su zona, al terminarla se ve la cinemática de la inmersión
+  const zone = UNITS.findIndex((u) => u.lessons.some((l) => l.id === leccion));
+  const zoneEnd = UNITS[zone].lessons[UNITS[zone].lessons.length - 1].id === leccion && zone < UNITS.length - 1;
+  return <LessonPlayer lesson={pub} initialLives={lives} zone={zoneEnd ? zone : undefined} />;
 }
 
 export default function LeccionPage(props: PageProps<"/[lang]/ruta/[leccion]">) {

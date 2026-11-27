@@ -689,6 +689,289 @@ html[data-simple="1"] .text-xs {
   animation: lure-glow 1.8s ease-in-out infinite;
 }
 
+/* ---- Sección 2: las fosas ---- */
+.dive-trench {
+  background: linear-gradient(180deg, #01030b 0%, #030414 18%, #04021a 40%, #020110 62%, #050003 82%, #000 100%);
+}
+/* Fosa de las Marianas: casi sin luz, con un resplandor rojo desde el fondo */
+.dive-mariana {
+  background: radial-gradient(120% 60% at 50% 100%, rgb(127 29 29 / 0.45) 0%, transparent 70%), linear-gradient(180deg, transparent 0%, rgb(0 0 0 / 0.6) 100%);
+}
+
+@keyframes snow-fall {
+  0% {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(260px) translateX(-10px);
+    opacity: 0;
+  }
+}
+.dive-snow {
+  animation: snow-fall 14s linear var(--delay, 0s) infinite;
+}
+
+/* Ojos que se abren y parpadean en la oscuridad */
+@keyframes eyes-open {
+  0%,
+  55%,
+  100% {
+    opacity: 0;
+    transform: scaleY(0.1);
+  }
+  62%,
+  88% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  75% {
+    opacity: 1;
+    transform: scaleY(0.15);
+  }
+}
+.dive-eyes {
+  animation: eyes-open 7s ease-in-out var(--delay, 0s) infinite;
+}
+
+/* La lección del Leviatán late como un corazón */
+@keyframes boss-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(239 68 68 / 0.6), 0 0 24px rgb(239 68 68 / 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 14px rgb(239 68 68 / 0), 0 0 40px rgb(239 68 68 / 0.8);
+  }
+}
+.dive-boss-node {
+  animation: boss-pulse 1.6s ease-in-out infinite;
+}
+
+/* ---- Batalla contra el Leviatán ---- */
+.boss-arena {
+  background: radial-gradient(90% 55% at 50% 100%, rgb(127 29 29 / 0.55) 0%, transparent 70%),
+    radial-gradient(70% 45% at 50% 22%, rgb(69 10 10 / 0.6) 0%, transparent 70%), #020001;
+}
+@keyframes boss-breathe {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(6px) scale(1.035);
+  }
+}
+.boss-breathe {
+  animation: boss-breathe 3.4s ease-in-out infinite;
+}
+/* Ataque: se lanza hacia ti */
+@keyframes boss-lunge {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  35% {
+    transform: translateY(70px) scale(1.35);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+.boss-lunge {
+  animation: boss-lunge 0.7s cubic-bezier(0.3, 0, 0.2, 1) both;
+}
+/* Recibe tu golpe: retrocede, parpadea en rojo */
+@keyframes boss-hurt {
+  0% {
+    transform: translateX(0);
+    filter: brightness(1);
+  }
+  15% {
+    transform: translateX(-16px) rotate(-4deg);
+    filter: brightness(3) saturate(0.2);
+  }
+  30% {
+    transform: translateX(14px) rotate(3deg);
+  }
+  50% {
+    transform: translateX(-8px);
+    filter: brightness(1.6);
+  }
+  100% {
+    transform: translateX(0);
+    filter: brightness(1);
+  }
+}
+.boss-hurt {
+  animation: boss-hurt 0.7s ease-out both;
+}
+/* Derrotado: se apaga y se hunde en la oscuridad */
+@keyframes boss-die {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    filter: brightness(2);
+  }
+  30% {
+    transform: translateX(-10px) translateY(10px);
+  }
+  100% {
+    transform: translateY(140px) scale(0.7);
+    opacity: 0;
+    filter: brightness(0.2);
+  }
+}
+.boss-die {
+  animation: boss-die 2.4s ease-in both;
+}
+@keyframes boss-slash {
+  from {
+    opacity: 1;
+    clip-path: inset(0 100% 0 0);
+  }
+  50% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+  to {
+    opacity: 0;
+    clip-path: inset(0 0 0 0);
+  }
+}
+.boss-slash {
+  animation: boss-slash 0.5s ease-out both;
+}
+/* Te golpea: la pantalla tiembla y se pone roja */
+@keyframes boss-shake {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  15% {
+    transform: translate(-12px, 6px);
+  }
+  30% {
+    transform: translate(10px, -8px);
+  }
+  45% {
+    transform: translate(-8px, 4px);
+  }
+  60% {
+    transform: translate(6px, -3px);
+  }
+  80% {
+    transform: translate(-3px, 2px);
+  }
+}
+.boss-shake {
+  animation: boss-shake 0.5s ease-out both;
+}
+@keyframes boss-flash {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 0;
+  }
+}
+.boss-flash {
+  animation: boss-flash 0.6s ease-out both;
+}
+@keyframes boss-rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.boss-rise {
+  animation: boss-rise 0.9s ease-out 0.2s both;
+}
+/* Sale de la oscuridad la primera vez que lo ves */
+@keyframes boss-emerge {
+  0% {
+    opacity: 0;
+    transform: translateY(60px) scale(0.85);
+    filter: brightness(0);
+  }
+  60% {
+    opacity: 1;
+    filter: brightness(0.35);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: brightness(1);
+  }
+}
+.boss-emerge {
+  animation: boss-emerge 3.2s ease-out both, boss-breathe 3.4s ease-in-out 3.2s infinite;
+}
+/* La luz falla de vez en cuando */
+@keyframes boss-flicker {
+  0%,
+  86%,
+  100% {
+    opacity: 0;
+  }
+  87% {
+    opacity: 0.7;
+  }
+  88% {
+    opacity: 0.1;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  92% {
+    opacity: 0;
+  }
+}
+.boss-flicker {
+  animation: boss-flicker 6.5s linear infinite;
+}
+/* Tu pez: esquiva hacia un lado o sale despedido */
+@keyframes fish-dodge {
+  0% {
+    transform: translateX(0);
+  }
+  30% {
+    transform: translateX(110px) rotate(10deg);
+  }
+  60% {
+    transform: translateX(110px) translateY(-30px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+.fish-dodge {
+  animation: fish-dodge 0.8s ease-in-out both;
+}
+@keyframes fish-hurt {
+  0% {
+    transform: translateX(0);
+    filter: none;
+  }
+  30% {
+    transform: translateX(-30px) rotate(-25deg);
+    filter: brightness(2) drop-shadow(0 0 10px #ef4444);
+  }
+  100% {
+    transform: translateX(0);
+    filter: none;
+  }
+}
+.fish-hurt {
+  animation: fish-hurt 0.7s ease-out both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   /* Las animaciones que se repiten se apagan (acortarlas las haría parpadear) */
   .dive-bubble,
@@ -701,8 +984,33 @@ html[data-simple="1"] .text-xs {
     display: none;
   }
   .dive-line-done,
-  .dive-lure {
+  .dive-lure,
+  .dive-snow,
+  .dive-boss-node,
+  .boss-breathe,
+  .boss-lunge,
+  .boss-hurt,
+  .boss-shake,
+  .boss-slash,
+  .boss-rise,
+  .boss-emerge,
+  .boss-flicker,
+  .fish-dodge,
+  .fish-hurt {
     animation: none !important;
+  }
+  /* Derrotado: sin animación, solo desaparece */
+  .boss-die {
+    animation: none !important;
+    opacity: 0;
+  }
+  .dive-snow {
+    display: none;
+  }
+  /* Los ojos quedan abiertos y quietos */
+  .dive-eyes {
+    animation: none !important;
+    opacity: 0.8;
   }
 
   .mark path {

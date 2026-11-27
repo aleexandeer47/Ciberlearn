@@ -22,7 +22,7 @@ type L = { es: string; en: string };
 
 export const FEATURES: { label: L; free: boolean | L; pro: boolean | L }[] = [
   // Se comprueba en content.test.ts (no se importa content.ts aquí: este archivo también va al navegador)
-  { label: { es: "Ruta guiada: 24 lecciones, 126 ejercicios", en: "Guided path: 24 lessons, 126 exercises" }, free: true, pro: true },
+  { label: { es: "Ruta guiada: 39 lecciones, 212 ejercicios", en: "Guided path: 39 lessons, 212 exercises" }, free: true, pro: true },
   { label: { es: "Vidas en la ruta", en: "Lives on the path" }, free: { es: "5 (1 cada 30 min)", en: "5 (1 every 30 min)" }, pro: { es: "infinitas", en: "unlimited" } },
   { label: { es: "Chats con IA que intentan estafarte", en: "AI chats that try to scam you" }, free: false, pro: { es: "próximamente", en: "coming soon" } },
   { label: { es: "¿Es estafa? Revisa un mensaje con IA", en: "Is it a scam? Check a message with AI" }, free: false, pro: { es: "próximamente", en: "coming soon" } },
