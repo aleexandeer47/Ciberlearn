@@ -2,7 +2,7 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
-import type { Persona } from "@/lib/ai/personas";
+import { AI_LAUNCHED, type Persona } from "@/lib/ai/personas";
 import type { Lang } from "@/lib/i18n";
 import { SITE } from "@/lib/site";
 
@@ -14,10 +14,12 @@ import { SITE } from "@/lib/site";
  */
 
 /**
- * La función se lanza a propósito con AI_CHAT_ENABLED=true (y la clave de Anthropic).
- * Mientras tanto la página muestra los escenarios con el aviso de "próximamente".
+ * Interruptor de lanzamiento: mientras sea false, los chats con IA y “¿Es estafa?” con IA muestran
+ * "próximamente" aunque las variables de entorno estén activadas. Para lanzar: true aquí, créditos en
+ * la cuenta de Anthropic, y AI_CHAT_ENABLED=true + ANTHROPIC_API_KEY en Vercel. La misma bandera se usa
+ * en la interfaz (src/lib/ai/personas.ts, AI_LAUNCHED) para el menú y la página.
  */
-export const aiEnabled = () => process.env.AI_CHAT_ENABLED === "true" && !!process.env.ANTHROPIC_API_KEY;
+export const aiEnabled = () => AI_LAUNCHED && process.env.AI_CHAT_ENABLED === "true" && !!process.env.ANTHROPIC_API_KEY;
 const model = () => process.env.AI_MODEL || "claude-haiku-5-5";
 
 let client: Anthropic | null = null;

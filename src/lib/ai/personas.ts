@@ -136,6 +136,12 @@ export const personasFor = (lang: Lang) => (lang === "en" ? EN : ES);
 export const personaById = (id: string, lang: Lang) => personasFor(lang).find((p) => p.id === id);
 export const PERSONA_BY_ID = new Map(ES.map((p) => [p.id, p]));
 
+/**
+ * ¿Ya se lanzaron los chats con IA? Mientras sea false, la sección dice "próximamente" (en el menú y en la
+ * página) y el servidor no llama a la IA aunque la clave esté configurada. Ver aiEnabled en src/lib/server/ai.ts.
+ */
+export const AI_LAUNCHED = false;
+
 export const AI_LIMITS = {
   /** Exclusivo de Pro */
   proPerDay: 30,

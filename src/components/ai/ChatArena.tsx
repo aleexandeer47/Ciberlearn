@@ -122,7 +122,9 @@ export function ChatArena({ personas, enabled, loggedIn, isPro, left: initialLef
                   </span>
                   <span className="mt-4 font-display text-xl">{p.title}</span>
                   <span className="mt-1 text-sm text-fog">{p.description}</span>
-                  <span className="mt-4 text-sm font-semibold text-brand">{busy ? t("Preparando…", "Getting ready…") : t("Empezar", "Start")}</span>
+                  <span className="mt-4 text-sm font-semibold text-brand">
+                    {!enabled ? t("Próximamente", "Coming soon") : busy ? t("Preparando…", "Getting ready…") : t("Empezar", "Start")}
+                  </span>
                 </button>
               </li>
             );

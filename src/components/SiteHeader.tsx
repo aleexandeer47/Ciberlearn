@@ -10,6 +10,7 @@ import { getT } from "@/lib/i18n-server";
 import { LEGAL } from "@/lib/legal";
 import { SITE } from "@/lib/site";
 import { getCurrentUser } from "@/lib/server/session";
+import { AI_LAUNCHED } from "@/lib/ai/personas";
 
 const nav = (t: T) =>
   [
@@ -22,6 +23,11 @@ const nav = (t: T) =>
     ["/ranking", "Ranking"],
     ["/planes", t("Planes", "Pricing")],
   ] as const;
+
+/** Etiqueta de "próximamente" junto a una sección del menú. */
+function Soon({ label }: { label: string }) {
+  return <span className="rounded-full bg-brand/15 px-1.5 py-0.5 text-[10px] font-bold uppercase leading-none tracking-wide text-brand">{label}</span>;
+}
 
 export function Logo() {
   return (
@@ -57,8 +63,9 @@ export async function SiteHeader() {
         {/* Enlaces al centro (escritorio) */}
         <nav className="hidden items-center gap-0.5 text-[15px] font-medium lg:flex" aria-label={t("Principal", "Main")}>
           {NAV.map(([href, label]) => (
-            <Link key={href} href={href} className="rounded-lg px-2.5 py-2 text-chalk transition-colors hover:text-brand">
+            <Link key={href} href={href} className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-chalk transition-colors hover:text-brand">
               {label}
+              {href === "/ia" && !AI_LAUNCHED && <Soon label={t("Pronto", "Soon")} />}
             </Link>
           ))}
         </nav>
@@ -77,8 +84,9 @@ export async function SiteHeader() {
         className="flex gap-1 overflow-x-auto border-t border-desk-line/50 px-3 py-1.5 text-sm font-medium [scrollbar-width:none] lg:hidden"
       >
         {NAV.map(([href, label]) => (
-          <Link key={href} href={href} className="shrink-0 rounded-full px-3 py-1.5 text-chalk transition-colors hover:bg-desk-3">
+          <Link key={href} href={href} className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-chalk transition-colors hover:bg-desk-3">
             {label}
+            {href === "/ia" && !AI_LAUNCHED && <Soon label={t("Pronto", "Soon")} />}
           </Link>
         ))}
       </nav>
